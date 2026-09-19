@@ -324,6 +324,28 @@ class InvestigationEngine:
             steps.append(step)
         return AttackPath(id=new_id("attack_path"),entry=path.nodes[0].id,steps=tuple(steps),trust_boundaries_crossed=path.trust_boundary_node_ids,supporting_evidence_ids=path.evidence_ids,snapshot_id=path.snapshot_id,observed_at=utc_now())
 
+    def validate_attack_path(self, context: InvestigationContext, path: GraphPath) -> tuple[bool, tuple[str, ...]]:
+        if path.snapshot_id != context.case.snapshot_id:
+            raise SnapshotScopeError("attack path crosses snapshot")
+        issues: list[str] = []
+        if not path.edges:
+            issues.append("path has no security transition")
+        for edge in path.edges:
+            if not edge.evidence_ids:
+                issues.append(f"edge {edge.id} has no evidence")
+            if edge.snapshot_id != context.case.snapshot_id:
+                issues.append(f"edge {edge.id} crosses snapshot")
+        for node in path.nodes:
+            if node.snapshot_id != context.case.snapshot_id:
+                issues.append(f"node {node.id} crosses snapshot")
+        if not path.evidence_ids:
+            issues.append("path has no supporting evidence")
+        return not issues, tuple(sorted(set(issues)))
+
+    def find_alternate_paths(self, context: InvestigationContext, source_id: str, target_id: str, primary_edge_ids: frozenset[str]) -> tuple[GraphPath, ...]:
+        paths = context.graph.bounded_paths(source_id, target_id, max_depth=context.case.budget.max_depth, max_paths=min(100, context.case.budget.max_tool_calls))
+        return tuple(path for path in paths.paths if not primary_edge_ids.intersection(edge.id for edge in path.edges))
+
     def analyze_exploitability(self, context:InvestigationContext, path:AttackPath|None, *, missing:Iterable[str]=(), contradictions:Iterable[str]=())->ExploitabilityAnalysis:
         missing_tuple=tuple(sorted(set(missing))); contradiction_tuple=tuple(sorted(set(contradictions)))
         if path is None:
