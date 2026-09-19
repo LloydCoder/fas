@@ -1,5 +1,4 @@
 from hypothesis import given,strategies as st
-import pytest
 from fas.collectors.parsing import ParseLimitError,ParseLimits,safe_json_loads
 @given(st.binary(min_size=0,max_size=2048))
 def test_arbitrary_bytes_never_escape_parser(data):
