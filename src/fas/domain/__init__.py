@@ -8,7 +8,7 @@ from .common import (
     AttackPathId, Confidence, ContentHash, EdgeId, EvidenceId, EvidenceType, FasEnum,
     FindingId, FindingStatus, GraphNodeType, IntegrityMetadata, MissingEvidence, NodeId,
     ObservationId, Provenance, ProvenanceCategory, ProvenanceLevel, RelationshipType,
-    RemediationId, RemediationStatus, RepositoryReference, Severity, SnapshotId,
+    RemediationId, RemediationStatus, RepositoryReference, Severity, SnapshotId, HypothesisStatus, InvestigationStatus, InvestigationEventType, InvestigationToolStatus, EvidenceRequestType,
     SourceLocation, VerdictId, VerdictType, VerificationId, VerificationStatus,
     VerificationTargetType, VerificationType, new_id, utc_now,
 )
