@@ -1,10 +1,8 @@
 """Observation-to-evidence normalization with provenance preservation."""
 from __future__ import annotations
 import hashlib,json
-from fas.domain.analysis import Observation
 from fas.domain.common import EvidenceId,EvidenceType
 from fas.domain.evidence import Evidence
-from .base import CollectionContext
 class NormalizationError(ValueError): pass
 _CATEGORY_MAP={"code":EvidenceType.CODE,"code_artifact":EvidenceType.CODE_LOCATION,"dependency_manifest":EvidenceType.DEPENDENCY,"secret":EvidenceType.TOOL_OUTPUT,"vulnerability":EvidenceType.TOOL_OUTPUT,"misconfiguration":EvidenceType.CONFIGURATION,"tool_result":EvidenceType.TOOL_OUTPUT,"static_analysis":EvidenceType.CODE}
 def _evidence_id(context,observation)->EvidenceId:
