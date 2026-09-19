@@ -216,6 +216,7 @@ class GraphDiff(DomainModel):
     endpoint_changed: tuple[str, ...] = ()
     tool_capability_changed: tuple[str, ...] = ()
     agent_capability_changed: tuple[str, ...] = ()
+    mcp_capability_changed: tuple[str, ...] = ()
     credential_changed: tuple[str, ...] = ()
     dataflow_changed: tuple[str, ...] = ()
     control_changed: tuple[str, ...] = ()
