@@ -12,7 +12,7 @@ from collections.abc import Callable, Iterable
 from fas.domain import (
     Finding, GraphNode, InvestigationCase, InvestigationEvent, InvestigationHypothesis,
     InvestigationResult, InvestigationStatus, InvestigationToolResult, EvidenceRequest,
-    ExploitabilityAnalysis, VerdictProposal,
+    InvestigationBudget, InvestigationConstraints, ExploitabilityAnalysis, VerdictProposal,
     TrustBoundaryAssessment, ToolPolicy, AttackPath,
     AttackPathStep, new_id, utc_now,
 )
