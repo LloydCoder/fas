@@ -404,8 +404,7 @@ The structure follows domain boundaries rather than individual vendors. Product 
 
 ## Development status
 
-FAS is in **early development** with Phases 1–5 implemented as explicit security-analysis
-contracts and deterministic engines. Phase 6 now provides the installable product boundary, local persistence, shared API/CLI service, bounded jobs, reporting, configuration diagnostics, and package/CI hardening. This does not claim universal vulnerability coverage or formal framework compliance.
+FAS is in **alpha**. Phases 1–5 provide explicit security-analysis contracts and deterministic engines. Phase 6 provides the bounded local product boundary, persistence, shared API/CLI service, jobs, reporting, configuration diagnostics, and package/CI hardening. Phase 6 does not claim universal vulnerability coverage, arbitrary runtime sandboxing, distributed scaling, or formal framework compliance.
 
 ### Implemented
 
@@ -426,9 +425,13 @@ contracts and deterministic engines. Phase 6 now provides the installable produc
 - PostgreSQL and distributed worker integration remain architectural seams rather than a hidden
   Phase 5 dependency.
 
-### Next
+### Phase 6 capability boundary
 
-Phase 6 productization is implemented as a bounded local product layer. PostgreSQL/S3 and arbitrary repository runtime sandbox backends remain explicit extension seams.
+Implemented: deterministic repository discovery/collection, local persistence, content-addressed objects, bounded subprocess policy, API/CLI transport, reporting, audit-chain verification, and durable local jobs.
+
+Bounded: scanner execution depends on installed/configured tools; graph/investigation/verdict semantics remain evidence-driven and do not manufacture findings from empty collection results.
+
+Unsupported/future: arbitrary candidate-code runtime execution, PostgreSQL/S3 adapters, horizontally scaled workers, and universal scanner/vulnerability coverage.
 ## Relationship to existing security tools
 
 FAS is designed to complement established security tooling.
@@ -620,4 +623,39 @@ FAS is licensed under the [Apache License 2.0](LICENSE).
 FAS is security analysis software. Results are evidence produced by the configured analysis environment and should be reviewed in the context of the target system, threat model, and available evidence.
 
 FAS does not guarantee that a system is secure or that a reported verdict captures every possible attack path.
-\n\n## Product usage\n\nInstall:\n\n```bash\npython -m pip install -e \".[dev]\"\n```\n\nInspect the environment:\n\n```bash\nfas doctor --format json\nfas tools --format json\n```\n\nRun a deterministic local analysis:\n\n```bash\nfas analyze ./example-project --format json\n```\n\nThe HTTP API is available with `fas api` and defaults to `127.0.0.1`. Non-local binding requires explicit bearer-token authentication. API versioning is `/v1`; `/openapi.json` exposes the machine-readable API description.\n\n## Capability boundaries\n\nFAS does not claim that a scanner disappearance proves remediation, that an incomplete graph proves absence, or that an LLM is ground truth. The local product backend does not execute arbitrary repository code. Candidate runtime execution requires a future hardened sandbox adapter with explicit filesystem, network, credential, timeout, and resource controls.\n\n## FAS-Bench integration\n\nFAS-Bench remains a separate repository and runtime dependency boundary. FAS exposes versioned machine-readable analysis/report structures so an external benchmark can evaluate findings, evidence, attack paths, verdicts, remediation state, verification state, and provenance without importing private implementation modules.\n\n## Standards references\n\nSARIF interoperability follows the OASIS SARIF 2.1.0 standard and approved errata where applicable. FAS provenance is inspired by supply-chain provenance principles; FAS does not claim formal SLSA, NIST, OWASP, or other framework compliance unless separately demonstrated.\n
+ 
+
+## Product usage
+
+Install:
+
+```bash
+python -m pip install -e ".[dev]"
+```
+
+Inspect the environment:
+
+```bash
+fas doctor --format json
+fas tools --format json
+```
+
+Run a deterministic local analysis:
+
+```bash
+fas analyze ./example-project --format json
+```
+
+The HTTP API is available with `fas api` and defaults to `127.0.0.1`. Non-local binding requires explicit bearer-token authentication. API versioning is `/v1`; `/openapi.json` exposes the machine-readable API description.
+
+## Capability boundaries
+
+FAS does not claim that a scanner disappearance proves remediation, that an incomplete graph proves absence, or that an LLM is ground truth. The local product backend does not execute arbitrary repository code. Candidate runtime execution requires a future hardened sandbox adapter with explicit filesystem, network, credential, timeout, and resource controls.
+
+## FAS-Bench integration
+
+FAS-Bench remains a separate repository and runtime dependency boundary. FAS exposes versioned machine-readable analysis/report structures so an external benchmark can evaluate findings, evidence, attack paths, verdicts, remediation state, verification state, and provenance without importing private implementation modules.
+
+## Standards references
+
+SARIF interoperability follows the OASIS SARIF 2.1.0 standard and approved errata where applicable. FAS provenance is inspired by supply-chain provenance principles; FAS does not claim formal SLSA, NIST, OWASP, or other framework compliance unless separately demonstrated.
