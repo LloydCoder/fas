@@ -4,18 +4,16 @@ from __future__ import annotations
 
 from collections import deque
 from hashlib import sha256
-from itertools import count
 import json
-from typing import Iterable
+from collections.abc import Iterable
 
 from fas.domain.analysis import Artifact, Observation
-from fas.domain.common import EvidenceId, GraphNodeType, NodeId, RelationshipType, new_id
+from fas.domain.common import EvidenceId, GraphNodeType, NodeId, RelationshipType
 from fas.domain.evidence import Evidence
 from fas.domain.graph import GraphEdge, GraphNode
 
 from .contracts import (
     GraphDiff,
-    GraphExport,
     GraphLimits,
     GraphQuery,
     GraphQueryResult,
@@ -30,7 +28,7 @@ from .contracts import (
     ValidationResult,
 )
 from .errors import (
-    DuplicateNode,
+    EdgeNotFound,
     GraphDeserializationError,
     GraphInvariantViolation,
     GraphSealedError,
@@ -169,7 +167,7 @@ class GraphEngine:
         try:
             self.get_edge(edge_id)
             return True
-        except Exception:
+        except EdgeNotFound:
             return False
 
     def nodes(self, query: GraphQuery | None = None) -> tuple[GraphNode, ...]:
@@ -626,7 +624,7 @@ class GraphEngine:
                     evidence = self.store.evidence(evidence_id)
                     if evidence.analysis_id != node.analysis_id or evidence.snapshot_id != node.snapshot_id:
                         issues.append(ValidationIssue("EVIDENCE_SCOPE", "node evidence scope mismatch", node.id))
-            except Exception as exc:
+            except NodeNotFound as exc:
                 issues.append(ValidationIssue("EVIDENCE_REFERENCE", str(exc), node.id))
         for edge in self.edges():
             if edge.source_node_id not in node_ids or edge.target_node_id not in node_ids:
@@ -641,7 +639,7 @@ class GraphEngine:
                     evidence = self.store.evidence(evidence_id)
                     if evidence.analysis_id != edge.analysis_id or evidence.snapshot_id != edge.snapshot_id:
                         issues.append(ValidationIssue("EVIDENCE_SCOPE", "edge evidence scope mismatch", edge.id))
-                except Exception as exc:
+                except NodeNotFound as exc:
                     issues.append(ValidationIssue("EVIDENCE_REFERENCE", str(exc), edge.id))
         return ValidationResult(tuple(issues))
 
@@ -699,9 +697,6 @@ class GraphEngine:
                 unchanged_nodes.append(right_nodes[identity])
             else:
                 changed_nodes.append((left_nodes[identity], right_nodes[identity]))
-        added_nodes = [right_nodes[key] for key in sorted(right_nodes.keys() - left_nodes.keys())]
-        removed_nodes = [left_nodes[key] for key in sorted(left_nodes.keys() - right_nodes.keys())]
-
         def edge_key(edge: GraphEdge) -> tuple[str, str, str]:
             source = left.get_node(edge.source_node_id).canonical_identity if left.node_exists(edge.source_node_id) else edge.source_node_id
             target = left.get_node(edge.target_node_id).canonical_identity if left.node_exists(edge.target_node_id) else edge.target_node_id
