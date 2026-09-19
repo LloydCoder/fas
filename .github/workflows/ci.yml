@@ -35,3 +35,7 @@ jobs:
 
       - name: Test
         run: pytest
+
+      - name: Graph baseline benchmark
+        if: matrix.python-version == '3.13'
+        run: python benchmarks/graph_baseline.py
