@@ -4,4 +4,4 @@ from .registry import AdapterRegistry
 from .sarif import SarifAdapter
 from .semgrep import SemgrepAdapter
 from .trivy import TrivyAdapter
-__all__=["GitleaksAdapter","SarifAdapter","SemgrepAdapter","TrivyAdapter"]
+__all__=["AdapterRegistry","GitleaksAdapter","SarifAdapter","SemgrepAdapter","TrivyAdapter"]
