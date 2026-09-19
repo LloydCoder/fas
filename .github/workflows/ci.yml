@@ -47,7 +47,7 @@ jobs:
         run: python -m pip check
 
       - name: Secret scan
-        uses: gitleaks/gitleaks-action@ff9f8c6f2b4f3a1f4e8d2d5a0e8b1c7b2c6d5e4a
+        uses: gitleaks/gitleaks-action@bcfb9cce635345aac9996cedc19b2de8e01b894f
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
