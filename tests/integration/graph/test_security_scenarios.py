@@ -1,4 +1,4 @@
-from fas.domain.common import GraphNodeType, RelationshipType
+from fas.domain.common import GraphNodeType
 from fas.graph import GraphEngine, ResultStatus
 from tests.fixtures.graph.scenarios import (
     scenario_agent_tool_chain,
