@@ -2,9 +2,8 @@
 from __future__ import annotations
 import json
 from pathlib import Path
-from typing import Protocol, TypeVar, Any
+from typing import Protocol, Any
 
-T=TypeVar("T")
 
 
 class VerificationRepository(Protocol):
