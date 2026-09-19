@@ -90,10 +90,12 @@ class GraphEngine:
 
     def add_artifact(self, artifact: Artifact) -> None:
         self._ensure_mutable()
+        self._ensure_scope(artifact.analysis_id, artifact.snapshot_id)
         self.store.register_artifact(artifact)
 
     def add_observation(self, observation: Observation) -> None:
         self._ensure_mutable()
+        self._ensure_scope(observation.analysis_id, observation.snapshot_id)
         self.store.register_observation(observation)
 
     def add_node(self, node: GraphNode) -> None:
