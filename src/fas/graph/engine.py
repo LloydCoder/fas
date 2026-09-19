@@ -135,6 +135,22 @@ class GraphEngine:
         self._ensure_scope(edge.analysis_id, edge.snapshot_id)
         self.store.remove_edge(edge.id)
 
+    def merge_graph(self, other: "GraphEngine") -> None:
+        """Merge evidence into an identically scoped mutable graph."""
+        self._ensure_mutable()
+        if self.scope != other.scope or self.scope.kind != GraphScopeKind.SNAPSHOT:
+            raise SnapshotMismatch("ordinary graph merge requires the same exact snapshot scope")
+        for artifact in other.store.artifact_records():
+            self.add_artifact(artifact)
+        for observation in other.store.observation_records():
+            self.add_observation(observation)
+        for evidence in other.store.evidence_records():
+            self.add_evidence(evidence)
+        for node in other.nodes():
+            self.upsert_node(node)
+        for edge in other.edges():
+            self.merge_edge_evidence(edge)
+
     def seal(self, *, complete: bool | None = None) -> "GraphView":
         if complete is not None:
             self.complete = complete
