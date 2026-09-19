@@ -1,6 +1,6 @@
 """Application service shared by CLI and HTTP API."""
 from __future__ import annotations
-import hashlib, json, os, subprocess
+import hashlib, json, subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 from fas.domain import Analysis, AnalysisStatus, ContentHash, Project, RepositoryReference, Snapshot, new_id
