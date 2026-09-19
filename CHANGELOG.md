@@ -25,3 +25,13 @@ The project is currently in early development and has not established a stable r
 - Added model-agnostic investigator provider, deterministic fake model, structured output validation and external tool authorization boundary.
 - Added append-only local persistence seam, PostgreSQL schema, JSON Schema contract and parity checking.
 - Added security tests and investigation architecture/threat-model documentation.
+
+## Phase 5 — Verification
+
+- Added explicit remediation, verification-plan, verification-run, graph-diff, attack-path-comparison, residual-path, verification-evidence, regression, baseline, regression-test, security-test, result, and report contracts.
+- Added snapshot-to-snapshot deterministic verification with explicit security-property outcomes and no-false-success invariants.
+- Added semantic graph differential analysis for permissions, identities, trust boundaries, data-flow, controls, dependencies, agents, tools, credentials, and endpoints.
+- Added bounded original/residual/alternate attack-path revalidation using the Phase 4 graph primitives.
+- Added append-only JSONL verification persistence seam and deterministic fixture security-test executor.
+- Added Phase 5 schema parity, verification fixtures, threat-model coverage, ADRs, and structured `fas verify` CLI support.
+- Kept arbitrary candidate-repository execution outside the core Phase 5 runtime boundary.
