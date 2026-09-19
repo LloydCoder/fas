@@ -38,9 +38,16 @@ class ProductService:
         digest=hashlib.sha256()
         files=[]
         for path in sorted(p for p in root.rglob("*") if p.is_file() and ".git" not in p.parts):
-            rel=path.relative_to(root).as_posix()
+            if path.is_symlink():
+                continue
+            try:
+                resolved=path.resolve(strict=True)
+                resolved.relative_to(root)
+                rel=resolved.relative_to(root).as_posix()
+                data=resolved.read_bytes()
+            except (OSError, ValueError):
+                continue
             if len(files)>=10000: break
-            data=path.read_bytes()
             if len(data)>self.settings.max_artifact_bytes: continue
             digest.update(rel.encode()); digest.update(b"\0"); digest.update(hashlib.sha256(data).digest())
             files.append(rel)
@@ -57,6 +64,11 @@ class ProductService:
         analysis=analysis.model_copy(update={"status":AnalysisStatus.DISCOVERING,"started_at":datetime.now(timezone.utc)})
         self._replace_analysis(analysis,project_id)
         snap=self.snapshot(analysis,root)
+        if cancel is not None and getattr(cancel,"is_set",lambda:False)():
+            cancelled=analysis.model_copy(update={"snapshot_ids":(snap.id,),"status":AnalysisStatus.CANCELLED,
+                "completed_at":datetime.now(timezone.utc),"failure_reason":"analysis cancelled"})
+            self._replace_analysis(cancelled,project_id)
+            return {"analysis":cancelled.model_dump(mode="json"),"snapshot":snap.model_dump(mode="json"),"findings":[]}
         analysis=analysis.model_copy(update={"snapshot_ids":(snap.id,),"status":AnalysisStatus.PARTIAL,
             "completed_at":datetime.now(timezone.utc),
             "metadata":{**analysis.metadata,"limitations":"Core product pipeline records an immutable source snapshot and collection metadata. Deterministic verdicts require normalized security evidence; no evidence is fabricated."}})
