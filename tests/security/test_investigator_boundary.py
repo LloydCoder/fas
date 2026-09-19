@@ -1,5 +1,5 @@
 import pytest
-from fas.investigation import ConstrainedInvestigator, DeterministicFakeModel, InvestigatorRequest
+from fas.investigation import ConstrainedInvestigator, InvestigatorRequest
 from fas.investigation.gateway import ModelOutputRejected
 from fas.investigation.model import InvestigatorResponse, ModelToolCall
 
