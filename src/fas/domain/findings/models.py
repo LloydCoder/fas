@@ -4,12 +4,9 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 
-from fas.domain.common import (
-    AttackPathId, DomainModel, EvidenceId, FindingId, FindingStatus, NodeId, ObservationId,
-    Severity, SnapshotId, SourceLocation,
-)
+from fas.domain.common import AttackPathId, DomainModel, EvidenceId, FindingId, FindingStatus, NodeId, ObservationId, Severity, SnapshotId, SourceLocation
 
 
 class Finding(DomainModel):
@@ -28,7 +25,7 @@ class Finding(DomainModel):
     snapshot_id: SnapshotId
     created_at: datetime
     updated_at: datetime
-    metadata: dict[str, str] = {}
+    metadata: dict[str, str] = Field(default_factory=dict)
 
     @field_validator("created_at", "updated_at")
     @classmethod
@@ -37,10 +34,8 @@ class Finding(DomainModel):
             raise ValueError("finding timestamps must be timezone-aware")
         return value.astimezone(timezone.utc)
 
-    @field_validator("updated_at")
-    @classmethod
-    def not_before_creation(cls, value: datetime, info):
-        created = info.data.get("created_at")
-        if created is not None and value < created:
+    @model_validator(mode="after")
+    def updated_not_before_created(self) -> "Finding":
+        if self.updated_at < self.created_at:
             raise ValueError("updated_at cannot precede created_at")
-        return value
+        return self
