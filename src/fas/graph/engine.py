@@ -279,7 +279,13 @@ class GraphEngine:
         ids = frozenset(evidence_ids)
         nodes = tuple(node for node in self.nodes() if ids.intersection(node.evidence_ids))
         edges = tuple(edge for edge in self.edges() if ids.intersection(edge.evidence_ids))
-        return GraphQueryResult(nodes=nodes, edges=edges, status=ResultStatus.COMPLETE if self.complete else ResultStatus.PARTIAL)
+        truncated = len(nodes) + len(edges) > self.limits.max_result_size
+        if truncated:
+            budget = self.limits.max_result_size
+            nodes = nodes[:budget]
+            edges = edges[:max(0, budget - len(nodes))]
+        status = ResultStatus.TRUNCATED if truncated else (ResultStatus.COMPLETE if self.complete else ResultStatus.PARTIAL)
+        return GraphQueryResult(nodes=nodes, edges=edges, status=status, reason="max_result_size reached" if truncated else None)
 
     def subgraph(self, node_ids: Iterable[NodeId], *, query: GraphQuery | None = None) -> GraphQueryResult:
         ids = frozenset(node_ids)
@@ -288,7 +294,13 @@ class GraphEngine:
             edge for edge in self.edges(query)
             if edge.source_node_id in ids and edge.target_node_id in ids
         )
-        return GraphQueryResult(nodes=nodes, edges=edges, status=(ResultStatus.PARTIAL if not self.complete else (ResultStatus.COMPLETE if nodes else ResultStatus.EMPTY)))
+        truncated = len(nodes) + len(edges) > self.limits.max_result_size
+        if truncated:
+            budget = self.limits.max_result_size
+            nodes = nodes[:budget]
+            edges = edges[:max(0, budget - len(nodes))]
+        status = ResultStatus.TRUNCATED if truncated else (ResultStatus.PARTIAL if not self.complete else (ResultStatus.COMPLETE if nodes else ResultStatus.EMPTY))
+        return GraphQueryResult(nodes=nodes, edges=edges, status=status, reason="max_result_size reached" if truncated else None)
 
     def neighborhood(
         self,
@@ -318,7 +330,14 @@ class GraphEngine:
         )
         if max_edges is not None:
             edges = edges[:max_edges]
-        return GraphQueryResult(nodes=nodes, edges=edges, status=result.status, reason=result.reason)
+        truncated = len(nodes) + len(edges) > self.limits.max_result_size
+        if truncated:
+            budget = self.limits.max_result_size
+            nodes = nodes[:budget]
+            edges = edges[:max(0, budget - len(nodes))]
+        status = ResultStatus.TRUNCATED if truncated else result.status
+        reason = "max_result_size reached" if truncated else result.reason
+        return GraphQueryResult(nodes=nodes, edges=edges, status=status, reason=reason)
 
     def traverse(
         self,
