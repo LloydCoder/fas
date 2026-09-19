@@ -9,6 +9,7 @@ from fas.domain.common import (
     EvidenceId,
     GraphNodeType,
     NodeId,
+    ProvenanceCategory,
     RelationshipType,
     SnapshotId,
 )
@@ -72,7 +73,7 @@ class GraphQuery:
     node_types: frozenset[GraphNodeType] | None = None
     relationship_types: frozenset[RelationshipType] | None = None
     evidence_ids: frozenset[EvidenceId] | None = None
-    provenance_categories: frozenset[str] | None = None
+    provenance_categories: frozenset[ProvenanceCategory] | None = None
     min_confidence: float | None = None
     max_confidence: float | None = None
 
