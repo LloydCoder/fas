@@ -109,6 +109,19 @@ class SQLiteStore:
                            ON CONFLICT(operation_key) DO UPDATE SET status=excluded.status,payload=excluded.payload,updated_at=excluded.updated_at,error=excluded.error""",
                         (job_id,operation_key,kind,status,json.dumps(payload,sort_keys=True),created_at,updated_at,error))
 
+    def job_claim(self, job_id: str, operation_key: str, kind: str, payload: dict[str, Any], created_at: str, worker_id: str, lease_until: str) -> dict[str, Any]:
+        with self._connect() as con:
+            con.execute(
+                """INSERT OR IGNORE INTO jobs(
+                    id,operation_key,kind,status,payload,created_at,updated_at,error,worker_id,lease_until,heartbeat_at,retry_count
+                ) VALUES(?,?,?,?,?,?,?,?,?,?,?,0)""",
+                (job_id,operation_key,kind,"QUEUED",json.dumps(payload,sort_keys=True),created_at,created_at,None,worker_id,lease_until,created_at),
+            )
+            row = con.execute("SELECT * FROM jobs WHERE operation_key=?", (operation_key,)).fetchone()
+        if row is None:
+            raise RuntimeError("job claim failed")
+        return dict(row)
+
     def job_by_key(self, operation_key: str) -> dict[str, Any] | None:
         with self._connect() as con:
             row=con.execute("SELECT * FROM jobs WHERE operation_key=?", (operation_key,)).fetchone()
@@ -116,7 +129,7 @@ class SQLiteStore:
 
     def recover_running_jobs(self) -> int:
         with self._connect() as con:
-            cur=con.execute("UPDATE jobs SET status='FAILED', error='worker restarted while job was running', updated_at=datetime('now') WHERE status='RUNNING'")
+            cur=con.execute("UPDATE jobs SET status='FAILED', error='worker restarted while job was running', updated_at=datetime('now'), lease_until=NULL WHERE status='RUNNING'")
             return cur.rowcount
 
 class LocalObjectStore:
