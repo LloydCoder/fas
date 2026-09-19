@@ -6,11 +6,12 @@ import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 from fas.domain import Analysis, AnalysisStatus, AuditEvent, ContentHash, Project, RepositoryReference, Snapshot, new_id
-from fas.collectors import CollectionContext, CollectionPlan, CollectionOrchestrator, CodeDiscoveryCollector, DependencyDiscoveryCollector, ConfigurationCollector, CICDCollector, AgentConfigurationCollector
+from fas.collectors import CollectionContext, CollectionPlan, CollectionOrchestrator, CodeDiscoveryCollector, DependencyDiscoveryCollector, ConfigurationCollector, CICDCollector, AgentConfigurationCollector, CollectionPipeline
 from .config import Settings
 from .storage import SQLiteStore, LocalObjectStore
 from .reports import ReportService
 from .jobs import JobManager
+from fas.graph import GraphEngine
 
 class ProductService:
     def __init__(self, settings: Settings):
@@ -108,10 +109,22 @@ class ProductService:
             self.store.put("artifacts",artifact.id,snap.id,artifact.model_dump(mode="json"),artifact.provenance[0].observed_at.isoformat())
         for observation in collection.batch.observations:
             self.store.put("observations",observation.id,snap.id,observation.model_dump(mode="json"),observation.observed_at.isoformat())
+        graph = GraphEngine(analysis_id=analysis.id, snapshot_id=snap.id)
+        pipeline = CollectionPipeline(graph)
+        normalized = pipeline.ingest(collection.batch, context)
+        for evidence in normalized.evidence:
+            self.store.put("evidence",evidence.id,snap.id,evidence.model_dump(mode="json"),evidence.observed_at.isoformat())
+        graph_view = pipeline.build_graph(complete=normalized.complete)
+        for node in graph_view.nodes():
+            self.store.put("graph_nodes",node.id,snap.id,node.model_dump(mode="json"),datetime.now(timezone.utc).isoformat())
+        for edge in graph_view.edges():
+            self.store.put("graph_edges",edge.id,snap.id,edge.model_dump(mode="json"),edge.observed_at.isoformat())
         analysis=analysis.model_copy(update={"status":AnalysisStatus.NORMALIZING,
             "metadata":{**analysis.metadata,"collection_status":collection.summary.status.value,
                         "artifact_count":str(collection.summary.artifacts),
-                        "observation_count":str(collection.summary.observations)}})
+                        "observation_count":str(collection.summary.observations),
+                        "evidence_count":str(len(normalized.evidence)),
+                        "graph_complete":str(graph_view.complete).lower()}})
         self._replace_analysis(analysis,project_id)
         if cancel is not None and getattr(cancel,"is_set",lambda:False)():
             cancelled=analysis.model_copy(update={"snapshot_ids":(snap.id,),"status":AnalysisStatus.CANCELLED,
