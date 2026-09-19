@@ -10,3 +10,6 @@ A graph path is only a structural candidate. `validate_attack_path` requires eve
 
 
 CI acceptance is performed by the repository workflow before Phase 4 is declared complete.
+
+
+Final acceptance verification marker.
