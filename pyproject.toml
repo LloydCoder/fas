@@ -39,7 +39,7 @@ line-length = 100
 target-version = "py311"
 
 [tool.ruff.lint]
-ignore = ["C408", "DTZ001", "I001", "RUF059", "SIM114", "UP017", "UP037"]
+ignore = ["C408", "DTZ001", "I001", "RUF022", "RUF059", "SIM114", "UP017", "UP037"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
