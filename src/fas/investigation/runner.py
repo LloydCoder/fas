@@ -41,8 +41,11 @@ class InvestigationRunner:
                 case=self.transition(case,InvestigationStatus.PARTIAL)
             return result
         except InvestigationCancelled:
-            self.transition(case,InvestigationStatus.CANCELLED); raise
+            self.transition(case,InvestigationStatus.CANCELLED)
+            raise
         except InvestigationBudgetExceeded:
-            self.transition(case,InvestigationStatus.PARTIAL); raise
+            self.transition(case,InvestigationStatus.PARTIAL)
+            raise
         except Exception:
-            self.transition(case,InvestigationStatus.FAILED); raise
+            self.transition(case,InvestigationStatus.FAILED)
+            raise
