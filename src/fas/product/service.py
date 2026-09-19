@@ -77,8 +77,11 @@ class ProductService:
         self._replace_analysis(analysis,project_id)
         context=CollectionContext(analysis_id=analysis.id,snapshot_id=snap.id,root=root,repository=str(root),
                                   revision=snap.repository.revision,max_files=10000,max_file_bytes=self.settings.max_artifact_bytes)
-        plan=CollectionPlan(context=context,collectors=(CodeDiscoveryCollector(),DependencyDiscoveryCollector()))
-        collection=CollectionOrchestrator().run(plan,cancel=cancel)
+        collectors = [CodeDiscoveryCollector(), DependencyDiscoveryCollector()]
+        from fas.collectors import ConfigurationCollector, CICDCollector, AgentConfigurationCollector
+        collectors.extend((ConfigurationCollector(), CICDCollector(), AgentConfigurationCollector()))
+        plan = CollectionPlan(context=context, collectors=tuple(collectors))
+        collection = CollectionOrchestrator().run(plan, cancel=cancel)
         for artifact in collection.batch.artifacts:
             self.store.put("artifacts",artifact.id,snap.id,artifact.model_dump(mode="json"),artifact.provenance[0].observed_at.isoformat())
         for observation in collection.batch.observations:
