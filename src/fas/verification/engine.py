@@ -182,7 +182,7 @@ class VerificationEngine:
         plan=self.plan(finding,remediation,original_snapshot,candidate_snapshot)
         if security_tests:
             plan=plan.model_copy(update={"required_checks": (*plan.required_checks, VerificationCheck.VERIFY_SECURITY_TEST)})
-        verification_id=verification_id
+        verification_id=new_id("verification")
         checks=[]
         missing=list(errors)
         if errors:
@@ -202,7 +202,7 @@ class VerificationEngine:
                 original_snapshot_id=original_snapshot.id,candidate_snapshot_id=candidate_snapshot.id,
                 result=VerdictType.UNKNOWN,security_property=remediation.expected_security_property,
                 property_outcome=SecurityPropertyOutcome.UNKNOWN,
-                path_statuses=[],graph_diff_id=graph_diff.id,
+                original_path_status=AttackPathComparisonStatus.UNKNOWN,graph_diff_id=graph_diff.id,
                 verification_evidence_ids=(evidence.id,),missing_evidence=tuple(sorted(set(errors))),
                 limitations=("Verification stopped before comparison because required integrity conditions were not established.",),
                 checks=tuple(checks),completeness_required=len(plan.required_checks),completeness_completed=0,
