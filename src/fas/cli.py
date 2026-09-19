@@ -3,6 +3,9 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+from fas.domain import AttackPath, Finding, Remediation, Snapshot
+from fas.graph import GraphEngine
+from fas.verification import VerificationEngine
 from fas import __version__
 from fas.product import ProductService, load_settings
 from fas.product.tools import discover
@@ -22,6 +25,10 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--format",choices=("human","json"),default="human")
     sub=p.add_subparsers(dest="command",required=True)
     subcommands=[]
+    verify=sub.add_parser("verify",help="verify remediation from explicit persisted contracts")
+    for name in ("finding","remediation","original-snapshot","candidate-snapshot","original-graph","candidate-graph","original-paths"):
+        verify.add_argument(f"--{name}",required=True)
+    subcommands.append(verify)
     a=sub.add_parser("analyze"); subcommands.append(a); a.add_argument("path"); a.add_argument("--project",default=None)
     for name,help_text in (
         ("status","show analysis status"),("findings","show findings"),("evidence","show evidence references"),
@@ -48,6 +55,16 @@ def main(argv: list[str]|None=None) -> int:
     if args.command=="api":
         from fas.product.api import ApiServer
         ApiServer(service).serve(settings.api_host,settings.api_port); return 0
+    if args.command=="verify":
+        def load(path: str): return json.loads(Path(path).read_text(encoding="utf-8"))
+        finding=Finding.model_validate(load(args.finding)); remediation=Remediation.model_validate(load(args.remediation))
+        original=Snapshot.model_validate(load(args.original_snapshot)); candidate=Snapshot.model_validate(load(args.candidate_snapshot))
+        before=GraphEngine.from_json(Path(args.original_graph).read_text(encoding="utf-8"))
+        after=GraphEngine.from_json(Path(args.candidate_graph).read_text(encoding="utf-8"))
+        paths=tuple(AttackPath.model_validate(x) for x in load(args.original_paths))
+        outcome=VerificationEngine().verify(finding=finding,remediation=remediation,original_snapshot=original,candidate_snapshot=candidate,original_graph=before,candidate_graph=after,original_paths=paths)
+        dump(outcome.result,args.format)
+        return 0
     if args.command=="analyze":
         root=Path(args.path).resolve()
         project=service.create_project(args.project or root.name,str(root))
