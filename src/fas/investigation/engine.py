@@ -465,7 +465,7 @@ class InvestigationEngine:
 
     def complete(self, context:InvestigationContext, analysis:ExploitabilityAnalysis, *, attack_path:AttackPath|None, rationale:str)->InvestigationResult:
         proposal=self.propose_verdict(context,analysis,attack_path=attack_path,rationale=rationale)
-        status=InvestigationStatus.READY_FOR_VERDICT if proposal.verdict else InvestigationStatus.PARTIAL
+        status=(InvestigationStatus.READY_FOR_VERDICT if proposal.verdict != "UNKNOWN" and analysis.evidence_sufficient and attack_path is not None else InvestigationStatus.AWAITING_EVIDENCE)
         result=InvestigationResult(investigation_id=context.case.id,finding_id=context.case.finding_id,analysis_id=context.case.analysis_id,snapshot_id=context.case.snapshot_id,status=status,hypotheses=context.case.hypotheses,evidence_ids=tuple(sorted(set(context.case.acquired_evidence))),missing_evidence=analysis.missing_evidence,contradictions=tuple(),attack_paths=proposal.attack_path_ids,controls=analysis.controls,identities=(analysis.identity,) if analysis.identity else (),permissions=analysis.permissions,trust_boundaries=analysis.trust_boundaries,exploitability_analysis=analysis,verdict_proposal=proposal,limitations=(),audit_reference=f"investigation:{context.case.id}")
         self.store.results[context.case.id]=result
         return result
