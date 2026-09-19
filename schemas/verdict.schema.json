@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/LloydCoder/fas/blob/main/schemas/verdict.schema.json",
+  "title": "FAS Verdict",
+  "x-fas-canonical-model": "Verdict",
+  "x-fas-schema-version": "1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version","id","verdict","finding_id","confidence","rationale","created_at"],
+  "properties": {
+    "schema_version":{"type":"string"},
+    "id":{"type":"string","pattern":"^verdict_[0-9A-HJKMNP-TV-Z]{26}$"},
+    "verdict":{"type":"string","enum":["EXPLOITABLE","NOT_EXPLOITABLE","CONDITIONALLY_EXPLOITABLE","REMEDIATED","REMEDIATION_FAILED","REGRESSED","UNKNOWN"]},
+    "finding_id":{"type":"string","pattern":"^finding_[0-9A-HJKMNP-TV-Z]{26}$"},
+    "confidence":{"type":"object"},
+    "rationale":{"type":"string","minLength":1},
+    "supporting_evidence_ids":{"type":"array","items":{"type":"string"}},
+    "contradicting_evidence_ids":{"type":"array","items":{"type":"string"}},
+    "missing_evidence":{"type":"array"},
+    "conditions":{"type":"array","items":{"type":"string"}},
+    "attack_path_id":{"type":["string","null"]},
+    "prior_verdict_id":{"type":["string","null"]},
+    "verifier":{"type":["string","null"]},
+    "created_at":{"type":"string","format":"date-time"},
+    "metadata":{"type":"object","additionalProperties":{"type":"string"}}
+  }
+}
