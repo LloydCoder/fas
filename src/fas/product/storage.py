@@ -100,7 +100,41 @@ class SQLiteStore:
         return [json.loads(r["payload"]) for r in rows]
 
     def append_audit(self, payload: dict[str, Any]) -> None:
-        self.put("audit_events", payload["id"], payload["analysis_id"], payload, payload["created_at"])
+        with self._connect() as con:
+            rows=con.execute("SELECT payload FROM audit_events WHERE analysis_id=? ORDER BY created_at ASC, id ASC",(payload["analysis_id"],)).fetchall()
+            previous=None
+            if rows:
+                previous=json.loads(rows[-1]["payload"]).get("_audit_event_hash")
+            canonical=json.dumps(payload,sort_keys=True,separators=(",",":"),ensure_ascii=False)
+            payload_hash=hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+            chain_material=f"{previous or 'GENESIS'}|{payload_hash}".encode("utf-8")
+            event_hash=hashlib.sha256(chain_material).hexdigest()
+            chained=dict(payload)
+            chained["_audit_previous_hash"]=previous
+            chained["_audit_payload_hash"]=payload_hash
+            chained["_audit_event_hash"]=event_hash
+            con.execute(
+                "INSERT INTO audit_events(id,analysis_id,payload,created_at) VALUES(?,?,?,?)",
+                (payload["id"],payload["analysis_id"],json.dumps(chained,sort_keys=True,separators=(",",":")),payload["created_at"]),
+            )
+
+    def verify_audit_chain(self, analysis_id: str) -> dict[str, Any]:
+        with self._connect() as con:
+            rows=con.execute("SELECT id,payload FROM audit_events WHERE analysis_id=? ORDER BY created_at ASC,id ASC",(analysis_id,)).fetchall()
+        previous=None
+        errors=[]
+        for row in rows:
+            item=json.loads(row["payload"])
+            stored_payload_hash=item.get("_audit_payload_hash")
+            stored_event_hash=item.get("_audit_event_hash")
+            declared_previous=item.get("_audit_previous_hash")
+            unsigned={k:v for k,v in item.items() if not k.startswith("_audit_")}
+            payload_hash=hashlib.sha256(json.dumps(unsigned,sort_keys=True,separators=(",",":"),ensure_ascii=False).encode("utf-8")).hexdigest()
+            expected=hashlib.sha256(f"{previous or 'GENESIS'}|{payload_hash}".encode("utf-8")).hexdigest()
+            if declared_previous!=previous or stored_payload_hash!=payload_hash or stored_event_hash!=expected:
+                errors.append(row["id"])
+            previous=stored_event_hash
+        return {"valid":not errors,"events":len(rows),"invalid_event_ids":tuple(errors)}
 
     def job_upsert(self, job_id: str, operation_key: str, kind: str, status: str, payload: dict[str, Any], created_at: str, updated_at: str, error: str | None = None) -> None:
         with self._connect() as con:
