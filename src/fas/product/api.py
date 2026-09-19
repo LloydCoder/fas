@@ -60,12 +60,16 @@ class ApiServer:
                 self.wfile.write(body)
             def _auth(self):
                 if not service.settings.auth_required: return True
-                supplied=self.headers.get("Authorization")
+                auth_values=self.headers.get_all("Authorization") or []
+                if len(auth_values) != 1: return False
+                supplied=auth_values[0]
                 expected=service.settings.api_token
                 if not supplied or expected is None or len(supplied)>MAX_HEADER_BYTES: return False
+                if any(len(str(k))+len(str(v)) > MAX_HEADER_BYTES for k,v in self.headers.items()): return False
                 scheme,separator,token=supplied.partition(" ")
                 if separator!=" " or scheme!="Bearer" or not token or token!=token.strip(): return False
                 return secrets.compare_digest(token,expected)
+
             def _request_body(self):
                 raw_length=self.headers.get("Content-Length")
                 if raw_length is None: raise ValueError("Content-Length is required")
