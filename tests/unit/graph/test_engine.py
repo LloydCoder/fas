@@ -1,16 +1,12 @@
 from fas.domain.common import GraphNodeType, RelationshipType
 from fas.graph import (
     GraphBuilder,
-    GraphEngine,
-    GraphLimits,
     ResultStatus,
     stable_id,
     TraversalDirection,
 )
 from fas.graph.errors import (
-    DuplicateEdge,
     DuplicateNode,
-    GraphInvariantViolation,
     GraphSealedError,
     SnapshotMismatch,
 )
@@ -87,7 +83,7 @@ def test_bounded_traversal_and_deterministic_shortest_path(engine, context, prov
         )
         engine.add_node(node)
         nodes.append(node)
-    for left, right in zip(nodes, nodes[1:]):
+    for left, right in __import__("itertools").pairwise(nodes):
         engine.add_edge(GraphBuilder.make_edge(
             analysis_id=context["analysis"], snapshot_id=context["snapshot"],
             source_node_id=left.id, target_node_id=right.id,
