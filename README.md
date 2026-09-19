@@ -427,9 +427,9 @@ FAS is in **alpha**. Phases 1–5 provide explicit security-analysis contracts a
 
 ### Phase 6 capability boundary
 
-Implemented: deterministic repository discovery/collection, local persistence, content-addressed objects, bounded subprocess policy, API/CLI transport, reporting, audit-chain verification, and durable local jobs.
+Implemented: deterministic repository snapshot/discovery/collection, local persistence, content-addressed objects, bounded subprocess policy, API/CLI transport, explicit completeness-aware reporting, audit-chain verification, and durable local jobs.
 
-Bounded: scanner execution depends on installed/configured tools; graph/investigation/verdict semantics remain evidence-driven and do not manufacture findings from empty collection results.
+Bounded: scanner execution depends on installed/configured tools; collection completeness is propagated; graph/investigation/verdict semantics remain evidence-driven and do not manufacture findings from empty collection results.
 
 Unsupported/future: arbitrary candidate-code runtime execution, PostgreSQL/S3 adapters, horizontally scaled workers, and universal scanner/vulnerability coverage.
 ## Relationship to existing security tools
@@ -577,9 +577,9 @@ and bounded machine-readable reports.
 
 ### Phase 6 — Productization
 Implemented as a bounded local product layer: installable package, shared CLI/API service, SQLite persistence,
-content-addressed local objects, durable bounded jobs, configuration diagnostics, JSON reporting, health endpoints,
-and CI/package hardening. PostgreSQL/S3 and arbitrary repository runtime-sandbox backends remain explicit extension
-seams rather than simulated capabilities.
+content-addressed local objects, deterministic snapshot/discovery/collection, bounded subprocess policy, durable jobs,
+completeness-aware reporting, configuration diagnostics, health endpoints, and CI/package hardening. PostgreSQL/S3,
+hardened arbitrary runtime execution, and universal scanner/vulnerability coverage remain explicit extension seams.
 
 
 ## Documentation
