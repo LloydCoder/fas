@@ -22,7 +22,7 @@ __all__ = [
     "AnalysisId", "SnapshotId", "ArtifactId", "ObservationId", "EvidenceId", "NodeId", "EdgeId",
     "FindingId", "AttackPathId", "VerdictId", "RemediationId", "VerificationId",
     "Finding", "AttackPath", "AttackPathStep", "Verdict", "Remediation", "Verification",
-    "AnalysisStatus", "ArtifactType", "ProvenanceCategory", "ProvenanceLevel", "EvidenceType",
+    "AnalysisStatus", "ArtifactType", "ProvenanceCategory", "ProvenanceLevel", "EvidenceType", "FasEnum",
     "GraphNodeType", "RelationshipType", "FindingStatus", "Severity", "VerdictType",
     "RemediationStatus", "VerificationTargetType", "VerificationType", "VerificationStatus",
     "ActorType", "Confidence", "ContentHash", "IntegrityMetadata", "RepositoryReference",
