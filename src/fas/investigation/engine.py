@@ -375,17 +375,28 @@ class InvestigationEngine:
         return tuple(path for path in paths.paths if not primary_edge_ids.intersection(edge.id for edge in path.edges))
 
     def analyze_exploitability(self, context:InvestigationContext, path:AttackPath|None, *, missing:Iterable[str]=(), contradictions:Iterable[str]=())->ExploitabilityAnalysis:
-        missing_tuple=tuple(sorted(set(missing))); contradiction_tuple=tuple(sorted(set(contradictions)))
+        missing_values=set(missing); contradiction_values=set(contradictions)
         if path is None:
-            return ExploitabilityAnalysis(evidence_sufficient=False,missing_evidence=missing_tuple or ("validated attack path unavailable",),contradictions=contradiction_tuple)
+            missing_values.add("validated attack path unavailable")
+            return ExploitabilityAnalysis(evidence_sufficient=False,missing_evidence=tuple(sorted(missing_values)),contradictions=tuple(sorted(contradiction_values)))
+        evidence_records=[context.graph.store.evidence(eid) for eid in sorted(path.supporting_evidence_ids)]
+        attacker_influence=None; identity=None
+        for evidence in evidence_records:
+            value=evidence.observed_value
+            if isinstance(value,dict):
+                if value.get("attacker_controlled") is True: attacker_influence=True
+                if isinstance(value.get("identity"),str): identity=value["identity"]
+        if attacker_influence is not True:
+            missing_values.add("attacker influence is not deterministically established")
+        if contradiction_values:
+            missing_values.add("contradictory security evidence requires reconciliation")
         return ExploitabilityAnalysis(
-            attacker_influence=True,reachable=True,data_flow_established=True,
-            evidence_sufficient=not missing_tuple and not contradiction_tuple,
-            alternate_paths_found=False,
+            attacker_influence=attacker_influence, reachable=True, data_flow_established=True,
+            evidence_sufficient=not missing_values and not contradiction_values, identity=identity,
+            alternate_paths_found=False, missing_evidence=tuple(sorted(missing_values)),
+            contradictions=tuple(sorted(contradiction_values)),
             trust_boundaries=tuple(TrustBoundaryAssessment(boundary_node_id=n.id,source=n.metadata.get("source",n.label),target=n.metadata.get("target",n.label),evidence_ids=n.evidence_ids) for n in (context.graph.get_node(i) for i in path.trust_boundaries_crossed)),
-            missing_evidence=missing_tuple,contradictions=contradiction_tuple,
         )
-
     def propose_verdict(self, context:InvestigationContext, analysis:ExploitabilityAnalysis, *, attack_path:AttackPath|None, rationale:str)->VerdictProposal:
         evidence=tuple(sorted(set((attack_path.supporting_evidence_ids if attack_path else ()) + tuple(e for c in analysis.controls for e in c.evidence_ids))))
         if analysis.missing_evidence or analysis.contradictions or not analysis.evidence_sufficient:
