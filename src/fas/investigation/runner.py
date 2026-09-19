@@ -1,8 +1,8 @@
 """Bounded investigation lifecycle orchestration."""
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import Callable
-from fas.domain import Finding, InvestigationCase, InvestigationStatus, InvestigationResult, new_id
+from collections.abc import Callable
+from fas.domain import Finding, InvestigationCase, InvestigationStatus, InvestigationResult
 from .engine import InvestigationEngine, InvestigationContext, InvestigationCancelled, InvestigationBudgetExceeded
 
 _ALLOWED={
