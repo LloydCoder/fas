@@ -47,7 +47,7 @@ def test_identifier_validation_and_generation():
     assert value.startswith("evidence_")
     assert len(value.split("_", 1)[1]) == 26
     with pytest.raises(ValidationError):
-        Evidence(id="bad", type=EvidenceType.CODE, claim="x", provenance=(), observed_at=NOW)
+        Evidence(id="bad", analysis_id=i["analysis"], snapshot_id=i["snapshot"], type=EvidenceType.CODE, claim="x", provenance=(), observed_at=NOW)
 
 
 def test_hash_and_source_location_invariants(context):
@@ -139,6 +139,8 @@ def test_evidence_distinguishes_from_observation(context):
     i, p = context
     e = Evidence(
         id=i["evidence"],
+        analysis_id=i["analysis"],
+        snapshot_id=i["snapshot"],
         type=EvidenceType.CODE,
         claim="function invokes shell",
         observed_value={"symbol": "run"},
@@ -148,23 +150,23 @@ def test_evidence_distinguishes_from_observation(context):
     assert e.id != i["observation"]
     assert e.provenance[0].category == ProvenanceCategory.TOOL_OBSERVATION
     with pytest.raises(ValidationError):
-        Evidence(id=i["evidence"], type=EvidenceType.CODE, claim="x", provenance=(), observed_at=NOW)
+        Evidence(id=i["evidence"], analysis_id=i["analysis"], snapshot_id=i["snapshot"], type=EvidenceType.CODE, claim="x", provenance=(), observed_at=NOW)
 
 
 def test_graph_requires_provenance_and_security_evidence(context):
     i, p = context
     with pytest.raises(ValidationError):
-        GraphNode(id=i["node"], type=GraphNodeType.FILE, label="x", provenance=())
+        GraphNode(id=i["node"], type=GraphNodeType.FILE, label="x", analysis_id=i["analysis"], snapshot_id=i["snapshot"], canonical_identity="file:fixture", provenance=())
     with pytest.raises(ValidationError):
         GraphNode(
-            id=i["node"], type=GraphNodeType.SECRET, label="x", provenance=(p,), security_relevant=True
+            id=i["node"], type=GraphNodeType.SECRET, label="x", analysis_id=i["analysis"], snapshot_id=i["snapshot"], canonical_identity="secret:fixture", provenance=(p,), security_relevant=True
         )
     node = GraphNode(
-        id=i["node"], type=GraphNodeType.FILE, label="x", provenance=(p,), evidence_ids=(i["evidence"],)
+        id=i["node"], type=GraphNodeType.FILE, label="x", analysis_id=i["analysis"], snapshot_id=i["snapshot"], canonical_identity="file:fixture", provenance=(p,), evidence_ids=(i["evidence"],)
     )
     edge = GraphEdge(
         id=i["edge"], source_node_id=node.id, target_node_id=new_id("node"),
-        relationship_type=RelationshipType.CALLS, provenance=(p,), observed_at=NOW,
+        relationship_type=RelationshipType.CALLS, analysis_id=i["analysis"], snapshot_id=i["snapshot"], provenance=(p,), observed_at=NOW,
         security_relevant=True, evidence_ids=(i["evidence"],),
     )
     assert edge.relationship_type == RelationshipType.CALLS
@@ -267,7 +269,7 @@ def test_remediation_and_verification(context):
 
 def test_frozen_models_reject_mutation(context):
     i, p = context
-    e = Evidence(id=i["evidence"], type=EvidenceType.CODE, claim="x", provenance=(p,), observed_at=NOW)
+    e = Evidence(id=i["evidence"], analysis_id=i["analysis"], snapshot_id=i["snapshot"], type=EvidenceType.CODE, claim="x", provenance=(p,), observed_at=NOW)
     with pytest.raises(ValidationError):
         e.claim = "changed"
 
