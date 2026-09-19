@@ -1,32 +1,49 @@
-"""Fail CI when Phase 4 public model properties drift from the checked-in schema contract."""
+"""Validate checked-in JSON Schema property/required sets against Pydantic domain models."""
 import json
 from pathlib import Path
-from fas.domain.investigation import EvidenceRequest, InvestigationCase, InvestigationHypothesis, InvestigationResult, VerdictProposal
-from fas.domain.audit import AuditEvent, Report, ToolRun
 
-MODELS={"InvestigationCase":InvestigationCase,"InvestigationHypothesis":InvestigationHypothesis,"EvidenceRequest":EvidenceRequest,"InvestigationResult":InvestigationResult,"VerdictProposal":VerdictProposal}
-AUDIT_MODELS={"AuditEvent":AuditEvent,"Report":Report,"ToolRun":ToolRun}
+from fas.domain.audit import AuditEvent, Report, ToolRun
+from fas.domain.investigation import EvidenceRequest, InvestigationCase, InvestigationHypothesis, InvestigationResult, VerdictProposal
+from fas.domain.verification import (
+    AttackPathComparison, GraphDiff, Remediation, RegressionTest, ResidualPath,
+    SecurityBaseline, SecurityRegression, SecurityTestDefinition, SecurityTestResult,
+    Verification, VerificationEvidence, VerificationPlan, VerificationReport, VerificationResult,
+    VerificationRun,
+)
+
+def check_schema(path, models):
+    schema=json.loads(Path(path).read_text(encoding="utf-8"))
+    failures=[]
+    for name, model in models.items():
+        expected=model.model_json_schema()
+        actual=schema.get("$defs",{}).get(name)
+        if actual is None:
+            failures.append(f"{path}: {name}: missing $defs entry")
+            continue
+        if set(expected.get("properties",{})) != set(actual.get("properties",{})):
+            failures.append(f"{path}: {name}: property set mismatch")
+        if set(expected.get("required",[])) != set(actual.get("required",[])):
+            failures.append(f"{path}: {name}: required set mismatch")
+    return failures
 
 def main():
-    schema=json.loads(Path("schemas/investigation.schema.json").read_text(encoding="utf-8"))
     failures=[]
-    for name,model in MODELS.items():
-        expected=model.model_json_schema()
-        actual=schema["$defs"].get(name)
-        if actual is None:
-            failures.append(f"{name}: missing $defs entry"); continue
-        if set(expected.get("properties",{})) != set(actual.get("properties",{})):
-            failures.append(f"{name}: property set mismatch")
-        if set(expected.get("required",[])) != set(actual.get("required",[])):
-            failures.append(f"{name}: required set mismatch")
-    audit=json.loads(Path("schemas/audit.schema.json").read_text(encoding="utf-8"))
-    for name,model in AUDIT_MODELS.items():
-        expected=model.model_json_schema(); actual=audit["$defs"].get(name)
-        if actual is None or set(expected.get("properties",{})) != set(actual.get("properties",{})) or set(expected.get("required",[])) != set(actual.get("required",[])):
-            failures.append(f"{name}: schema drift")
+    failures += check_schema("schemas/investigation.schema.json", {
+        "InvestigationCase":InvestigationCase,"InvestigationHypothesis":InvestigationHypothesis,
+        "EvidenceRequest":EvidenceRequest,"InvestigationResult":InvestigationResult,"VerdictProposal":VerdictProposal,
+    })
+    failures += check_schema("schemas/audit.schema.json", {"AuditEvent":AuditEvent,"Report":Report,"ToolRun":ToolRun})
+    failures += check_schema("schemas/phase5.schema.json", {
+        "Remediation":Remediation,"Verification":Verification,"VerificationPlan":VerificationPlan,
+        "VerificationRun":VerificationRun,"GraphDiff":GraphDiff,"AttackPathComparison":AttackPathComparison,
+        "ResidualPath":ResidualPath,"VerificationEvidence":VerificationEvidence,
+        "SecurityRegression":SecurityRegression,"RegressionTest":RegressionTest,"SecurityBaseline":SecurityBaseline,
+        "SecurityTestDefinition":SecurityTestDefinition,"SecurityTestResult":SecurityTestResult,
+        "VerificationResult":VerificationResult,"VerificationReport":VerificationReport,
+    })
     if failures:
         raise SystemExit("\n".join(failures))
-    print("Phase 4 schema parity: PASS")
+    print("Schema parity: PASS")
 
 if __name__=="__main__":
     main()
