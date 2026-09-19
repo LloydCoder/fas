@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/LloydCoder/fas/blob/main/schemas/finding.schema.json",
+  "title": "FAS Finding",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["finding_id", "title", "status", "evidence_ids"],
+  "properties": {
+    "finding_id": { "type": "string", "minLength": 1 },
+    "title": { "type": "string", "minLength": 1 },
+    "description": { "type": "string" },
+    "status": {
+      "type": "string",
+      "enum": ["candidate", "investigating", "verified", "closed"]
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["unknown", "low", "medium", "high", "critical"]
+    },
+    "category": { "type": "string" },
+    "location": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "artifact_id": { "type": "string" },
+        "path": { "type": "string" },
+        "line_start": { "type": "integer", "minimum": 1 },
+        "line_end": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "evidence_ids": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    }
+  }
+}
