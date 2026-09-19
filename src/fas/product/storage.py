@@ -130,7 +130,7 @@ class SQLiteStore:
             declared_previous=item.get("_audit_previous_hash")
             unsigned={k:v for k,v in item.items() if not k.startswith("_audit_")}
             payload_hash=hashlib.sha256(json.dumps(unsigned,sort_keys=True,separators=(",",":"),ensure_ascii=False).encode("utf-8")).hexdigest()
-            expected=hashlib.sha256(f"{previous or 'GENESIS'}|{payload_hash}".encode("utf-8")).hexdigest()
+            expected=hashlib.sha256(f"{previous or 'GENESIS'}|{payload_hash}".encode()).hexdigest()
             if declared_previous!=previous or stored_payload_hash!=payload_hash or stored_event_hash!=expected:
                 errors.append(row["id"])
             previous=stored_event_hash
