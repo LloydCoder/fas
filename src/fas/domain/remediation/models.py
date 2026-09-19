@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 
 from fas.domain.common import (
     AttackPathId, DomainModel, FindingId, RemediationId, RemediationStatus, SnapshotId,
-    VerificationId, VerificationStatus, VerificationType,
+    VerificationId, VerificationStatus, VerificationTargetType, VerificationType,
 )
 
 
@@ -22,7 +22,7 @@ class Remediation(DomainModel):
     expected_broken_path_ids: tuple[AttackPathId, ...] = ()
     status: RemediationStatus = RemediationStatus.PROPOSED
     created_at: datetime
-    metadata: dict[str, str] = {}
+    metadata: dict[str, str] = Field(default_factory=dict)
 
     @field_validator("created_at")
     @classmethod
@@ -35,7 +35,8 @@ class Remediation(DomainModel):
 class Verification(DomainModel):
     id: VerificationId
     target_id: str = Field(min_length=1, max_length=128)
-    target_type: VerificationType
+    target_type: VerificationTargetType
+    verification_type: VerificationType
     status: VerificationStatus = VerificationStatus.PENDING
     evidence_ids: tuple[str, ...] = ()
     before_snapshot_id: SnapshotId | None = None
@@ -46,7 +47,7 @@ class Verification(DomainModel):
     new_path_ids: tuple[AttackPathId, ...] = ()
     verified_at: datetime | None = None
     verifier: str | None = Field(default=None, min_length=1, max_length=1024)
-    metadata: dict[str, str] = {}
+    metadata: dict[str, str] = Field(default_factory=dict)
 
     @field_validator("verified_at")
     @classmethod
