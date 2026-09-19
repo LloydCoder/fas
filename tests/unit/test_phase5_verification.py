@@ -110,10 +110,10 @@ def original_attack_path(analysis_id,snap,graph,nodes):
 def test_command_injection_remediated_when_sink_is_removed():
     analysis=new_id("analysis"); before=snapshot(analysis,"a"*1); after=snapshot(analysis,"b"*1)
     bg,nodes=build_graph(analysis,before)
-    cg,_=build_graph(analysis,after)
+    cg,cnodes=build_graph(analysis,after)
     # remove the dangerous sink and incoming edge from the candidate.
-    cg.remove_edge(cg.get_edges_between(nodes[1].id,nodes[2].id)[0].id)
-    cg.remove_node(nodes[2].id)
+    cg.remove_edge(cg.get_edges_between(cnodes[1].id,cnodes[2].id)[0].id)
+    cg.remove_node(cnodes[2].id)
     # candidate node IDs differ; source/endpoint semantic matching is used.
     ev=bg.get_node_evidence(nodes[0].id)[0]
     f=finding(analysis,before,ev)
@@ -159,7 +159,7 @@ def test_permission_widening_is_semantic_regression_signal():
 def test_security_test_failure_blocks_remediation():
     analysis=new_id("analysis"); before=snapshot(analysis,"a"); after=snapshot(analysis,"b")
     bg,nodes=build_graph(analysis,before)
-    cg,_=build_graph(analysis,after); cg.remove_edge(cg.get_edges_between(nodes[1].id,nodes[2].id)[0].id); cg.remove_node(nodes[2].id)
+    cg,cnodes=build_graph(analysis,after); cg.remove_edge(cg.get_edges_between(cnodes[1].id,cnodes[2].id)[0].id); cg.remove_node(cnodes[2].id)
     ev=bg.get_node_evidence(nodes[0].id)[0]; f=finding(analysis,before,ev); r=remediation(analysis,f,before)
     path=original_attack_path(analysis,before,bg,nodes)
     definition=SecurityTestDefinition(test_id="command-injection-regression",version="1",snapshot_id=after.id,
