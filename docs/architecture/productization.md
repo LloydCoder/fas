@@ -16,7 +16,7 @@ SQLite  Object Store
   |
 jobs/audit/domain records
       |
-collection / investigation / verification engines
+collection / normalization / graph / investigation / verification engines
       |
 evidence graph
 ```
@@ -27,7 +27,7 @@ The supported local deployment uses SQLite and a content-addressed local object 
 
 The public API namespace is `/v1`. The API validates requests, enforces the local/non-local authentication boundary, emits stable structured errors, and delegates domain operations to ProductService.
 
-The API never executes arbitrary repository commands from HTTP input and never allows transport-level code to create authoritative security evidence.
+The API never executes arbitrary repository commands from HTTP input and never allows transport-level code to create authoritative security evidence. Non-local binding requires authentication; request bodies and JSON structure are bounded; malformed input is converted to stable errors.
 
 ## CLI
 
@@ -35,11 +35,11 @@ The `fas` executable uses the same ProductService as the HTTP API. Human output 
 
 ## Jobs
 
-The local worker uses bounded ThreadPoolExecutor concurrency with durable SQLite job state, operation-key idempotency, cancellation events, and crash recovery of jobs left in RUNNING state.
+The local worker uses bounded ThreadPoolExecutor concurrency with durable SQLite job state, operation-key idempotency, cancellation events, worker/lease metadata, and crash recovery of jobs left in RUNNING state.
 
 ## Artifact handling
 
-Large or reusable byte content is stored by SHA-256 content address through LocalObjectStore. Domain records retain references and provenance instead of treating mutable filenames as artifact identity.
+Large or reusable byte content is stored by SHA-256 content address through LocalObjectStore. Writes use unique temporary files, flush/fsync and atomic replacement; reads rehash content and reject corruption.
 
 ## Security boundary
 
@@ -56,3 +56,7 @@ The domain and core analysis engines do not import the HTTP server or CLI. Produ
 ## FAS-Bench
 
 FAS-Bench is external. The product layer exposes stable JSON projections suitable for evaluation without making the benchmark a runtime dependency.
+
+## Completeness and evidence boundary
+
+Snapshot manifests record bounded omissions and completeness. Collection failures, parser failures, output truncation, and bounded discovery are propagated as PARTIAL/UNKNOWN conditions rather than converted into clean conclusions. Reports expose completeness explicitly and do not authorize a clean claim from partial analysis.
