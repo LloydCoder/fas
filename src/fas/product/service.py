@@ -37,7 +37,8 @@ class ProductService:
 
     def snapshot(self, analysis: Analysis, root: Path) -> Snapshot:
         root=root.resolve()
-        if not root.is_dir(): raise ValueError("analysis source must be a directory")
+        if not root.is_dir():
+            raise ValueError("analysis source must be a directory")
         digest=hashlib.sha256()
         files=[]
         for path in sorted(p for p in root.rglob("*") if p.is_file() and ".git" not in p.parts):
@@ -50,9 +51,13 @@ class ProductService:
                 data=resolved.read_bytes()
             except (OSError, ValueError):
                 continue
-            if len(files)>=10000: break
-            if len(data)>self.settings.max_artifact_bytes: continue
-            digest.update(rel.encode()); digest.update(b"\0"); digest.update(hashlib.sha256(data).digest())
+            if len(files)>=10000:
+                break
+            if len(data)>self.settings.max_artifact_bytes:
+                continue
+            digest.update(rel.encode())
+            digest.update(b"\0")
+            digest.update(hashlib.sha256(data).digest())
             files.append(rel)
         now=datetime.now(timezone.utc)
         snap=Snapshot(id=new_id("snapshot"),repository=RepositoryReference(repository=str(root),revision=_git_revision(root)),
@@ -90,7 +95,8 @@ class ProductService:
             return {"analysis":cancelled.model_dump(mode="json"),"snapshot":snap.model_dump(mode="json"),"findings":[]}
         analysis=analysis.model_copy(update={"snapshot_ids":(snap.id,),"status":AnalysisStatus.PARTIAL,
             "completed_at":datetime.now(timezone.utc),
-            "metadata":{**analysis.metadata,"limitations":"Core product pipeline records an immutable source snapshot and collection metadata. Deterministic verdicts require normalized security evidence; no evidence is fabricated."}})
+            "metadata":{**analysis.metadata,"limitations":"Core product pipeline records an immutable source snapshot and collection metadata. Deterministic verdicts require normalized security evidence
+            no evidence is fabricated."}})
         fixture=root/".fas-fixture.json"
         if fixture.exists():
             data=json.loads(fixture.read_text(encoding="utf-8"))
@@ -117,7 +123,8 @@ class ProductService:
 
     def report(self, analysis_id: str) -> dict[str,object]:
         a=self.get_analysis(analysis_id)
-        if not a.snapshot_ids: raise ValueError("analysis has no snapshot")
+        if not a.snapshot_ids:
+            raise ValueError("analysis has no snapshot")
         return self.reports.generate(analysis_id,a.snapshot_ids[-1]).model_dump(mode="json")
 
     def doctor(self) -> dict[str,object]:
@@ -130,7 +137,8 @@ class ProductService:
 
 def _git_revision(root: Path) -> str|None:
     git=root/".git"
-    if not git.exists(): return None
+    if not git.exists():
+        return None
     try:
         p=subprocess.run(["git","-C",str(root),"rev-parse","HEAD"],capture_output=True,text=True,timeout=5,check=True)
         return p.stdout.strip()
