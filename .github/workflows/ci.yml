@@ -39,3 +39,7 @@ jobs:
       - name: Graph baseline benchmark
         if: matrix.python-version == '3.13'
         run: python benchmarks/graph_baseline.py
+
+      - name: Collection baseline benchmark
+        if: matrix.python-version == '3.13'
+        run: python benchmarks/collection_baseline.py
