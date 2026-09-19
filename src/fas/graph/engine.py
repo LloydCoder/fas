@@ -635,7 +635,15 @@ class GraphEngine:
         return tuple(sorted(components, key=lambda component: component))
 
     def detect_cycles(self) -> tuple[tuple[NodeId, ...], ...]:
-        return tuple(component for component in self.strongly_connected_components() if len(component) > 1)
+        cycles = []
+        for component in self.strongly_connected_components():
+            if len(component) > 1:
+                cycles.append(component)
+                continue
+            node_id = component[0]
+            if any(edge.source_node_id == node_id and edge.target_node_id == node_id for edge in self.outgoing_edges(node_id)):
+                cycles.append(component)
+        return tuple(cycles)
 
     def connected_components(self) -> tuple[tuple[NodeId, ...], ...]:
         unseen = {node.id for node in self.nodes()}
