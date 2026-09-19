@@ -85,11 +85,17 @@ def benchmark(node_count: int, edge_count: int) -> None:
     started = perf_counter()
     payload = engine.to_json()
     round_trip = perf_counter() - started
+    other = GraphEngine.from_json(payload)
+    removable = other.edges()[-1]
+    other.remove_edge(removable.id)
+    started = perf_counter()
+    GraphEngine.diff(engine, other)
+    diff = perf_counter() - started
     print(
         f"{node_count} nodes / {edge_count} edges: "
         f"build={insertion:.6f}s neighborhood={neighborhood:.6f}s "
         f"traversal={traversal:.6f}s shortest={shortest:.6f}s "
-        f"serialize={round_trip:.6f}s bytes={len(payload)}"
+        f"serialize={round_trip:.6f}s diff={diff:.6f}s bytes={len(payload)}"
     )
 
 
