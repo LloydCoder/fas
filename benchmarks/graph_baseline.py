@@ -52,7 +52,7 @@ def build_graph(node_count: int, edge_count: int) -> GraphEngine:
     engine.add_nodes(nodes)
     for index in range(edge_count):
         source = nodes[index % node_count]
-        target = nodes[(index + 1) % node_count]
+        target = nodes[(index * 37 + 1) % node_count]
         if source.id == target.id:
             continue
         engine.merge_edge_evidence(GraphBuilder.make_edge(
