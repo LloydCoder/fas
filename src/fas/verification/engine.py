@@ -247,6 +247,7 @@ class VerificationEngine:
         supporting=set(finding.supporting_evidence_ids)
         candidate_paths=[]
         original_path_status=AttackPathComparisonStatus.UNKNOWN
+        path_statuses=[]
 
         if not original_paths:
             missing.append("original attack path unavailable")
