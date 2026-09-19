@@ -7,7 +7,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Iterable
 
 from fas.domain import (
     AttackPath, AttackPathStep, Finding, Remediation, Snapshot, VerdictType, new_id,
