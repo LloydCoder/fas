@@ -6,10 +6,12 @@
   "x-fas-schema-version": "1.0",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version","id","type","claim","provenance","observed_at"],
+  "required": ["schema_version","id","analysis_id","snapshot_id","type","claim","provenance","observed_at"],
   "properties": {
     "schema_version": {"type":"string"},
     "id": {"type":"string","pattern":"^evidence_[0-9A-HJKMNP-TV-Z]{26}$"},
+    "analysis_id": {"type":"string","pattern":"^analysis_[0-9A-HJKMNP-TV-Z]{26}$"},
+    "snapshot_id": {"type":"string","pattern":"^snapshot_[0-9A-HJKMNP-TV-Z]{26}$"},
     "type": {"type":"string","enum":["CODE","CODE_LOCATION","DATA_FLOW","CALL_GRAPH","CONFIGURATION","DEPENDENCY","IDENTITY","PERMISSION","NETWORK","RUNTIME","TEST","POLICY","TOOL_OUTPUT","HUMAN_ASSERTION"]},
     "claim": {"type":"string","minLength":1},
     "source": {"type":["object","null"]},
