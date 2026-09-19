@@ -65,7 +65,8 @@ def _path_semantics(path: AttackPath, graph: GraphEngine) -> tuple[tuple[str,...
 def _candidate_matches(node, target):
     if node.canonical_identity == target.canonical_identity:
         return 100
-    a=_node_semantics(node); b=_node_semantics(target)
+    a=_node_semantics(node)
+    b=_node_semantics(target)
     score=sum(1 for x,y in zip(a,b) if x and x == y)
     return score
 
@@ -240,7 +241,10 @@ class VerificationEngine:
             notes=f"nodes +{len(graph_diff.added_node_ids)} -{len(graph_diff.removed_node_ids)}; edges +{len(graph_diff.added_edge_ids)} -{len(graph_diff.removed_edge_ids)}"
         ))
 
-        comparisons=[]; residuals=[]; alternate_ids=[]; supporting=set(finding.supporting_evidence_ids)
+        comparisons=[]
+        residuals=[]
+        alternate_ids=[]
+        supporting=set(finding.supporting_evidence_ids)
         candidate_paths=[]
         original_path_status=AttackPathComparisonStatus.UNKNOWN
 

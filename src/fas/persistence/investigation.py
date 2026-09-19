@@ -28,14 +28,16 @@ class JsonlInvestigationRepository:
     def append_event(self,event): self._append("event",event.model_dump(mode="json"))
     def save_result(self,result): self._append("result",result.model_dump(mode="json"))
     def _latest(self,kind:str,ident:str):
-        if not self.path.exists(): raise KeyError(ident)
+        if not self.path.exists():
+            raise KeyError(ident)
         latest=None
         for line in self.path.read_text(encoding="utf-8").splitlines():
             item=json.loads(line)
             payload=item["payload"]
             if item["kind"]==kind and payload.get("id",payload.get("investigation_id"))==ident:
                 latest=payload
-        if latest is None: raise KeyError(ident)
+        if latest is None:
+            raise KeyError(ident)
         return latest
     def load_case(self,investigation_id): return InvestigationCase.model_validate(self._latest("case",investigation_id))
     def load_result(self,investigation_id): return InvestigationResult.model_validate(self._latest("result",investigation_id))

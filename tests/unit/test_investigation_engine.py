@@ -14,7 +14,8 @@ def prov():
         collector="fixture",method="fixture",source="tests",observed_at=datetime.now(timezone.utc))
 
 def build_graph(attacker_controlled=True):
-    analysis=new_id("analysis"); snapshot=new_id("snapshot")
+    analysis=new_id("analysis")
+    snapshot=new_id("snapshot")
     graph=GraphEngine(analysis_id=analysis,snapshot_id=snapshot,complete=True)
     ev=Evidence(id=new_id("evidence"),analysis_id=analysis,snapshot_id=snapshot,type=EvidenceType.DATA_FLOW,
         claim="attacker-controlled input reaches sink",observed_value={"attacker_controlled":attacker_controlled},
@@ -25,7 +26,10 @@ def build_graph(attacker_controlled=True):
         canonical_identity="symbol:exec",evidence_ids=(ev.id,),provenance=(prov(),),security_relevant=True)
     edge=GraphEdge(id=new_id("edge"),source_node_id=source.id,target_node_id=sink.id,relationship_type=RelationshipType.FLOWS_TO,
         analysis_id=analysis,snapshot_id=snapshot,evidence_ids=(ev.id,),provenance=(prov(),),observed_at=datetime.now(timezone.utc),security_relevant=True)
-    graph.add_evidence(ev); graph.add_node(source); graph.add_node(sink); graph.add_edge(edge)
+    graph.add_evidence(ev)
+    graph.add_node(source)
+    graph.add_node(sink)
+    graph.add_edge(edge)
     finding=Finding(id=new_id("finding"),title="Command injection",category="INJECTION",severity=Severity.HIGH,
         status=FindingStatus.CANDIDATE,supporting_evidence_ids=(ev.id,),snapshot_id=snapshot,
         created_at=datetime.now(timezone.utc),updated_at=datetime.now(timezone.utc))

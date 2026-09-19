@@ -16,7 +16,8 @@ class AuditEvent(DomainModel):
     @field_validator("created_at")
     @classmethod
     def timezone_required(cls,value:datetime)->datetime:
-        if value.tzinfo is None or value.utcoffset() is None: raise ValueError("created_at must be timezone-aware")
+        if value.tzinfo is None or value.utcoffset() is None:
+            raise ValueError("created_at must be timezone-aware")
         return value
 
 class ToolRun(DomainModel):

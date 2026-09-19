@@ -48,3 +48,17 @@ verification, mutate verification records, or execute arbitrary remediation/runt
 ## Coordinated disclosure
 
 Allow reasonable time for investigation and remediation before public disclosure.
+
+
+## Phase 6 product boundary
+
+The default HTTP API binds to 127.0.0.1 and has authentication disabled only for local development.
+Any externally reachable deployment must enable bearer-token authentication. The API rejects oversized
+JSON bodies and does not expose arbitrary filesystem or shell execution.
+
+The local SQLite backend is suitable for local operation and deterministic CI, not as a claim of
+horizontally scaled production storage. Deployments requiring PostgreSQL, S3-compatible storage, or
+runtime code execution must supply dedicated hardened adapters.
+
+Secrets are redacted from product diagnostics where recognized. Source content is not sent to external
+AI services by the core product layer. Network use is not required for core local analysis.

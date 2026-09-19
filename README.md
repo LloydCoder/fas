@@ -320,7 +320,7 @@ Verification
 
 The model should not have unrestricted database access or the ability to create arbitrary evidence.
 
-Planned investigator capabilities include:
+Available investigator capabilities include:
 
 - `get_evidence()`
 - `query_graph()`
@@ -405,8 +405,7 @@ The structure follows domain boundaries rather than individual vendors.
 ## Development status
 
 FAS is in **early development** with Phases 1–5 implemented as explicit security-analysis
-contracts and deterministic engines. Production-scale API, worker orchestration, and distribution
-remain Phase 6 work.
+contracts and deterministic engines. Phase 6 now provides the installable product boundary, local persistence, shared API/CLI service, bounded jobs, reporting, configuration diagnostics, and package/CI hardening. This does not claim universal vulnerability coverage or formal framework compliance.
 
 ### Implemented
 
@@ -429,8 +428,7 @@ remain Phase 6 work.
 
 ### Next
 
-Phase 6 — Productization: production API/CLI expansion, worker execution, reporting surfaces,
-sandboxed runtime infrastructure, and scale/reliability hardening.
+Phase 6 productization is implemented as a bounded local product layer. PostgreSQL/S3 and arbitrary repository runtime sandbox backends remain explicit extension seams.
 ## Relationship to existing security tools
 
 FAS is designed to complement established security tooling.

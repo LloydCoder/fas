@@ -1,57 +1,87 @@
-"""Small structured CLI for deterministic Phase 5 verification.
-
-The CLI accepts explicit JSON snapshot/graph contracts and never executes repository commands.
-Product-scale API/worker orchestration remains Phase 6.
-"""
+"""First-class FAS CLI. API and CLI share the ProductService and never fabricate security conclusions."""
 from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
-
-from fas import __version__
 from fas.domain import AttackPath, Finding, Remediation, Snapshot
 from fas.graph import GraphEngine
 from fas.verification import VerificationEngine
+from fas import __version__
+from fas.product import ProductService, load_settings
+from fas.product.tools import discover
 
-
-def _load(path: str):
-    return json.loads(Path(path).read_text(encoding="utf-8"))
-
-
-def _dump(value) -> None:
-    print(json.dumps(value.model_dump(mode="json") if hasattr(value,"model_dump") else value, indent=2, sort_keys=True))
-
+def dump(value: object, fmt: str) -> None:
+    if fmt == "json":
+        print(json.dumps(value, sort_keys=True, indent=2))
+    else:
+        if isinstance(value, dict):
+            for k,v in value.items(): print(f"{k}: {v}")
+        else: print(value)
 
 def build_parser() -> argparse.ArgumentParser:
     p=argparse.ArgumentParser(prog="fas",description="Forensic Agent Security")
     p.add_argument("--version",action="version",version=__version__)
-    sub=p.add_subparsers(dest="command")
-    verify=sub.add_parser("verify",help="verify remediation between two explicit snapshots")
-    for name in ("finding","remediation","original-snapshot","candidate-snapshot","original-graph","candidate-graph"):
+    p.add_argument("--config",default=None,help="JSON configuration file")
+    p.add_argument("--format",choices=("human","json"),default="human")
+    sub=p.add_subparsers(dest="command",required=True)
+    subcommands=[]
+    verify=sub.add_parser("verify",help="verify remediation from explicit persisted contracts")
+    for name in ("finding","remediation","original-snapshot","candidate-snapshot","original-graph","candidate-graph","original-paths"):
         verify.add_argument(f"--{name}",required=True)
-    verify.add_argument("--original-paths",required=True,help="JSON array of persisted AttackPath objects")
+    subcommands.append(verify)
+    a=sub.add_parser("analyze"); subcommands.append(a); a.add_argument("path"); a.add_argument("--project",default=None)
+    for name,help_text in (
+        ("status","show analysis status"),("findings","show findings"),("evidence","show evidence references"),
+        ("graph","show persisted graph information"),("attack-paths","show persisted attack paths"),
+        ("investigate","start an investigation"),("remediate","create a remediation"),
+        ("verify-remediation","verify a remediation"),("verification","show verification"),
+        ("report","generate or show report")):
+        q=sub.add_parser(name,help=help_text); subcommands.append(q); q.add_argument("id")
+    doctor=sub.add_parser("doctor"); tools=sub.add_parser("tools"); api=sub.add_parser("api")
+    subcommands.extend((doctor,tools,api))
+    for command in subcommands:
+        command.add_argument("--format",choices=("human","json"),default=argparse.SUPPRESS)
     return p
 
-
-def main(argv: list[str] | None = None) -> None:
-    parser=build_parser()
-    args=parser.parse_args(argv)
+def main(argv: list[str]|None=None) -> int:
+    args=build_parser().parse_args(argv)
+    settings=load_settings(args.config)
+    service=ProductService(settings)
+    if args.command=="doctor":
+        result=service.doctor()
+        dump(result,args.format); return 0 if result["ok"] else 2
+    if args.command=="tools":
+        dump(discover(),args.format); return 0
+    if args.command=="api":
+        from fas.product.api import ApiServer
+        ApiServer(service).serve(settings.api_host,settings.api_port); return 0
     if args.command=="verify":
-        finding=Finding.model_validate(_load(args.finding))
-        remediation=Remediation.model_validate(_load(args.remediation))
-        original=Snapshot.model_validate(_load(args.original_snapshot))
-        candidate=Snapshot.model_validate(_load(args.candidate_snapshot))
+        def load(path: str): return json.loads(Path(path).read_text(encoding="utf-8"))
+        finding=Finding.model_validate(load(args.finding)); remediation=Remediation.model_validate(load(args.remediation))
+        original=Snapshot.model_validate(load(args.original_snapshot)); candidate=Snapshot.model_validate(load(args.candidate_snapshot))
         before=GraphEngine.from_json(Path(args.original_graph).read_text(encoding="utf-8"))
         after=GraphEngine.from_json(Path(args.candidate_graph).read_text(encoding="utf-8"))
-        paths=tuple(AttackPath.model_validate(x) for x in _load(args.original_paths))
-        outcome=VerificationEngine().verify(
-            finding=finding,remediation=remediation,original_snapshot=original,candidate_snapshot=candidate,
-            original_graph=before,candidate_graph=after,original_paths=paths,
-        )
-        _dump(outcome.result)
-        return
-    parser.print_help()
-
+        paths=tuple(AttackPath.model_validate(x) for x in load(args.original_paths))
+        outcome=VerificationEngine().verify(finding=finding,remediation=remediation,original_snapshot=original,candidate_snapshot=candidate,original_graph=before,candidate_graph=after,original_paths=paths)
+        dump(outcome.result,args.format)
+        return 0
+    if args.command=="analyze":
+        root=Path(args.path).resolve()
+        project=service.create_project(args.project or root.name,str(root))
+        result=service.analyze_sync(project.id,root)
+        dump(result,args.format); return 0
+    if args.command=="status":
+        dump(service.get_analysis(args.id).model_dump(mode="json"),args.format); return 0
+    if args.command=="findings":
+        dump({"items":service.findings(args.id)},args.format); return 0
+    if args.command=="report":
+        report=service.report(args.id)
+        dump(report,args.format); return 0
+    if args.command in {"evidence","graph","attack-paths","investigate","remediate","verify-remediation","verification"}:
+        dump({"status":"UNSUPPORTED","code":"CAPABILITY_NOT_AVAILABLE","resource_id":args.id,
+              "message":"The current repository does not expose a persisted product backend for this operation; FAS will not fabricate one."},args.format)
+        return 3
+    return 2
 
 if __name__=="__main__":
-    main()
+    raise SystemExit(main())

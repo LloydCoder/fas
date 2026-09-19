@@ -8,10 +8,25 @@ from typing import Literal
 from pydantic import Field, field_validator, model_validator
 
 from fas.domain.common import (
-    AnalysisId, AnalysisStatus, ArtifactId, ArtifactType, ContentHash, JSONValue,
+    AnalysisId, AnalysisStatus, ArtifactId, ProjectId, ArtifactType, ContentHash, JSONValue,
     DomainModel, ObservationId, Provenance, RepositoryReference, SnapshotId, SourceLocation,
     utc_now,
 )
+
+
+class Project(DomainModel):
+    id: ProjectId
+    name: str = Field(min_length=1, max_length=512)
+    repository: str = Field(min_length=1, max_length=2048)
+    owner: str = Field(min_length=1, max_length=512)
+    created_at: datetime = Field(default_factory=utc_now)
+
+    @field_validator("created_at")
+    @classmethod
+    def project_time_aware(cls, value: datetime) -> datetime:
+        if value.tzinfo is None or value.utcoffset() is None:
+            raise ValueError("created_at must be timezone-aware")
+        return value.astimezone(__import__("datetime").timezone.utc)
 
 
 class Analysis(DomainModel):

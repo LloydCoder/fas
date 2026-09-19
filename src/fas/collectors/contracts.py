@@ -6,11 +6,19 @@ from collections.abc import Mapping
 from .base import CollectionContext, CollectionBatch, Collector
 
 class CollectionStatus(str, Enum):
-    SUCCESS="SUCCESS"; PARTIAL="PARTIAL"; FAILED="FAILED"; TIMEOUT="TIMEOUT"; CANCELLED="CANCELLED"
-    UNSUPPORTED="UNSUPPORTED"; INVALID_INPUT="INVALID_INPUT"; TOOL_ERROR="TOOL_ERROR"; RESOURCE_LIMIT="RESOURCE_LIMIT"
+    SUCCESS="SUCCESS"
+    PARTIAL="PARTIAL"
+    FAILED="FAILED"
+    TIMEOUT="TIMEOUT"
+    CANCELLED="CANCELLED"
+    UNSUPPORTED="UNSUPPORTED"
+    INVALID_INPUT="INVALID_INPUT"
+    TOOL_ERROR="TOOL_ERROR"
+    RESOURCE_LIMIT="RESOURCE_LIMIT"
 
 class RetryDisposition(str, Enum):
-    RETRY="RETRY"; DO_NOT_RETRY="DO_NOT_RETRY"
+    RETRY="RETRY"
+    DO_NOT_RETRY="DO_NOT_RETRY"
 
 @dataclass(frozen=True, slots=True)
 class CollectorSpec:
@@ -21,7 +29,8 @@ class CollectorSpec:
     enabled: bool=True
     metadata: Mapping[str,str]=field(default_factory=dict)
     def __post_init__(self):
-        if not self.name or self.timeout_seconds<=0 or self.max_attempts<1: raise ValueError("invalid collector spec")
+        if not self.name or self.timeout_seconds<=0 or self.max_attempts<1:
+            raise ValueError("invalid collector spec")
 
 @dataclass(frozen=True, slots=True)
 class CollectionPlan:
@@ -31,9 +40,11 @@ class CollectionPlan:
     fail_fast: bool=False
     def __post_init__(self):
         names=[c.name for c in self.collectors]
-        if len(names)!=len(set(names)): raise ValueError("collector names must be unique")
+        if len(names)!=len(set(names)):
+            raise ValueError("collector names must be unique")
         specs=self.specs or tuple(CollectorSpec(c.name) for c in self.collectors)
-        if {s.name for s in specs}!={c.name for c in self.collectors}: raise ValueError("specs must match collectors")
+        if {s.name for s in specs}!={c.name for c in self.collectors}:
+            raise ValueError("specs must match collectors")
         object.__setattr__(self,"specs",specs)
 
 @dataclass(frozen=True, slots=True)
@@ -55,7 +66,8 @@ class CollectionSummary:
     skipped: int
     warnings: tuple[str,...]=()
     def __post_init__(self):
-        if self.artifacts<0 or self.observations<0 or self.skipped<0: raise ValueError("counts cannot be negative")
+        if self.artifacts<0 or self.observations<0 or self.skipped<0:
+            raise ValueError("counts cannot be negative")
 
 @dataclass(frozen=True, slots=True)
 class CollectionResult:

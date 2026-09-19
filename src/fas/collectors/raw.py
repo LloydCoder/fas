@@ -5,14 +5,32 @@ from dataclasses import dataclass,asdict
 from .base import CollectionContext
 @dataclass(frozen=True,slots=True)
 class ToolRun:
-    run_id:str; analysis_id:str; snapshot_id:str; tool_name:str; tool_version:str|None
-    argv:tuple[str,...]; cwd:str; environment_fingerprint:str; started_at:str; completed_at:str|None
-    exit_code:int|None; status:str; stdout_hash:str|None; stderr_hash:str|None
-    raw_artifact_id:str|None=None; configuration_hash:str|None=None; repository_revision:str|None=None
+    run_id:str
+    analysis_id:str
+    snapshot_id:str
+    tool_name:str
+    tool_version:str|None
+    argv:tuple[str,...]
+    cwd:str
+    environment_fingerprint:str
+    started_at:str
+    completed_at:str|None
+    exit_code:int|None
+    status:str
+    stdout_hash:str|None
+    stderr_hash:str|None
+    raw_artifact_id:str|None=None
+    configuration_hash:str|None=None
+    repository_revision:str|None=None
     def canonical_json(self)->str: return json.dumps(asdict(self),sort_keys=True,separators=(",",":"))
 @dataclass(frozen=True,slots=True)
 class RawArtifact:
-    artifact_id:str; media_type:str; size_bytes:int; sha256:str; storage_reference:str; redacted:bool=False
+    artifact_id:str
+    media_type:str
+    size_bytes:int
+    sha256:str
+    storage_reference:str
+    redacted:bool=False
 def stable_run_id(context:CollectionContext)->str:
     material=f"{context.analysis_id}|{context.snapshot_id}|{context.repository}|{context.revision or ''}"
     return "toolrun_"+hashlib.sha256(material.encode()).hexdigest()[:26]

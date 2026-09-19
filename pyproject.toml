@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "forensic-agent-security"
-version = "0.1.0.dev0"
+version = "0.6.0"
 description = "Evidence-first security analysis for AI agents and modern software."
 readme = "README.md"
 requires-python = ">=3.11"
