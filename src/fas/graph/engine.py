@@ -266,7 +266,7 @@ class GraphEngine:
         ids = frozenset(evidence_ids)
         nodes = tuple(node for node in self.nodes() if ids.intersection(node.evidence_ids))
         edges = tuple(edge for edge in self.edges() if ids.intersection(edge.evidence_ids))
-        return GraphQueryResult(nodes=nodes, edges=edges, status=ResultStatus.COMPLETE)
+        return GraphQueryResult(nodes=nodes, edges=edges, status=ResultStatus.COMPLETE if self.complete else ResultStatus.PARTIAL)
 
     def subgraph(self, node_ids: Iterable[NodeId], *, query: GraphQuery | None = None) -> GraphQueryResult:
         ids = frozenset(node_ids)
@@ -275,7 +275,7 @@ class GraphEngine:
             edge for edge in self.edges(query)
             if edge.source_node_id in ids and edge.target_node_id in ids
         )
-        return GraphQueryResult(nodes=nodes, edges=edges, status=ResultStatus.COMPLETE if nodes else ResultStatus.EMPTY)
+        return GraphQueryResult(nodes=nodes, edges=edges, status=(ResultStatus.PARTIAL if not self.complete else (ResultStatus.COMPLETE if nodes else ResultStatus.EMPTY)))
 
     def neighborhood(
         self,
@@ -366,7 +366,7 @@ class GraphEngine:
             if truncated:
                 break
 
-        status = ResultStatus.TRUNCATED if truncated else ResultStatus.COMPLETE
+        status = ResultStatus.TRUNCATED if truncated else (ResultStatus.COMPLETE if self.complete else ResultStatus.PARTIAL)
         return TraversalResult(
             node_ids=tuple(sorted(seen)),
             edge_ids=tuple(sorted(visited_edges)),
@@ -414,7 +414,7 @@ class GraphEngine:
                 predecessor[neighbor] = (current, edge.id)
                 queue.append(neighbor)
         if target.id not in predecessor:
-            return PathResult(status=ResultStatus.EMPTY)
+            return PathResult(status=ResultStatus.PARTIAL if not self.complete else ResultStatus.EMPTY)
         node_ids = []
         edge_ids = []
         current = target.id
@@ -426,7 +426,7 @@ class GraphEngine:
         node_ids.append(source.id)
         node_ids.reverse()
         edge_ids.reverse()
-        return PathResult(paths=(self._build_path(tuple(node_ids), tuple(edge_ids)),), status=ResultStatus.COMPLETE)
+        return PathResult(paths=(self._build_path(tuple(node_ids), tuple(edge_ids)),), status=ResultStatus.COMPLETE if self.complete else ResultStatus.PARTIAL)
 
     def all_shortest_paths(self, source_node_id: NodeId, target_node_id: NodeId, **kwargs) -> PathResult:
         source = self.get_node(source_node_id)
@@ -456,7 +456,7 @@ class GraphEngine:
                 elif distance[neighbor] == candidate_distance:
                     predecessors[neighbor].append((current, edge.id))
         if target.id not in distance:
-            return PathResult(status=ResultStatus.EMPTY)
+            return PathResult(status=ResultStatus.PARTIAL if not self.complete else ResultStatus.EMPTY)
         paths: list[GraphPath] = []
         truncated = False
 
@@ -476,7 +476,7 @@ class GraphEngine:
         backtrack(target.id, [target.id], [])
         return PathResult(
             paths=tuple(paths),
-            status=ResultStatus.TRUNCATED if truncated else ResultStatus.COMPLETE,
+            status=ResultStatus.TRUNCATED if truncated else (ResultStatus.COMPLETE if self.complete else ResultStatus.PARTIAL),
             reason="max_paths reached" if truncated else None,
         )
 
