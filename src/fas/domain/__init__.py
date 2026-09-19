@@ -22,6 +22,13 @@ from .investigation import (
     TrustBoundaryAssessment, VerdictProposal,
 )
 from .remediation import Remediation, Verification
+from .verification import (
+    AttackPathComparison, AttackPathComparisonStatus, CheckStatus, GraphDiff, RegressionStatus,
+    RegressionTest, RemediationType, ResidualPath, SecurityBaseline, SecurityPropertyOutcome,
+    SecurityRegression, SecurityTestDefinition, SecurityTestResult, VerificationCheck,
+    VerificationCheckResult, VerificationEvidence, VerificationPlan, VerificationReport,
+    VerificationResult, VerificationRun,
+)
 from .verdicts import Verdict
 
 __all__ = [
@@ -31,8 +38,8 @@ __all__ = [
     "Finding", "AttackPath", "AttackPathStep", "Verdict", "Remediation", "Verification",
     "AnalysisStatus", "ArtifactType", "ProvenanceCategory", "ProvenanceLevel", "EvidenceType", "FasEnum",
     "GraphNodeType", "RelationshipType", "FindingStatus", "Severity", "VerdictType",
-    "RemediationStatus", "VerificationTargetType", "VerificationType", "VerificationStatus",
-    "ActorType", "Confidence", "InvestigationCase", "InvestigationHypothesis", "EvidenceRequest",
+    "RemediationStatus", "VerificationTargetType", "VerificationType", "VerificationStatus", "RemediationType", "SecurityPropertyOutcome", "VerificationCheck", "CheckStatus", "AttackPathComparisonStatus", "DiffKind", "RegressionStatus",
+    "ActorType", "Confidence", "VerificationPlan", "VerificationRun", "GraphDiff", "AttackPathComparison", "ResidualPath", "VerificationEvidence", "SecurityRegression", "RegressionTest", "SecurityBaseline", "SecurityTestDefinition", "SecurityTestResult", "VerificationResult", "VerificationReport", "VerificationCheckResult", "InvestigationCase", "InvestigationHypothesis", "EvidenceRequest",
     "InvestigationResult", "InvestigationEvent", "InvestigationBudget", "InvestigationConstraints",
     "InvestigationToolResult", "ControlAssessment", "PermissionAssessment", "TrustBoundaryAssessment",
     "ExploitabilityAnalysis", "VerdictProposal", "ToolPolicy", "ContentHash", "IntegrityMetadata", "RepositoryReference",
