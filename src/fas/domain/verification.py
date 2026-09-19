@@ -401,6 +401,8 @@ class VerificationReport(DomainModel):
     result: VerdictType
 
 
+Verification.model_rebuild()
+
 __all__ = [
     "RemediationType","Verification","SecurityPropertyOutcome","VerificationCheck","CheckStatus",
     "AttackPathComparisonStatus","DiffKind","RegressionStatus","Remediation",
