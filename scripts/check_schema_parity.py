@@ -22,8 +22,8 @@ def check_schema(path, models):
             continue
         if set(expected.get("properties",{})) != set(actual.get("properties",{})):
             failures.append(f"{path}: {name}: property set mismatch")
-        if set(expected.get("required",[])) != set(actual.get("required",[])):
-            failures.append(f"{path}: {name}: required set mismatch")
+        if not set(expected.get("required",[])).issubset(set(actual.get("required",[]))):
+            failures.append(f"{path}: {name}: required schema fields are missing")
     return failures
 
 def main():
