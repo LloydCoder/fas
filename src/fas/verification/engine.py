@@ -182,7 +182,7 @@ class VerificationEngine:
         plan=self.plan(finding,remediation,original_snapshot,candidate_snapshot)
         if security_tests:
             plan=plan.model_copy(update={"required_checks": (*plan.required_checks, VerificationCheck.VERIFY_SECURITY_TEST)})
-        verification_id=new_id("verification")
+        verification_id=verification_id
         checks=[]
         missing=list(errors)
         if errors:
@@ -202,7 +202,7 @@ class VerificationEngine:
                 original_snapshot_id=original_snapshot.id,candidate_snapshot_id=candidate_snapshot.id,
                 result=VerdictType.UNKNOWN,security_property=remediation.expected_security_property,
                 property_outcome=SecurityPropertyOutcome.UNKNOWN,
-                original_path_status=AttackPathComparisonStatus.UNKNOWN,graph_diff_id=graph_diff.id,
+                path_statuses=[],graph_diff_id=graph_diff.id,
                 verification_evidence_ids=(evidence.id,),missing_evidence=tuple(sorted(set(errors))),
                 limitations=("Verification stopped before comparison because required integrity conditions were not established.",),
                 checks=tuple(checks),completeness_required=len(plan.required_checks),completeness_completed=0,
@@ -265,13 +265,13 @@ class VerificationEngine:
                     exact.append(cp)
             if exact:
                 status=AttackPathComparisonStatus.ORIGINAL_PATH_PERSISTENT
-                original_path_status=AttackPathComparisonStatus.ORIGINAL_PATH_PERSISTENT
+                path_statuses.append(AttackPathComparisonStatus.ORIGINAL_PATH_PERSISTENT)
             elif candidate_attacks:
                 status=AttackPathComparisonStatus.ALTERNATE_PATH_FOUND
-                original_path_status=AttackPathComparisonStatus.ALTERNATE_PATH_FOUND
+                path_statuses.append(AttackPathComparisonStatus.ALTERNATE_PATH_FOUND)
             else:
                 status=AttackPathComparisonStatus.ORIGINAL_PATH_BROKEN
-                original_path_status=AttackPathComparisonStatus.ORIGINAL_PATH_BROKEN
+                path_statuses.append(AttackPathComparisonStatus.ORIGINAL_PATH_BROKEN)
             if status != AttackPathComparisonStatus.ORIGINAL_PATH_BROKEN:
                 for cp in candidate_attacks:
                     if cp.supporting_evidence_ids:
@@ -307,6 +307,15 @@ class VerificationEngine:
                         description="Original semantic attack path remains reachable.",
                     ))
 
+        if not path_statuses:
+            original_path_status=AttackPathComparisonStatus.UNKNOWN
+        elif AttackPathComparisonStatus.ORIGINAL_PATH_PERSISTENT in path_statuses:
+            original_path_status=AttackPathComparisonStatus.ORIGINAL_PATH_PERSISTENT
+        elif AttackPathComparisonStatus.ALTERNATE_PATH_FOUND in path_statuses:
+            original_path_status=AttackPathComparisonStatus.ALTERNATE_PATH_FOUND
+        else:
+            original_path_status=AttackPathComparisonStatus.ORIGINAL_PATH_BROKEN
+
         checks.append(VerificationCheckResult(
             check=VerificationCheck.VERIFY_ATTACK_PATH,
             status=CheckStatus.PASSED if original_path_status in {AttackPathComparisonStatus.ORIGINAL_PATH_BROKEN,AttackPathComparisonStatus.PATH_WEAKENED} else CheckStatus.FAILED,
@@ -328,11 +337,12 @@ class VerificationEngine:
                 blocking=original_path_status != AttackPathComparisonStatus.ORIGINAL_PATH_BROKEN,
             ))
         if VerificationCheck.VERIFY_IDENTITY in plan.required_checks:
-            checks.append(VerificationCheckResult(
-                check=VerificationCheck.VERIFY_IDENTITY,
-                status=CheckStatus.PASSED,
-                notes="identity scope is unchanged or narrowed in the compared graph",
-            ))
+            original_identities={n.canonical_identity for n in original_graph.nodes() if n.type.value=="IDENTITY"}
+            candidate_identities={n.canonical_identity for n in candidate_graph.nodes() if n.type.value=="IDENTITY"}
+            identity_ok=bool(original_identities) and candidate_identities.issuperset(original_identities)
+            checks.append(VerificationCheckResult(check=VerificationCheck.VERIFY_IDENTITY,status=CheckStatus.PASSED if identity_ok else CheckStatus.BLOCKED,notes="identity scope is preserved" if identity_ok else "identity evidence is unavailable or changed",blocking=not identity_ok))
+            if not identity_ok:
+                missing.append("identity comparison could not be deterministically established")
 
         permission_blocking=bool(graph_diff.permission_widened)
         if VerificationCheck.VERIFY_PERMISSION in plan.required_checks:
