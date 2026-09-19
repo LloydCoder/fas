@@ -312,6 +312,10 @@ class VerificationType(FasEnum):
 
 
 class VerificationStatus(FasEnum):
+    PENDING = "PENDING"
+    RUNNING = "RUNNING"
+    PASSED = "PASSED"
+    INCONCLUSIVE = "INCONCLUSIVE"
     CREATED = "CREATED"
     PLANNING = "PLANNING"
     COLLECTING = "COLLECTING"
