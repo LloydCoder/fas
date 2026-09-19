@@ -171,8 +171,8 @@ def scenario_conflicting_evidence():
 def scenario_cyclic_graph():
     engine, provenance, evidence = _engine()
     nodes = [_node(engine, provenance, evidence, GraphNodeType.SYMBOL, name) for name in ("a", "b", "c")]
-    for source, target in zip(nodes, [nodes[1], nodes[2], nodes[0]]):
-        _edge(engine, provenance, evidence, source, target, RelationshipType.CALLS)
+    for index, source in enumerate(nodes):
+        _edge(engine, provenance, evidence, source, nodes[(index + 1) % len(nodes)], RelationshipType.CALLS)
     return engine
 
 
@@ -188,9 +188,7 @@ def scenario_residual_path():
     original = scenario_agent_tool_chain()
     patched = GraphEngine.from_json(original.to_json())
     agent = next(node for node in patched.nodes() if node.type == GraphNodeType.AGENT)
-    tools = [node for node in patched.nodes() if node.type == GraphNodeType.TOOL]
     resource = next(node for node in patched.nodes() if node.canonical_identity.endswith(":production"))
-    principal = next(node for node in patched.nodes() if node.type == GraphNodeType.PRINCIPAL)
     evidence = patched.get_node_evidence(agent.id)[0]
     provenance = agent.provenance[0]
     patched.merge_edge_evidence(GraphBuilder.make_edge(
