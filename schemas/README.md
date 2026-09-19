@@ -14,3 +14,10 @@ models and the schemas named after those models.
 
 
 Phase 2 adds `graph.schema.json` for canonical graph export. GraphNode and GraphEdge remain Pydantic domain contracts; the graph export preserves analysis/snapshot scope, evidence identifiers, provenance, and deterministic ordering.
+
+
+## Phase 3 collection contracts
+
+- [Artifact](artifact.schema.json) — analysis/snapshot-scoped immutable artifact metadata and content integrity.
+- [Observation](observation.schema.json) — collector/tool observation before normalization or security reasoning.
+- [Collection Batch](collection-batch.schema.json) — explicit complete/partial collection result with skipped items and warnings.
