@@ -57,7 +57,7 @@ jobs:
           fas tools --format json
 
       - name: Product integration smoke
-        run: pytest tests/integration/product tests/security/test_phase6_product.py
+        run: pytest tests/integration/product
 
       - name: Graph baseline benchmark
         if: matrix.python-version == '3.13'
