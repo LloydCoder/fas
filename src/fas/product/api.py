@@ -109,7 +109,7 @@ class ApiServer:
                 if not self._auth(): return self._send(401,{"error":{"code":"UNAUTHORIZED","message":"authentication required"}})
                 try:
                     data=self._request_body()
-                    if not isinstance(data,dict): raise ValueError("request body must be a JSON object")
+                    if not isinstance(data,dict): raise TypeError("request body must be a JSON object")
                     path=urlparse(self.path).path
                     if path=="/v1/projects":
                         if "name" not in data or "repository" not in data: raise ValueError("name and repository are required")
