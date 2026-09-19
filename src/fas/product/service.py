@@ -96,9 +96,12 @@ class ProductService:
                 "completed_at":datetime.now(timezone.utc),"failure_reason":"analysis cancelled"})
             self._replace_analysis(cancelled,project_id)
             return {"analysis":cancelled.model_dump(mode="json"),"snapshot":snap.model_dump(mode="json"),"findings":[]}
-        analysis=analysis.model_copy(update={"snapshot_ids":(snap.id,),"status":AnalysisStatus.PARTIAL,
+        terminal_status = AnalysisStatus.COMPLETED if collection.summary.status.value == "SUCCESS" else AnalysisStatus.PARTIAL
+        analysis=analysis.model_copy(update={"snapshot_ids":(snap.id,),"status":terminal_status,
             "completed_at":datetime.now(timezone.utc),
-            "metadata":{**analysis.metadata,"limitations":"Core product pipeline records an immutable source snapshot and collection metadata; deterministic verdicts require normalized security evidence; no evidence is fabricated."}})
+            "metadata":{**analysis.metadata,
+                        "limitations":"Product collection is deterministic and bounded; downstream verdicts require normalized security evidence and are never fabricated.",
+                        "analysis_completeness":"COMPLETE" if terminal_status == AnalysisStatus.COMPLETED else "PARTIAL"}})
         # Benchmark/test oracle files are never read by production analysis.
         # A target repository must not be able to manufacture an expected verdict.
         self._replace_analysis(analysis,project_id)
