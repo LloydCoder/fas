@@ -6,11 +6,9 @@ import pytest
 
 from fas.domain.common import (
     EvidenceType,
-    GraphNodeType,
     Provenance,
     ProvenanceCategory,
     ProvenanceLevel,
-    RelationshipType,
     new_id,
 )
 from fas.domain.evidence import Evidence
