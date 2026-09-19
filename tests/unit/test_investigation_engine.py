@@ -71,7 +71,7 @@ def test_fake_model_is_structured_and_llm_free():
 
 def test_missing_attacker_evidence_produces_unknown():
     graph,finding,ev=build_graph()
-    plain=ev.model_copy(update={"observed_value":{"signal":"scanner"}})
+    plain=ev.model_copy(update={"id":new_id("evidence"),"observed_value":{"signal":"scanner"}})
     graph.store.register_evidence(plain)
     endpoint=next(n.id for n in graph.nodes() if n.type==GraphNodeType.ENDPOINT)
     sink=next(n.id for n in graph.nodes() if n.type==GraphNodeType.SYMBOL)
