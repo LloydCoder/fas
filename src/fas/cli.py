@@ -20,15 +20,19 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--config",default=None,help="JSON configuration file")
     p.add_argument("--format",choices=("human","json"),default="human")
     sub=p.add_subparsers(dest="command",required=True)
-    a=sub.add_parser("analyze"); a.add_argument("path"); a.add_argument("--project",default=None)
+    subcommands=[]
+    a=sub.add_parser("analyze"); subcommands.append(a); a.add_argument("path"); a.add_argument("--project",default=None)
     for name,help_text in (
         ("status","show analysis status"),("findings","show findings"),("evidence","show evidence references"),
         ("graph","show persisted graph information"),("attack-paths","show persisted attack paths"),
         ("investigate","start an investigation"),("remediate","create a remediation"),
         ("verify-remediation","verify a remediation"),("verification","show verification"),
         ("report","generate or show report")):
-        q=sub.add_parser(name,help=help_text); q.add_argument("id")
-    sub.add_parser("doctor"); sub.add_parser("tools"); sub.add_parser("api")
+        q=sub.add_parser(name,help=help_text); subcommands.append(q); q.add_argument("id")
+    doctor=sub.add_parser("doctor"); tools=sub.add_parser("tools"); api=sub.add_parser("api")
+    subcommands.extend((doctor,tools,api))
+    for command in subcommands:
+        command.add_argument("--format",choices=("human","json"),default=argparse.SUPPRESS)
     return p
 
 def main(argv: list[str]|None=None) -> int:
