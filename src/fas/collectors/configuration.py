@@ -1,9 +1,8 @@
 """Configuration and CI/CD inventory without executing configuration."""
 from __future__ import annotations
-from pathlib import Path
 from .base import _BatchBuilder
 from .discovery import RepositoryDiscoveryCollector
-from fas.domain.analysis import Artifact,Observation
+from fas.domain.analysis import Observation
 from fas.domain.common import ArtifactType,SourceLocation
 class ConfigurationCollector:
     name="configuration"
