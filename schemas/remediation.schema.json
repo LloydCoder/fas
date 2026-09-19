@@ -2,22 +2,40 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/LloydCoder/fas/blob/main/schemas/remediation.schema.json",
   "title": "FAS Remediation",
-  "x-fas-canonical-model": "Remediation",
-  "x-fas-schema-version": "1.0",
-  "type": "object",
-  "additionalProperties": false,
-  "required": ["schema_version","id","target_finding_id","original_snapshot_id","created_at"],
-  "properties": {
-    "schema_version":{"type":"string"},
-    "id":{"type":"string","pattern":"^remediation_[0-9A-HJKMNP-TV-Z]{26}$"},
-    "target_finding_id":{"type":"string"},
-    "original_snapshot_id":{"type":"string"},
-    "proposed_change_reference":{"type":["string","null"]},
-    "actual_change_reference":{"type":["string","null"]},
-    "patched_snapshot_id":{"type":["string","null"]},
-    "expected_broken_path_ids":{"type":"array","items":{"type":"string"}},
-    "status":{"type":"string","enum":["PROPOSED","IN_PROGRESS","APPLIED","VERIFIED","FAILED"]},
-    "created_at":{"type":"string","format":"date-time"},
-    "metadata":{"type":"object","additionalProperties":{"type":"string"}}
+  "$ref": "#/$defs/Remediation",
+  "$defs": {
+    "Remediation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {},
+        "id": {},
+        "finding_id": {},
+        "analysis_id": {},
+        "original_snapshot_id": {},
+        "target_snapshot_id": {},
+        "type": {},
+        "description": {},
+        "root_cause": {},
+        "affected_components": {},
+        "expected_security_property": {},
+        "proposed_changes": {},
+        "actual_changes": {},
+        "status": {},
+        "created_at": {},
+        "updated_at": {},
+        "provenance": {}
+      },
+      "required": [
+        "id",
+        "finding_id",
+        "analysis_id",
+        "original_snapshot_id",
+        "type",
+        "description",
+        "root_cause",
+        "expected_security_property"
+      ]
+    }
   }
 }
