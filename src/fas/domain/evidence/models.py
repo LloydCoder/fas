@@ -7,13 +7,25 @@ from datetime import datetime, timezone
 from pydantic import Field, field_validator
 
 from fas.domain.common import (
-    ArtifactId, Confidence, DomainModel, EvidenceId, EvidenceType, IntegrityMetadata, JSONValue,
-    ObservationId, Provenance, SourceLocation,
+    AnalysisId,
+    ArtifactId,
+    Confidence,
+    DomainModel,
+    EvidenceId,
+    EvidenceType,
+    IntegrityMetadata,
+    JSONValue,
+    ObservationId,
+    Provenance,
+    SnapshotId,
+    SourceLocation,
 )
 
 
 class Evidence(DomainModel):
     id: EvidenceId
+    analysis_id: AnalysisId
+    snapshot_id: SnapshotId
     type: EvidenceType
     claim: str = Field(min_length=1, max_length=16384)
     source: SourceLocation | None = None
