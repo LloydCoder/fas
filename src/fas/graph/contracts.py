@@ -240,25 +240,3 @@ class GraphDiff:
         self.unchanged_edges = unchanged_edges
         self.changed_edges = changed_edges
 
-
-class GraphExport:
-    schema_version: str = "1.0"
-
-    def __init__(
-        self,
-        *,
-        analysis_id: AnalysisId,
-        nodes: tuple[GraphNode, ...],
-        edges: tuple[GraphEdge, ...],
-        evidence: tuple[Evidence, ...],
-        artifacts: tuple[object, ...] = (),
-        observations: tuple[object, ...] = (),
-        metadata: dict[str, str] | None = None,
-    ) -> None:
-        self.analysis_id = analysis_id
-        self.nodes = nodes
-        self.edges = edges
-        self.evidence = evidence
-        self.artifacts = artifacts
-        self.observations = observations
-        self.metadata = metadata or {}
