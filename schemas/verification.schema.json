@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/LloydCoder/fas/blob/main/schemas/verification.schema.json",
+  "title": "FAS Verification",
+  "x-fas-canonical-model": "Verification",
+  "x-fas-schema-version": "1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version","id","target_id","target_type","verification_type"],
+  "properties": {
+    "schema_version":{"type":"string"},
+    "id":{"type":"string","pattern":"^verification_[0-9A-HJKMNP-TV-Z]{26}$"},
+    "target_id":{"type":"string"},
+    "target_type":{"type":"string","enum":["FINDING","REMEDIATION","VERDICT","ATTACK_PATH","CLAIM"]},
+    "verification_type":{"type":"string","enum":["REMEDIATION","EXPLOITABILITY","REGRESSION","SECURITY_TEST"]},
+    "status":{"type":"string","enum":["PENDING","RUNNING","PASSED","FAILED","INCONCLUSIVE"]},
+    "evidence_ids":{"type":"array","items":{"type":"string"}},
+    "before_snapshot_id":{"type":["string","null"]},
+    "after_snapshot_id":{"type":["string","null"]},
+    "attack_paths_before":{"type":"array","items":{"type":"string"}},
+    "attack_paths_after":{"type":"array","items":{"type":"string"}},
+    "residual_path_ids":{"type":"array","items":{"type":"string"}},
+    "new_path_ids":{"type":"array","items":{"type":"string"}},
+    "verified_at":{"type":["string","null"],"format":"date-time"},
+    "verifier":{"type":["string","null"]},
+    "metadata":{"type":"object","additionalProperties":{"type":"string"}}
+  }
+}
