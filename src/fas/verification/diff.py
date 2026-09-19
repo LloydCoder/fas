@@ -32,6 +32,14 @@ def _edge_key(graph: GraphEngine, edge) -> tuple[str, str, str]:
     return (_node_key(source), _node_key(target), edge.relationship_type.value)
 
 
+def _permission_parts(signature: str) -> tuple[str, str, str]:
+    principal, action, resource = (signature.split("|", 2) + ["",""])[:3]
+    return principal, action, resource
+
+
+_ACTION_RANK={"none":0,"deny":0,"read":1,"list":1,"write":2,"update":2,"delete":3,"admin":4,"deploy":5,"execute":5}
+
+
 def _fingerprint(values: tuple[str, ...]) -> str:
     return sha256("|".join(values).encode("utf-8")).hexdigest()
 
@@ -94,9 +102,21 @@ class SemanticGraphDiffEngine:
         for principal in sorted(set(before_by_principal) & set(after_by_principal)):
             before = before_by_principal[principal]
             after = after_by_principal[principal]
-            if after > before:
+            before_pairs={(_permission_parts(s)[2], _permission_parts(s)[1]) for s in before}
+            after_pairs={(_permission_parts(s)[2], _permission_parts(s)[1]) for s in after}
+            widened_flag=False
+            narrowed_flag=False
+            for resource, old_action in before_pairs:
+                for new_resource, new_action in after_pairs:
+                    if resource != new_resource:
+                        continue
+                    old_rank=_ACTION_RANK.get(old_action.lower(),1)
+                    new_rank=_ACTION_RANK.get(new_action.lower(),1)
+                    widened_flag |= new_rank > old_rank
+                    narrowed_flag |= new_rank < old_rank
+            if widened_flag:
                 widened.append(principal)
-            elif before > after:
+            if narrowed_flag:
                 narrowed.append(principal)
 
         def changed_types(node_type: GraphNodeType) -> tuple[str, ...]:
