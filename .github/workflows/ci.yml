@@ -20,10 +20,10 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - name: Set up Python
-        uses: actions/setup-python@v7.0.0
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
@@ -66,39 +66,3 @@ jobs:
       - name: Collection baseline benchmark
         if: matrix.python-version == '3.13'
         run: python benchmarks/collection_baseline.py
-
-  
-  lint-diagnostic:
-    name: Lint diagnostic (temporary)
-    if: github.repository == 'LloydCoder/fas' && github.head_ref == 'phase6-productization'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v7.0.1
-      - name: Set up Python
-        uses: actions/setup-python@v7.0.0
-        with:
-          python-version: "3.13"
-      - name: Install lint dependency
-        run: python -m pip install "ruff>=0.12"
-      - name: Publish lint diagnostics
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_URL: ${{ github.event.pull_request.html_url }}
-        run: |
-          set +e
-          ruff check . > /tmp/ruff.txt 2>&1
-          status=$?
-          python - <<'PY'
-          from pathlib import Path
-          p=Path("/tmp/ruff.txt")
-          text=p.read_text(encoding="utf-8")
-          if len(text)>60000:
-              text=text[:59000] + "\n...truncated..."
-          Path("/tmp/comment.md").write_text("## Temporary FAS lint diagnostics\n\n\\`\\`\\`text\n"+text+"\n\\`\\`\\`",encoding="utf-8")
-          PY
-          gh pr comment "$PR_URL" --body-file /tmp/comment.md
-          exit "$status"
