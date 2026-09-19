@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from typing import Literal
 
 from pydantic import Field, field_validator, model_validator
 
@@ -34,6 +35,7 @@ class AttackPath(DomainModel):
     confidence: Confidence | None = None
     snapshot_id: SnapshotId
     observed_at: datetime
+    status: Literal["COMPLETE", "PARTIAL", "TRUNCATED"] = "COMPLETE"
     metadata: dict[str, str] = Field(default_factory=dict)
 
     @field_validator("observed_at")
