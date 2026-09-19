@@ -53,7 +53,7 @@ def edge(analysis_id,snap,source,target,ev,relationship=RelationshipType.FLOWS_T
     )
 
 
-def build_graph(analysis_id,snap,alternate=False,permission_widened=False,complete=True):
+def build_graph(analysis_id,snap,alternate=False,permission_widened=False,complete=True,permission_action=None):
     g=GraphEngine(analysis_id=analysis_id,snapshot_id=snap.id,complete=complete)
     src_ev=evidence(analysis_id,snap,"attacker controls request",{"attacker_controlled":True})
     ep_ev=evidence(analysis_id,snap,"request reaches endpoint")
@@ -68,10 +68,10 @@ def build_graph(analysis_id,snap,alternate=False,permission_widened=False,comple
         g.add_edge(edge(analysis_id,snap,ep,sink,sink_ev))
     else:
         g.add_edge(edge(analysis_id,snap,ep,sink,sink_ev))
-    if permission_widened:
-        pev=evidence(analysis_id,snap,"production write permission")
+    if permission_widened or permission_action is not None:
+        pev=evidence(analysis_id,snap,"production permission")
         p=node(analysis_id,snap,GraphNodeType.PERMISSION,"prod-write","prod-write",pev,
-               principal="agent",action="write",resource="production",security_property="agent must not deploy production")
+               principal="agent",action=permission_action or "write",resource="production",security_property="agent must not deploy production")
         g.add_evidence(pev); g.add_node(p)
     return g, (src,ep,sink)
 
@@ -150,7 +150,7 @@ def test_incomplete_candidate_graph_returns_unknown():
 
 def test_permission_widening_is_semantic_regression_signal():
     analysis=new_id("analysis"); before=snapshot(analysis,"a"); after=snapshot(analysis,"b")
-    bg,nodes=build_graph(analysis,before); cg,_=build_graph(analysis,after,permission_widened=True)
+    bg,nodes=build_graph(analysis,before,permission_action="read"); cg,_=build_graph(analysis,after,permission_action="write")
     diff=VerificationEngine().diff_engine.compare(bg,cg)
     assert diff.permission_added
     assert diff.permission_widened
