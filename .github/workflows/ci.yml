@@ -36,6 +36,12 @@ jobs:
       - name: Test
         run: pytest
 
+      - name: Phase 4 schema parity
+        run: python scripts/check_schema_parity.py
+
+      - name: Package build
+        run: python -m build
+
       - name: Graph baseline benchmark
         if: matrix.python-version == '3.13'
         run: python benchmarks/graph_baseline.py
