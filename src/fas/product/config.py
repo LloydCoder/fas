@@ -26,6 +26,26 @@ class Settings:
     network_policy: str = "DENY_ALL"
     retention_days: int = 90
 
+    def __post_init__(self) -> None:
+        positive = {
+            "api_port": self.api_port,
+            "max_workers": self.max_workers,
+            "analysis_timeout_seconds": self.analysis_timeout_seconds,
+            "subprocess_timeout_seconds": self.subprocess_timeout_seconds,
+            "max_stdout_bytes": self.max_stdout_bytes,
+            "max_stderr_bytes": self.max_stderr_bytes,
+            "max_artifact_bytes": self.max_artifact_bytes,
+            "max_graph_nodes": self.max_graph_nodes,
+            "max_graph_edges": self.max_graph_edges,
+            "retention_days": self.retention_days,
+        }
+        if any(value <= 0 for value in positive.values()):
+            raise ValueError("numeric configuration limits must be positive")
+        if self.api_port > 65535:
+            raise ValueError("api_port must be <= 65535")
+        if self.network_policy not in {"DENY_ALL", "ALLOWLIST"}:
+            raise ValueError("network_policy must be DENY_ALL or ALLOWLIST")
+
     @classmethod
     def from_sources(cls, *, path: Path | None = None, cli: dict[str, object] | None = None) -> "Settings":
         values: dict[str, object] = {}
