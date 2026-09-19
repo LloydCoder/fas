@@ -3,6 +3,7 @@ from tests.fixtures.graph.conftest import add_evidence, add_node
 from fas.domain.common import GraphNodeType, RelationshipType
 from fas.graph import (
     GraphBuilder,
+    GraphEngine,
     GraphLimits,
     ResultStatus,
     stable_id,
@@ -222,7 +223,7 @@ def test_recursive_self_loop_is_representable(engine, context, provenance):
 def test_result_size_and_cancellation_limits(context, provenance):
     from tests.fixtures.graph.conftest import add_evidence, add_node
 
-    engine = __import__("fas.graph", fromlist=["GraphEngine"]).GraphEngine(
+    engine = GraphEngine(
         analysis_id=context["analysis"], snapshot_id=context["snapshot"],
         limits=GraphLimits(max_result_size=2, max_traversal_depth=8, max_nodes_visited=10, max_edges_visited=10, max_paths=5, max_path_depth=8),
     )
