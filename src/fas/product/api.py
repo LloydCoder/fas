@@ -1,6 +1,7 @@
 """Minimal dependency-light HTTP API with stable /v1 contracts and OpenAPI metadata."""
 from __future__ import annotations
-import json, secrets
+import json
+import secrets
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse
 from .service import ProductService
