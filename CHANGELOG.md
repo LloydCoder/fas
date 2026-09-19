@@ -1,3 +1,15 @@
+## Phase 6 — Productization — 2026-09-19
+
+- Added installable product boundary with shared CLI/API application service.
+- Added local SQLite persistence, durable job records, idempotency and bounded worker primitives.
+- Added content-addressed local object storage abstraction and evidence-linked JSON reports.
+- Added `fas analyze`, `status`, `findings`, `report`, `doctor`, `tools`, and `api` product commands.
+- Added HTTP health endpoints, OpenAPI metadata, /v1 project/analysis/status/findings/report resources, request IDs, structured errors and explicit capability errors.
+- Added configuration precedence, resource limits, secret-safe diagnostics and explicit sandbox policy primitives.
+- Added package installation and CLI smoke gates to CI, plus Phase 6 product/security integration tests.
+- Added benchmark-compatible machine-readable output schema and Phase 6 architecture/threat-model ADRs.
+- Kept unsupported PostgreSQL/S3/runtime-sandbox capabilities explicit rather than simulating them.
+
 ## Phase 3 completion — 2026-09-19
 
 - Completed bounded collection lifecycle and explicit collection states.
