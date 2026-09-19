@@ -1,4 +1,4 @@
-from fas.collectors.filesystem import PathPolicy,safe_read_bytes
+from fas.collectors.filesystem import safe_read_bytes
 def test_safe_reader_reads_regular_file(tmp_path):
     target=tmp_path/"safe.txt"; target.write_bytes(b"safe")
     assert safe_read_bytes(target,tmp_path,1024)==b"safe"
