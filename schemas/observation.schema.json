@@ -1,0 +1,17 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://github.com/LloydCoder/fas/blob/main/schemas/observation.schema.json",
+  "title":"FAS Observation","x-fas-canonical-model":"Observation","x-fas-schema-version":"1.0",
+  "type":"object","additionalProperties":false,
+  "required":["schema_version","id","analysis_id","snapshot_id","source","category","message","provenance","observed_at"],
+  "properties":{
+    "schema_version":{"type":"string"},"id":{"type":"string","pattern":"^observation_[0-9A-HJKMNP-TV-Z]{26}$"},
+    "analysis_id":{"type":"string","pattern":"^analysis_[0-9A-HJKMNP-TV-Z]{26}$"},
+    "snapshot_id":{"type":"string","pattern":"^snapshot_[0-9A-HJKMNP-TV-Z]{26}$"},
+    "source":{"type":"string","minLength":1},"category":{"type":"string","minLength":1},
+    "location":{"type":["object","null"]},"message":{"type":"string","minLength":1},"raw_reference":{"type":["string","null"]},
+    "raw_artifact_id":{"type":["string","null"],"pattern":"^artifact_[0-9A-HJKMNP-TV-Z]{26}$"},
+    "observed_value":{},"provenance":{"type":"array","minItems":1},"observed_at":{"type":"string","format":"date-time"},
+    "metadata":{"type":"object","additionalProperties":{"type":"string"}}
+  }
+}
