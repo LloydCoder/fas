@@ -1,9 +1,6 @@
 from fas.adapters import GitleaksAdapter
 from fas.collectors import CollectionContext
-from fas.domain.common import Provenance,ProvenanceCategory,ProvenanceLevel,new_id
-from fas.domain.analysis import Observation
 from fas.collectors import ObservationNormalizer
-from datetime import datetime,timezone
 import json
 
 def test_gitleaks_secret_is_not_promoted_to_evidence(tmp_path):
