@@ -93,9 +93,9 @@ class ApiServer:
                         analysis=service.create_analysis(str(data["project_id"]),str(data["source"]))
                         return self._send(201,analysis.model_dump(mode="json"))
                     return self._send(404,{"error":{"code":"NOT_FOUND","message":"resource not found"}})
-                except (KeyError,TypeError,ValueError,json.JSONDecodeError) as exc:
+                except (KeyError,TypeError,ValueError,json.JSONDecodeError):
                     return self._send(400,{"error":{"code":"INVALID_REQUEST","message":"invalid request"}})
-                except Exception as exc:
+                except (OSError, RuntimeError, TypeError) as exc:
                     return self._send(500,{"error":{"code":"INTERNAL_ERROR","message":type(exc).__name__}})
             def log_message(self,fmt,*args): return
         ThreadingHTTPServer((host,port),Handler).serve_forever()
