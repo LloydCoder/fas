@@ -76,7 +76,8 @@ class ProductService:
         manifest_payload={"files":manifest,"omitted":omitted,"file_count":file_count,"byte_count":byte_count,
                           "max_files":max_files,"max_file_bytes":self.settings.max_artifact_bytes,
                           "completeness":completeness}
-        manifest_hash=hashlib.sha256(json.dumps(manifest_payload,sort_keys=True,separators=(",",":")).encode()).hexdigest()
+        manifest_bytes=json.dumps(manifest_payload,sort_keys=True,separators=(",",":"),ensure_ascii=False).encode("utf-8")
+        manifest_hash=hashlib.sha256(manifest_bytes).hexdigest()
         now=datetime.now(timezone.utc)
         snap=Snapshot(id=new_id("snapshot"),repository=RepositoryReference(repository=str(root),revision=_git_revision(root)),
                       captured_at=now,content_hash=ContentHash(digest=digest.hexdigest()),
@@ -84,6 +85,8 @@ class ProductService:
                       configuration_identity="local-defaults",immutable=True,
                       metadata={"manifest_sha256":manifest_hash,"file_count":str(file_count),"byte_count":str(byte_count),
                                 "completeness":completeness,"omitted_count":str(len(omitted))})
+        manifest_ref=self.objects.put(manifest_bytes,media_type="application/vnd.fas.snapshot-manifest+json",snapshot_id=snap.id,source=str(root))
+        snap=snap.model_copy(update={"metadata":{**snap.metadata,"manifest_object":manifest_ref["storage_reference"]}})
         self.store.put("snapshots",snap.id,analysis.id,snap.model_dump(mode="json"),now.isoformat())
         self._audit(analysis.id,snap.id,"SNAPSHOT_CREATED",snap.id,{"source":str(root),"content_hash":snap.content_hash.value if snap.content_hash else None,
                                                                     "manifest_sha256":manifest_hash,"completeness":completeness})
