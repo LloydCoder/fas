@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import FrozenSet
-
 from fas.domain.common import (
     AnalysisId,
     EvidenceId,
@@ -72,10 +70,10 @@ class GraphLimits:
 
 @dataclass(frozen=True, slots=True)
 class GraphQuery:
-    node_types: FrozenSet[GraphNodeType] | None = None
-    relationship_types: FrozenSet[RelationshipType] | None = None
-    evidence_ids: FrozenSet[EvidenceId] | None = None
-    provenance_categories: FrozenSet[str] | None = None
+    node_types: frozenset[GraphNodeType] | None = None
+    relationship_types: frozenset[RelationshipType] | None = None
+    evidence_ids: frozenset[EvidenceId] | None = None
+    provenance_categories: frozenset[str] | None = None
     min_confidence: float | None = None
     max_confidence: float | None = None
 
