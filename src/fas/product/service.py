@@ -96,10 +96,8 @@ class ProductService:
         analysis=analysis.model_copy(update={"snapshot_ids":(snap.id,),"status":AnalysisStatus.PARTIAL,
             "completed_at":datetime.now(timezone.utc),
             "metadata":{**analysis.metadata,"limitations":"Core product pipeline records an immutable source snapshot and collection metadata; deterministic verdicts require normalized security evidence; no evidence is fabricated."}})
-        fixture=root/".fas-fixture.json"
-        if fixture.exists():
-            data=json.loads(fixture.read_text(encoding="utf-8"))
-            analysis=analysis.model_copy(update={"metadata":{**analysis.metadata,"fixture":data.get("name","unknown"),"expected_verdict":data.get("expected_verdict","UNKNOWN")}})
+        # Benchmark/test oracle files are never read by production analysis.
+        # A target repository must not be able to manufacture an expected verdict.
         self._replace_analysis(analysis,project_id)
         return {"analysis":analysis.model_dump(mode="json"),"snapshot":snap.model_dump(mode="json"),"findings":[]}
 
