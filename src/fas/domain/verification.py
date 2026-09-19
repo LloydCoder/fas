@@ -119,6 +119,37 @@ class Remediation(DomainModel):
         return self
 
 
+class Verification(DomainModel):
+    id: VerificationId
+    remediation_id: RemediationId
+    finding_id: FindingId
+    original_snapshot_id: SnapshotId
+    candidate_snapshot_id: SnapshotId
+    verification_plan_id: VerificationPlanId
+    status: VerificationStatus = VerificationStatus.CREATED
+    checks: tuple["VerificationCheckResult", ...] = ()
+    graph_diff_id: GraphDiffId | None = None
+    attack_path_comparison_ids: tuple[AttackPathComparisonId, ...] = ()
+    regressions: tuple[SecurityRegressionId, ...] = ()
+    residual_paths: tuple[ResidualPathId, ...] = ()
+    alternate_paths: tuple[AttackPathId, ...] = ()
+    supporting_evidence: tuple[VerificationEvidenceId, ...] = ()
+    contradicting_evidence: tuple[VerificationEvidenceId, ...] = ()
+    missing_evidence: tuple[str, ...] = ()
+    result: VerdictType | None = None
+    limitations: tuple[str, ...] = ()
+    created_at: datetime = Field(default_factory=utc_now)
+    completed_at: datetime | None = None
+
+    @model_validator(mode="after")
+    def snapshot_scope(self) -> "Verification":
+        if self.original_snapshot_id == self.candidate_snapshot_id:
+            raise ValueError("verification requires distinct original and candidate snapshots")
+        if self.status == VerificationStatus.COMPLETED and self.result is None:
+            raise ValueError("completed verification requires a result")
+        return self
+
+
 class VerificationCheckResult(DomainModel):
     check: VerificationCheck
     status: CheckStatus
@@ -371,7 +402,7 @@ class VerificationReport(DomainModel):
 
 
 __all__ = [
-    "RemediationType","SecurityPropertyOutcome","VerificationCheck","CheckStatus",
+    "RemediationType","Verification","SecurityPropertyOutcome","VerificationCheck","CheckStatus",
     "AttackPathComparisonStatus","DiffKind","RegressionStatus","Remediation",
     "VerificationCheckResult","VerificationPlan","VerificationRun","GraphDiff",
     "AttackPathComparison","ResidualPath","VerificationEvidence","SecurityRegression",
