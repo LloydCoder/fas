@@ -20,6 +20,7 @@ from fas.domain.verification import (
 from fas.graph import GraphEngine, GraphScopeKind
 from .diff import SemanticGraphDiffEngine
 from .runtime import SecurityTestExecutor
+from .regression import RegressionEngine
 
 
 @dataclass(frozen=True)
@@ -33,6 +34,7 @@ class VerificationOutcome:
     residual_paths: tuple[ResidualPath, ...]
     regressions: tuple[SecurityRegression, ...]
     tests: tuple[SecurityTestResult, ...]
+    baseline: object | None = None
 
 
 def _node_semantics(node) -> tuple[str, ...]:
@@ -348,6 +350,14 @@ class VerificationEngine:
                     blocking=not tests or not all(t.passed for t in tests),
                 ))
 
+        regressions=()
+        if baseline is not None:
+            regression=RegressionEngine().detect(
+                baseline=baseline,current=candidate_snapshot,graph=candidate_graph,
+                reachable_baseline_path=bool(alternate_ids or residuals),
+            )
+            if regression.status.value=="DETECTED":
+                regressions=(regression,)
         blocking_failure=(
             original_path_status in {AttackPathComparisonStatus.ORIGINAL_PATH_PERSISTENT,AttackPathComparisonStatus.ALTERNATE_PATH_FOUND}
             or permission_blocking
@@ -359,6 +369,9 @@ class VerificationEngine:
         if missing:
             result_type=VerdictType.UNKNOWN
             outcome=SecurityPropertyOutcome.UNKNOWN
+        elif regressions:
+            result_type=VerdictType.REGRESSED
+            outcome=SecurityPropertyOutcome.WORSENED
         elif blocking_failure:
             result_type=VerdictType.REMEDIATION_FAILED
             outcome=SecurityPropertyOutcome.UNCHANGED
@@ -396,7 +409,7 @@ class VerificationEngine:
             attack_path_comparison_ids=tuple(c.id for c in comparisons),
             residual_path_ids=tuple(r.id for r in residuals),
             alternate_path_ids=tuple(alternate_ids),
-            regression_ids=(),
+            regression_ids=tuple(r.id for r in regressions),
             verification_evidence_ids=(ve.id,),
             supporting_evidence_ids=tuple(sorted(supporting)),
             contradicting_evidence_ids=(),
@@ -425,10 +438,18 @@ class VerificationEngine:
             remaining_paths=tuple(p.id for p in candidate_paths if p.id not in alternate_ids),
             alternate_paths=tuple(alternate_ids),graph_diff_id=graph_diff.id,
             attack_path_comparison_ids=tuple(c.id for c in comparisons),
-            residual_path_ids=tuple(r.id for r in residuals),regressions=(),
+            residual_path_ids=tuple(r.id for r in residuals),regressions=tuple(r.id for r in regressions),
             tests=tuple(tests),evidence=(ve.id,),limitations=result.limitations,result=result_type,
         )
+        established_baseline=None
+        if result_type == VerdictType.REMEDIATED:
+            established_baseline=RegressionEngine().establish_baseline(
+                finding=finding,verification_id=verification_id,security_property=remediation.expected_security_property,
+                snapshot=candidate_snapshot,attack_path_ids=tuple(p.id for p in candidate_paths),
+                evidence_ids=tuple(sorted(supporting)),graph=candidate_graph,
+            )
         return VerificationOutcome(
             result=result,report=report,plan=plan,run=run,graph_diff=graph_diff,
-            comparisons=tuple(comparisons),residual_paths=tuple(residuals),regressions=(),tests=tuple(tests)
+            comparisons=tuple(comparisons),residual_paths=tuple(residuals),regressions=tuple(regressions),
+            tests=tuple(tests),baseline=established_baseline
         )
