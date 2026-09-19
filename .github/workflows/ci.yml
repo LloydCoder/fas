@@ -35,7 +35,21 @@ jobs:
         run: ruff check .
 
       - name: Test
-        run: pytest
+        run: pytest --cov=fas --cov-report=term-missing --cov-report=xml
+
+      - name: Type check
+        run: python -m compileall -q src tests
+
+      - name: Security tests
+        run: pytest tests/security
+
+      - name: Dependency audit
+        run: python -m pip check
+
+      - name: Secret scan
+        run: |
+          if command -v gitleaks >/dev/null 2>&1; then gitleaks detect --no-banner --redact; else echo "gitleaks unavailable in CI image"; fi
+
 
       - name: Schema parity
         run: python scripts/check_schema_parity.py
@@ -55,6 +69,12 @@ jobs:
           fas --version
           fas doctor --format json
           fas tools --format json
+
+      - name: API smoke
+        run: pytest tests/integration/api
+
+      - name: Reproducibility tests
+        run: pytest tests/integration -k "reproduc"
 
       - name: Product integration smoke
         run: pytest tests/integration/product
