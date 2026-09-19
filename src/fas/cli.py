@@ -1,6 +1,6 @@
 """First-class FAS CLI. API and CLI share the ProductService and never fabricate security conclusions."""
 from __future__ import annotations
-import argparse, json, sys
+import argparse, json
 from pathlib import Path
 from fas import __version__
 from fas.product import ProductService, load_settings
@@ -40,7 +40,8 @@ def main(argv: list[str]|None=None) -> int:
     settings=load_settings(args.config)
     service=ProductService(settings)
     if args.command=="doctor":
-        dump(service.doctor(),args.format); return 0 if service.doctor()["ok"] else 2
+        result=service.doctor()
+        dump(result,args.format); return 0 if result["ok"] else 2
     if args.command=="tools":
         dump(discover(),args.format); return 0
     if args.command=="api":
