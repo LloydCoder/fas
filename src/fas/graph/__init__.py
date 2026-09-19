@@ -3,7 +3,6 @@
 from .builder import GraphBuilder, NodeIdentityResolver, stable_id
 from .contracts import (
     GraphDiff,
-    GraphExport,
     GraphLimits,
     GraphPath,
     GraphQuery,
@@ -40,7 +39,6 @@ __all__ = [
     "NodeIdentityResolver",
     "stable_id",
     "GraphDiff",
-    "GraphExport",
     "GraphLimits",
     "GraphPath",
     "GraphQuery",
