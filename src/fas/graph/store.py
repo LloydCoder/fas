@@ -92,6 +92,8 @@ class InMemoryGraphStore:
             observation = self._observations.get(observation_id)
             if observation is None:
                 raise SnapshotMismatch(f"unknown observation {observation_id}")
+            if observation.analysis_id != evidence.analysis_id or observation.snapshot_id != evidence.snapshot_id:
+                raise SnapshotMismatch(f"observation {observation_id} is outside evidence scope")
         for provenance in evidence.provenance:
             for parent_id in provenance.parent_evidence_ids:
                 if parent_id not in self._evidence:
@@ -106,6 +108,18 @@ class InMemoryGraphStore:
     def register_observation(self, observation: Observation) -> None:
         if observation.id in self._observations and self._observations[observation.id] != observation:
             raise DuplicateNode(f"observation {observation.id} already exists with different content")
+        if observation.raw_artifact_id is not None:
+            artifact = self._artifacts.get(observation.raw_artifact_id)
+            if artifact is None:
+                raise SnapshotMismatch(f"unknown raw artifact {observation.raw_artifact_id}")
+            if artifact.analysis_id != observation.analysis_id or artifact.snapshot_id != observation.snapshot_id:
+                raise SnapshotMismatch(f"raw artifact {observation.raw_artifact_id} is outside observation scope")
+        if observation.location is not None:
+            artifact = self._artifacts.get(observation.location.artifact_id)
+            if artifact is None:
+                raise SnapshotMismatch(f"unknown location artifact {observation.location.artifact_id}")
+            if artifact.analysis_id != observation.analysis_id or artifact.snapshot_id != observation.snapshot_id:
+                raise SnapshotMismatch(f"location artifact {observation.location.artifact_id} is outside observation scope")
         self._observations[observation.id] = observation
 
     def add_node(self, node: GraphNode) -> None:
