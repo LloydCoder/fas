@@ -772,6 +772,8 @@ class GraphEngine:
     def diff(left: "GraphEngine", right: "GraphEngine") -> GraphDiff:
         if left.scope.analysis_id != right.scope.analysis_id:
             raise SnapshotMismatch("graph diff requires the same analysis")
+        if left.scope.kind != GraphScopeKind.SNAPSHOT or right.scope.kind != GraphScopeKind.SNAPSHOT:
+            raise SnapshotMismatch("graph diff requires snapshot-scoped graphs")
         left_nodes = {node.canonical_identity: node for node in left.nodes()}
         right_nodes = {node.canonical_identity: node for node in right.nodes()}
         unchanged_nodes = []
