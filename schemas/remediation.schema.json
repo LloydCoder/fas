@@ -2,6 +2,8 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/LloydCoder/fas/blob/main/schemas/remediation.schema.json",
   "title": "FAS Remediation",
+  "x-fas-canonical-model": "Remediation",
+  "x-fas-schema-version": "1.0",
   "$ref": "#/$defs/Remediation",
   "$defs": {
     "Remediation": {
@@ -24,17 +26,12 @@
         "status": {},
         "created_at": {},
         "updated_at": {},
-        "provenance": {}
+        "provenance": {},
+        "expected_broken_path_ids": {}
       },
       "required": [
         "id",
-        "finding_id",
-        "analysis_id",
-        "original_snapshot_id",
-        "type",
-        "description",
-        "root_cause",
-        "expected_security_property"
+        "original_snapshot_id"
       ]
     }
   }
