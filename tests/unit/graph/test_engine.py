@@ -244,6 +244,13 @@ def test_same_snapshot_graph_merge_accumulates_relationship_evidence(context, pr
     source = add_node(engine_a, context, provenance, node_type=GraphNodeType.SYMBOL, identity="source", evidence=evidence_a)
     target = add_node(engine_a, context, provenance, node_type=GraphNodeType.SYMBOL, identity="target", evidence=evidence_a)
     engine_a.add_nodes((source, target))
+    edge_a = GraphBuilder.make_edge(
+        analysis_id=context["analysis"], snapshot_id=context["snapshot"],
+        source_node_id=source.id, target_node_id=target.id,
+        relationship_type=RelationshipType.CALLS, provenance=(provenance,),
+        evidence_ids=(evidence_a.id,), observed_at=provenance.observed_at,
+    )
+    engine_a.add_edge(edge_a)
     source_b = source.model_copy(update={"evidence_ids": (evidence_b.id,)})
     target_b = target.model_copy(update={"evidence_ids": (evidence_b.id,)})
     engine_b.add_nodes((source_b, target_b))
@@ -255,4 +262,4 @@ def test_same_snapshot_graph_merge_accumulates_relationship_evidence(context, pr
     )
     engine_b.add_edge(edge)
     engine_a.merge_graph(engine_b)
-    assert set(engine_a.get_edge_evidence(edge.id)[0:2]) == {evidence_a, evidence_b}
+    assert set(engine_a.get_edge_evidence(edge.id)) == {evidence_a, evidence_b}
