@@ -1,0 +1,10 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://github.com/LloydCoder/fas/schemas/audit.schema.json",
+  "title":"FAS Audit Report and Tool Run Contracts",
+  "$defs":{
+    "AuditEvent":{"type":"object","required":["schema_version","id","analysis_id","snapshot_id","event_type","actor","subject_id","payload","created_at"],"properties":{"schema_version":{"type":"string"},"id":{"type":"string"},"analysis_id":{"type":"string"},"snapshot_id":{"type":"string"},"event_type":{"type":"string"},"actor":{"type":"string"},"subject_id":{"type":"string"},"payload":{"type":"object"},"created_at":{"type":"string"}}},
+    "ToolRun":{"type":"object","required":["schema_version","id","analysis_id","snapshot_id","tool_name","argv","cwd","environment_fingerprint","started_at","status"],"properties":{"schema_version":{"type":"string"},"id":{"type":"string"},"analysis_id":{"type":"string"},"snapshot_id":{"type":"string"},"tool_name":{"type":"string"},"tool_version":{"type":["string","null"]},"argv":{"type":"array"},"cwd":{"type":"string"},"environment_fingerprint":{"type":"string"},"configuration_fingerprint":{"type":["string","null"]},"started_at":{"type":"string"},"completed_at":{"type":["string","null"]},"exit_code":{"type":["integer","null"]},"status":{"type":"string"},"stdout_hash":{"type":["string","null"]},"stderr_hash":{"type":["string","null"]},"raw_artifact_id":{"type":["string","null"]}}},
+    "Report":{"type":"object","required":["schema_version","id","analysis_id","snapshot_id","title","finding_ids","investigation_ids","verdict_ids","generated_at","format","content"],"properties":{"schema_version":{"type":"string"},"id":{"type":"string"},"analysis_id":{"type":"string"},"snapshot_id":{"type":"string"},"title":{"type":"string"},"finding_ids":{"type":"array"},"investigation_ids":{"type":"array"},"verdict_ids":{"type":"array"},"generated_at":{"type":"string"},"format":{"type":"string"},"content":{"type":"object"}}}
+  }
+}
