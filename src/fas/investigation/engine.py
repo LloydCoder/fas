@@ -351,8 +351,7 @@ class InvestigationEngine:
         case=InvestigationCase(
             id=new_id("investigation"),analysis_id=self.graph.scope.analysis_id,finding_id=finding.id,
             snapshot_id=finding.snapshot_id,status=InvestigationStatus.CREATED,objective=objective,
-            graph_scope=f"analysis={self.graph.scope.analysis_id}
-            snapshot={self.graph.scope.snapshot_id}",
+            graph_scope=f"analysis={self.graph.scope.analysis_id}\n            snapshot={self.graph.scope.snapshot_id}",
             budget=budget or InvestigationBudget(),
             constraints=constraints or InvestigationConstraints(),
         )
