@@ -51,11 +51,14 @@ class SQLiteStore:
         allowed = {"projects","analyses","snapshots","artifacts","findings","reports","audit_events"}
         if table not in allowed:
             raise ValueError("unsupported table")
-        key_col = {"projects":"id","analyses":"id","snapshots":"id","artifacts":"id","findings":"id","reports":"id","audit_events":"id"}[table]
-        fk_col = {"projects":"id","analyses":"project_id","snapshots":"analysis_id","artifacts":"snapshot_id","findings":"snapshot_id","reports":"analysis_id","audit_events":"analysis_id"}[table]
+        key_col = "id"
+        serialized = json.dumps(payload, sort_keys=True, separators=(",",":"))
         with self._connect() as con:
-            con.execute(f"INSERT INTO {table}({key_col},{fk_col},payload,created_at) VALUES(?,?,?,?)",
-                        (identifier, foreign_key, json.dumps(payload, sort_keys=True, separators=(",",":")), created_at))
+            if table == "projects":
+                con.execute("INSERT INTO projects(id,payload,created_at) VALUES(?,?,?)", (identifier, serialized, created_at))
+            else:
+                fk_col = {"analyses":"project_id","snapshots":"analysis_id","artifacts":"snapshot_id","findings":"snapshot_id","reports":"analysis_id","audit_events":"analysis_id"}[table]
+                con.execute(f"INSERT INTO {table}({key_col},{fk_col},payload,created_at) VALUES(?,?,?,?)", (identifier, foreign_key, serialized, created_at))
 
     def get(self, table: str, identifier: str) -> dict[str, Any]:
         if table not in {"projects","analyses","snapshots","artifacts","findings","reports","audit_events","jobs"}:
