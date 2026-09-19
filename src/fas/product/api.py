@@ -74,8 +74,8 @@ class ApiServer:
                     return self._send(404,{"error":{"code":"NOT_FOUND","message":"resource not found"}})
                 except ValueError as exc:
                     return self._send(400,{"error":{"code":"INVALID_REQUEST","message":str(exc)}})
-                except Exception as exc:
-                    return self._send(500,{"error":{"code":"INTERNAL_ERROR","message":f"{type(exc).__name__}"}})
+                except (OSError, RuntimeError, TypeError) as exc:
+                    return self._send(500,{"error":{"code":"INTERNAL_ERROR","message":type(exc).__name__}})
             def do_POST(self):
                 if not self._auth():
                     return self._send(401,{"error":{"code":"UNAUTHORIZED","message":"authentication required"}})
@@ -93,7 +93,7 @@ class ApiServer:
                         analysis=service.create_analysis(str(data["project_id"]),str(data["source"]))
                         return self._send(201,analysis.model_dump(mode="json"))
                     return self._send(404,{"error":{"code":"NOT_FOUND","message":"resource not found"}})
-                except (KeyError,TypeError,ValueError,json.JSONDecodeError):
+                except (KeyError,TypeError,ValueError):
                     return self._send(400,{"error":{"code":"INVALID_REQUEST","message":"invalid request"}})
                 except (OSError, RuntimeError, ValueError) as exc:
                     return self._send(500,{"error":{"code":"INTERNAL_ERROR","message":type(exc).__name__}})
