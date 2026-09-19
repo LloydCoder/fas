@@ -31,8 +31,8 @@ class RawArtifact:
     sha256:str
     storage_reference:str
     redacted:bool=False
-def stable_run_id(context:CollectionContext)->str:
-    material=f"{context.analysis_id}|{context.snapshot_id}|{context.repository}|{context.revision or ''}"
+def stable_run_id(context:CollectionContext, tool_name: str | None = None)->str:
+    material=f"{context.analysis_id}|{context.snapshot_id}|{context.repository}|{context.revision or ''}|{tool_name or ''}"
     return "toolrun_"+hashlib.sha256(material.encode()).hexdigest()[:26]
 def environment_fingerprint(env:dict[str,str]|None=None)->str:
     selected=env or {}
