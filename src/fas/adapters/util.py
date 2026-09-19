@@ -1,8 +1,6 @@
 """Shared safe adapter helpers."""
 from __future__ import annotations
 import hashlib,json
-from typing import Any
-from fas.collectors.base import CollectionContext
 from fas.domain.common import ObservationId
 def load_json(payload):
     if isinstance(payload,(dict,list)): return payload
