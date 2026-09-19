@@ -1,10 +1,10 @@
 """Canonical FAS Phase 1 domain contracts."""
 
-from .analysis import Analysis, Artifact, Observation, Snapshot
+from .analysis import Analysis, Artifact, Observation, Project, Snapshot
 from .audit import AuditEvent, Report, ToolRun
 from .attack_paths import AttackPath, AttackPathStep
 from .common import (
-    ActorType, AnalysisId, AnalysisStatus, ArtifactId, ArtifactReference, ArtifactType,
+    ActorType, AnalysisId, ProjectId, AnalysisStatus, ArtifactId, ArtifactReference, ArtifactType,
     AttackPathId, Confidence, ContentHash, EdgeId, EvidenceId, EvidenceType, FasEnum,
     FindingId, FindingStatus, GraphNodeType, IntegrityMetadata, MissingEvidence, NodeId,
     ObservationId, Provenance, ProvenanceCategory, ProvenanceLevel, RelationshipType,
@@ -32,8 +32,8 @@ from .verification import (
 from .verdicts import Verdict
 
 __all__ = [
-    "Analysis", "Snapshot", "Artifact", "Observation", "Evidence", "GraphNode", "GraphEdge", "AuditEvent", "Report", "ToolRun",
-    "AnalysisId", "SnapshotId", "ArtifactId", "ObservationId", "EvidenceId", "NodeId", "EdgeId",
+    "Analysis", "Project", "Snapshot", "Artifact", "Observation", "Evidence", "GraphNode", "GraphEdge", "AuditEvent", "Report", "ToolRun",
+    "AnalysisId", "ProjectId", "SnapshotId", "ArtifactId", "ObservationId", "EvidenceId", "NodeId", "EdgeId",
     "FindingId", "AttackPathId", "VerdictId", "RemediationId", "VerificationId", "AuditEventId", "ReportId", "ToolRunId",
     "Finding", "AttackPath", "AttackPathStep", "Verdict", "Remediation", "Verification",
     "AnalysisStatus", "ArtifactType", "InvestigationStatus", "HypothesisStatus", "EvidenceRequestType", "InvestigationEventType", "InvestigationToolStatus", "ProvenanceCategory", "ProvenanceLevel", "EvidenceType", "FasEnum",

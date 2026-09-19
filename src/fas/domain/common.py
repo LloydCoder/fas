@@ -41,7 +41,7 @@ def new_id(prefix: str) -> str:
 FasId = Annotated[str, StringConstraints(min_length=4, max_length=64, pattern=r"^[a-z][a-z0-9_]*_[0-9A-HJKMNP-TV-Z]{26}$")]
 AnalysisId = Annotated[FasId, StringConstraints(pattern=r"^analysis_[0-9A-HJKMNP-TV-Z]{26}$")]
 SnapshotId = Annotated[FasId, StringConstraints(pattern=r"^snapshot_[0-9A-HJKMNP-TV-Z]{26}$")]
-ArtifactId = Annotated[FasId, StringConstraints(pattern=r"^artifact_[0-9A-HJKMNP-TV-Z]{26}$")]
+ProjectId = Annotated[FasId, StringConstraints(pattern=r"^project_[0-9A-HJKMNP-TV-Z]{26}$")]\nArtifactId = Annotated[FasId, StringConstraints(pattern=r"^artifact_[0-9A-HJKMNP-TV-Z]{26}$")]
 ObservationId = Annotated[FasId, StringConstraints(pattern=r"^observation_[0-9A-HJKMNP-TV-Z]{26}$")]
 EvidenceId = Annotated[FasId, StringConstraints(pattern=r"^evidence_[0-9A-HJKMNP-TV-Z]{26}$")]
 NodeId = Annotated[FasId, StringConstraints(pattern=r"^node_[0-9A-HJKMNP-TV-Z]{26}$")]
