@@ -42,7 +42,8 @@ construct a traversable union graph.
 
 GraphNode.canonical_identity is the explainable identity key. The
 NodeIdentityResolver normalizes exact identity strings and derives a stable
-node identifier from SHA-256 material encoded in the FAS identifier alphabet.
+scoped node identifier from SHA-256 material encoded in the FAS identifier alphabet.
+Canonical identity remains the cross-snapshot comparison key.
 
 No fuzzy or LLM-based entity resolution is performed.
 
