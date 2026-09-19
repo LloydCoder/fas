@@ -71,3 +71,16 @@ def test_diff_does_not_create_cross_snapshot_traversal(engine, context, provenan
     diff = GraphEngine.diff(engine, patched)
     assert diff.unchanged_nodes == ()
     assert diff.changed_nodes
+
+
+def test_graph_diff_is_directionally_symmetric_for_add_remove(engine, context, provenance):
+    from tests.fixtures.graph.conftest import add_evidence, add_node
+
+    evidence = add_evidence(engine, context, provenance)
+    node = add_node(engine, context, provenance, node_type=GraphNodeType.SYMBOL, identity="new", evidence=evidence)
+    empty = GraphEngine.from_json(engine.to_json())
+    engine.add_node(node)
+    forward = GraphEngine.diff(empty, engine)
+    reverse = GraphEngine.diff(engine, empty)
+    assert {item.id for item in forward.added_nodes} == {node.id}
+    assert {item.id for item in reverse.removed_nodes} == {node.id}
