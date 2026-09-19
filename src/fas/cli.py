@@ -66,7 +66,10 @@ def main(argv: list[str]|None=None) -> int:
         root=Path(args.path).resolve()
         project=service.create_project(args.project or root.name,str(root))
         result=service.analyze_sync(project.id,root)
-        dump(result,args.format); return 0
+        dump(result,args.format)
+        status=result["analysis"].get("status")
+        return 2 if status in {"PARTIAL","FAILED","CANCELLED"} else 0
+
     if args.command=="status":
         dump(service.get_analysis(args.id).model_dump(mode="json"),args.format); return 0
     if args.command=="findings":
