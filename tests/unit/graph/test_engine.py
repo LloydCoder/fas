@@ -21,7 +21,7 @@ def test_insert_lookup_and_direction(engine, context, provenance):
     source = add_node(
         engine, context, provenance, node_type=GraphNodeType.ENDPOINT, identity="/fetch", evidence=evidence
     )
-    target = __import__("conftest").add_node(
+    target = add_node(
         engine, context, provenance, node_type=GraphNodeType.SYMBOL, identity="fetch", evidence=evidence
     )
     engine.add_node(source)
@@ -47,7 +47,7 @@ def test_insert_lookup_and_direction(engine, context, provenance):
 
 
 def test_multigraph_and_merge_preserve_evidence(engine, context, provenance):
-    evidence_a = __import__("conftest").add_evidence(engine, context, provenance, claim="collector A")
+    evidence_a = add_evidence(engine, context, provenance, claim="collector A")
     evidence_b = __import__("conftest").add_evidence(engine, context, provenance, claim="collector B")
     source = __import__("conftest").add_node(
         engine, context, provenance, node_type=GraphNodeType.SYMBOL, identity="a", evidence=evidence_a
@@ -262,7 +262,7 @@ def test_same_snapshot_graph_merge_accumulates_relationship_evidence(context, pr
     )
     engine_b.add_edge(edge)
     engine_a.merge_graph(engine_b)
-    assert set(engine_a.get_edge_evidence(edge.id)) == {evidence_a, evidence_b}
+    assert {item.id for item in engine_a.get_edge_evidence(edge.id)} == {evidence_a.id, evidence_b.id}
 
 
 def test_disallowed_self_loop_relationship_is_rejected(engine, context, provenance):
