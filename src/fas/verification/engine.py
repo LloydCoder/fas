@@ -65,7 +65,7 @@ def _candidate_matches(node, target):
     if node.canonical_identity == target.canonical_identity:
         return 100
     a=_node_semantics(node); b=_node_semantics(target)
-    score=sum(x == y and x for x,y in zip(a,b))
+    score=sum(1 for x,y in zip(a,b) if x and x == y)
     return score
 
 
