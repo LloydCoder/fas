@@ -4,7 +4,7 @@
 
 **Evidence-first security analysis for AI agents and modern software — proving exploitability, reconstructing attack paths, and verifying remediation.**
 
-[![Status: Early Development](https://img.shields.io/badge/status-early%20development-orange)](https://github.com/LloydCoder/fas)
+[![Status: Alpha](https://img.shields.io/badge/status-alpha-orange)](https://github.com/LloydCoder/fas)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
 > **FAS is being built around a simple rule: security conclusions must be traceable to evidence.**
@@ -83,7 +83,7 @@ FAS is designed to reason across connected security domains:
 - Security controls
 - Remediation changes
 
-The initial implementation will prioritize a smaller subset and expand incrementally.
+The current product boundary is deliberately bounded: deterministic collection, investigation, verification, local persistence, reporting, API/CLI access, and security controls are implemented; unsupported infrastructure/runtime backends are exposed as explicit capability boundaries rather than simulated.
 
 ---
 
@@ -91,7 +91,7 @@ The initial implementation will prioritize a smaller subset and expand increment
 
 ### Security signal ingestion
 
-FAS can consume observations from security tools and deterministic collectors, including planned adapters for tools such as Semgrep, Trivy, Gitleaks, OSV-compatible dependency intelligence, and MCP/tooling analysis.
+FAS can consume observations from security tools and deterministic collectors, including adapters for Semgrep, Trivy, Gitleaks, and SARIF-compatible tool output, with additional collectors for repository, dependency, configuration, CI/CD, agent, and MCP metadata where supported.
 
 A tool observation is **not automatically a FAS finding**. FAS preserves the observation and correlates it with additional evidence.
 
@@ -398,7 +398,7 @@ fas/
 └── README.md
 ```
 
-The structure follows domain boundaries rather than individual vendors.
+The structure follows domain boundaries rather than individual vendors. Product API/CLI/application concerns live under `fas.product`; core domain semantics remain independent of HTTP, CLI, SQLite, Docker, and LLM providers.
 
 ---
 
@@ -618,3 +618,4 @@ FAS is licensed under the [Apache License 2.0](LICENSE).
 FAS is security analysis software. Results are evidence produced by the configured analysis environment and should be reviewed in the context of the target system, threat model, and available evidence.
 
 FAS does not guarantee that a system is secure or that a reported verdict captures every possible attack path.
+\n\n## Product usage\n\nInstall:\n\n```bash\npython -m pip install -e \".[dev]\"\n```\n\nInspect the environment:\n\n```bash\nfas doctor --format json\nfas tools --format json\n```\n\nRun a deterministic local analysis:\n\n```bash\nfas analyze ./example-project --format json\n```\n\nThe HTTP API is available with `fas api` and defaults to `127.0.0.1`. Non-local binding requires explicit bearer-token authentication. API versioning is `/v1`; `/openapi.json` exposes the machine-readable API description.\n\n## Capability boundaries\n\nFAS does not claim that a scanner disappearance proves remediation, that an incomplete graph proves absence, or that an LLM is ground truth. The local product backend does not execute arbitrary repository code. Candidate runtime execution requires a future hardened sandbox adapter with explicit filesystem, network, credential, timeout, and resource controls.\n\n## FAS-Bench integration\n\nFAS-Bench remains a separate repository and runtime dependency boundary. FAS exposes versioned machine-readable analysis/report structures so an external benchmark can evaluate findings, evidence, attack paths, verdicts, remediation state, verification state, and provenance without importing private implementation modules.\n\n## Standards references\n\nSARIF interoperability follows the OASIS SARIF 2.1.0 standard and approved errata where applicable. FAS provenance is inspired by supply-chain provenance principles; FAS does not claim formal SLSA, NIST, OWASP, or other framework compliance unless separately demonstrated.\n
