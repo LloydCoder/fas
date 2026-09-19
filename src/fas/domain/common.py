@@ -12,7 +12,9 @@ from typing import Annotated, TypeAlias
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_validator, model_validator
 
-SCHEMA_VERSION = "1.0"\n\nJSONValue: TypeAlias = dict[str, "JSONValue"] | list["JSONValue"] | str | int | float | bool | None
+SCHEMA_VERSION = "1.0"
+
+JSONValue: TypeAlias = dict[str, "JSONValue"] | list["JSONValue"] | str | int | float | bool | None
 
 
 def _ulid() -> str:
