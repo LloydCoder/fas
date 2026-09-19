@@ -1,9 +1,9 @@
 from datetime import timezone, datetime
 import pytest
 from fas.domain import (
-    ContentHash, Evidence, EvidenceType, Finding, FindingStatus, GraphEdge, GraphNode,
+Evidence, EvidenceType, Finding, FindingStatus, GraphEdge, GraphNode,
     GraphNodeType, Provenance, ProvenanceCategory, ProvenanceLevel, RelationshipType,
-    Severity, SourceLocation, InvestigationStatus, new_id,
+    Severity, new_id,
 )
 from fas.investigation import InvestigationEngine, DeterministicFakeModel, InvestigatorRequest
 from fas.investigation.engine import SnapshotScopeError, UnauthorizedInvestigatorTool
@@ -36,9 +36,11 @@ def test_investigation_produces_evidence_backed_exploitable_proposal():
     engine=InvestigationEngine(graph=graph)
     case=engine.create_case(finding=finding,objective="determine exploitability")
     primitive=engine.primitives(case,finding)
-    result=primitive.find_attack_paths(next(iter(graph.nodes())).id,[n.id for n in graph.nodes() if n.type==GraphNodeType.SYMBOL][0])
+    symbol_id=next(n.id for n in graph.nodes() if n.type==GraphNodeType.SYMBOL)
+    endpoint_id=next(n.id for n in graph.nodes() if n.type==GraphNodeType.ENDPOINT)
+    result=primitive.find_attack_paths(endpoint_id,symbol_id)
     assert result.evidence_ids==(ev.id,)
-    path=graph.bounded_paths([n.id for n in graph.nodes() if n.type==GraphNodeType.ENDPOINT][0],[n.id for n in graph.nodes() if n.type==GraphNodeType.SYMBOL][0]).paths[0]
+    path=graph.bounded_paths(endpoint_id,symbol_id).paths[0]
     attack=engine.reconstruct_attack_path(primitive.ctx,path)
     analysis=engine.analyze_exploitability(primitive.ctx,attack)
     final=engine.complete(primitive.ctx,analysis,attack_path=attack,rationale="Evidence establishes attacker-controlled data flow to the sink.")
