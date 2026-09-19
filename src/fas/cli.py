@@ -76,7 +76,9 @@ def main(argv: list[str]|None=None) -> int:
         dump({"items":service.findings(args.id)},args.format); return 0
     if args.command=="report":
         report=service.report(args.id)
-        dump(report,args.format); return 0
+        dump(report,args.format)
+        summary=report.get("content",{}).get("executive_summary",{})
+        return 2 if summary.get("completeness") in {"PARTIAL","TRUNCATED","UNKNOWN"} else 0
     return 2
 
 if __name__=="__main__":
