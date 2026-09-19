@@ -5,7 +5,7 @@ from datetime import datetime,timezone
 from pathlib import Path
 from fas.domain.analysis import Artifact,Observation
 from fas.domain.common import ArtifactType,ContentHash,Provenance,ProvenanceCategory,ProvenanceLevel,SourceLocation
-from .base import CollectionContext,_BatchBuilder
+from .base import _BatchBuilder
 
 _SKIP_DIRS=frozenset({".git",".hg",".svn",".venv","venv","node_modules","__pycache__",".mypy_cache",".pytest_cache",".ruff_cache","dist","build","coverage",".tox",".idea",".vscode"})
 _SOURCE_SUFFIXES=frozenset({".py",".pyi",".js",".jsx",".ts",".tsx",".java",".kt",".go",".rs",".c",".h",".cc",".cpp",".hpp",".cs",".php",".rb",".swift",".scala",".sh",".bash",".zsh",".sql",".yaml",".yml",".json",".toml",".ini"})
