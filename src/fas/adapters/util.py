@@ -2,6 +2,7 @@
 from __future__ import annotations
 import hashlib,json
 from fas.domain.common import ObservationId
+from fas.collectors.base import CollectionContext
 def load_json(payload):
     if isinstance(payload,(dict,list)): return payload
     try: return json.loads(payload)
