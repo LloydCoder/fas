@@ -57,3 +57,21 @@ def test_audit_chain_detects_mutation(tmp_path: Path) -> None:
 
 def test_audit_payload_hash_is_deterministic() -> None:
     assert hashlib.sha256(b"fas").hexdigest() == hashlib.sha256(b"fas").hexdigest()
+
+
+def test_tool_run_identity_is_stable_and_tool_scoped() -> None:
+    from fas.collectors.base import CollectionContext
+    from fas.collectors.raw import stable_run_id
+    context = CollectionContext(
+        analysis_id="analysis_01J00000000000000000000000",
+        snapshot_id="snapshot_01J00000000000000000000000",
+        root=Path(".").resolve(),
+        repository="repo",
+        revision="abc",
+    )
+    semgrep_a = stable_run_id(context, "semgrep")
+    semgrep_b = stable_run_id(context, "semgrep")
+    trivy = stable_run_id(context, "trivy")
+    assert semgrep_a == semgrep_b
+    assert semgrep_a != trivy
+    assert len(semgrep_a.split("_", 1)[1]) == 26
