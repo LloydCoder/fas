@@ -4,35 +4,31 @@
   "title": "FAS Remediation",
   "x-fas-canonical-model": "Remediation",
   "x-fas-schema-version": "1.0",
-  "$ref": "#/$defs/Remediation",
-  "$defs": {
-    "Remediation": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "schema_version": {},
-        "id": {},
-        "finding_id": {},
-        "analysis_id": {},
-        "original_snapshot_id": {},
-        "target_snapshot_id": {},
-        "type": {},
-        "description": {},
-        "root_cause": {},
-        "affected_components": {},
-        "expected_security_property": {},
-        "proposed_changes": {},
-        "actual_changes": {},
-        "status": {},
-        "created_at": {},
-        "updated_at": {},
-        "provenance": {},
-        "expected_broken_path_ids": {}
-      },
-      "required": [
-        "id",
-        "original_snapshot_id"
-      ]
-    }
-  }
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {},
+    "id": {},
+    "finding_id": {},
+    "analysis_id": {},
+    "original_snapshot_id": {},
+    "target_snapshot_id": {},
+    "type": {},
+    "description": {},
+    "root_cause": {},
+    "affected_components": {},
+    "expected_security_property": {},
+    "proposed_changes": {},
+    "actual_changes": {},
+    "status": {},
+    "created_at": {},
+    "updated_at": {},
+    "provenance": {},
+    "expected_broken_path_ids": {},
+    "patched_snapshot_id": {}
+  },
+  "required": [
+    "id",
+    "original_snapshot_id"
+  ]
 }
