@@ -12,7 +12,6 @@ from fas.domain.common import (
     RelationshipType,
     SnapshotId,
 )
-from fas.domain.evidence import Evidence
 from fas.domain.graph import GraphEdge, GraphNode
 
 
