@@ -7,19 +7,12 @@ from fas.domain.analysis import Artifact,Observation
 from fas.domain.common import AnalysisId,SnapshotId
 @dataclass(frozen=True,slots=True)
 class CollectionContext:
-    analysis_id:AnalysisId
-    snapshot_id:SnapshotId
-    root:Path
-    repository:str
-    revision:str|None=None
-    max_files:int=100_000
-    max_file_bytes:int=5*1024*1024
+    analysis_id:AnalysisId; snapshot_id:SnapshotId; root:Path; repository:str; revision:str|None=None
+    max_files:int=100_000; max_file_bytes:int=5*1024*1024
     def __post_init__(self):
-        if self.max_files<1 or self.max_file_bytes<1:
-            raise ValueError("collection limits must be positive")
+        if self.max_files<1 or self.max_file_bytes<1: raise ValueError("collection limits must be positive")
         root=self.root.expanduser().resolve()
-        if not root.is_dir(): raise ValueError(f"collection root is not a directory:
-            {root}")
+        if not root.is_dir(): raise ValueError(f"collection root is not a directory: {root}")
         object.__setattr__(self,"root",root)
 @dataclass(frozen=True,slots=True)
 class CollectionBatch:
@@ -36,12 +29,8 @@ class Collector(Protocol):
     def collect(self,context:CollectionContext)->CollectionBatch: ...
 @dataclass(slots=True)
 class _BatchBuilder:
-    artifacts:list[Artifact]=field(default_factory=list)
-    observations:list[Observation]=field(default_factory=list)
-    warnings:list[str]=field(default_factory=list)
-    skipped:int=0
-    complete:bool=True
-    raw_artifacts:list[object]=field(default_factory=list)
-    tool_runs:list[object]=field(default_factory=list)
+    artifacts:list[Artifact]=field(default_factory=list); observations:list[Observation]=field(default_factory=list)
+    warnings:list[str]=field(default_factory=list); skipped:int=0; complete:bool=True
+    raw_artifacts:list[object]=field(default_factory=list); tool_runs:list[object]=field(default_factory=list)
     def build(self)->CollectionBatch:
         return CollectionBatch(tuple(self.artifacts),tuple(self.observations),self.complete,self.skipped,tuple(self.warnings),tuple(self.raw_artifacts),tuple(self.tool_runs))
