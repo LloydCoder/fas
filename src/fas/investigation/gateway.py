@@ -1,6 +1,6 @@
 """Constrained model gateway: validates structured output and tool authorization outside the model."""
 from __future__ import annotations
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from .model import InvestigatorModel, InvestigatorRequest, InvestigatorResponse
 from fas.domain.investigation import ToolPolicy
 
@@ -10,7 +10,7 @@ class ModelOutputRejected(ValueError):
 @dataclass(frozen=True)
 class ConstrainedInvestigator:
     model: InvestigatorModel
-    policy: ToolPolicy = ToolPolicy()
+    policy: ToolPolicy = field(default_factory=ToolPolicy)
     timeout_seconds: float = 30.0
 
     def request(self, request: InvestigatorRequest) -> InvestigatorResponse:
