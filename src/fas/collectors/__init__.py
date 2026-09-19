@@ -11,7 +11,7 @@ from .parsing import ParseLimits,ParseLimitError,safe_json_loads
 from .agent import AgentConfigurationCollector
 from .configuration import ConfigurationCollector
 from .ci_cd import CICDCollector
-from .filesystem import PathPolicy,ResourceLimitError,safe_walk
+from .filesystem import PathPolicy,ResourceLimitError,safe_read_bytes,safe_walk
 from .replay import ReplayManifest,manifest,plan_hash,replay_compatible
 from .tool import ToolCollector
-__all__=["AgentConfigurationCollector","CancellationToken","CICDCollector","CodeDiscoveryCollector","CollectionBatch","CollectionContext","CollectionError","CollectionOrchestrator","CollectionPipeline","CollectionPlan","CollectionResult","CollectionStatus","CollectionSummary","Collector","CollectorOutcome","CollectorSpec","ConfigurationCollector","DependencyDiscoveryCollector","ExecutionPolicy","ExecutionResult","NormalizationError","ObservationNormalizer","ParseLimitError","ParseLimits","PathPolicy","RawArtifact","ReplayManifest","RepositoryDiscoveryCollector","ResourceLimitError","SecureExecutor","ToolCollector","ToolRun","manifest","plan_hash","replay_compatible","safe_json_loads","safe_walk"]
+__all__=["AgentConfigurationCollector","CancellationToken","CICDCollector","CodeDiscoveryCollector","CollectionBatch","CollectionContext","CollectionError","CollectionOrchestrator","CollectionPipeline","CollectionPlan","CollectionResult","CollectionStatus","CollectionSummary","Collector","CollectorOutcome","CollectorSpec","ConfigurationCollector","DependencyDiscoveryCollector","ExecutionPolicy","ExecutionResult","NormalizationError","ObservationNormalizer","ParseLimitError","ParseLimits","PathPolicy","RawArtifact","ReplayManifest","RepositoryDiscoveryCollector","ResourceLimitError","SecureExecutor","ToolCollector","ToolRun","manifest","plan_hash","replay_compatible","safe_json_loads","safe_read_bytes","safe_walk"]
