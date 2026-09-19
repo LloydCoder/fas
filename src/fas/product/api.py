@@ -29,42 +29,62 @@ class ApiServer:
             server_version="FAS/0.1"
             def _send(self,status,payload):
                 body=json.dumps(payload,sort_keys=True,separators=(",",":")).encode()
-                self.send_response(status); self.send_header("Content-Type","application/json"); self.send_header("Content-Length",str(len(body)))
-                self.send_header("X-Request-ID",secrets.token_hex(12)); self.end_headers(); self.wfile.write(body)
+                self.send_response(status)
+                self.send_header("Content-Type","application/json")
+                self.send_header("Content-Length",str(len(body)))
+                self.send_header("X-Request-ID",secrets.token_hex(12))
+                self.end_headers()
+                self.wfile.write(body)
             def _auth(self):
                 if service.settings.auth_required:
                     supplied=self.headers.get("Authorization","")
                     expected=service.settings.api_token or ""
-                    if not supplied.startswith("Bearer ") or not secrets.compare_digest(supplied[7:],expected): return False
+                    if not supplied.startswith("Bearer ") or not secrets.compare_digest(supplied[7:],expected):
+                        return False
                 return True
             def do_GET(self):
-                if not self._auth(): return self._send(401,{"error":{"code":"UNAUTHORIZED","message":"authentication required"}})
+                if not self._auth():
+                    return self._send(401,{"error":{"code":"UNAUTHORIZED","message":"authentication required"}})
                 p=urlparse(self.path).path
                 try:
-                    if p=="/health/live": return self._send(200,{"status":"ok"})
+                    if p=="/health/live":
+                        return self._send(200,{"status":"ok"})
                     if p=="/health/ready":
-                        d=service.doctor(); return self._send(200 if d["ok"] else 503,d)
-                    if p=="/openapi.json": return self._send(200,OPENAPI)
+                        d=service.doctor()
+                        return self._send(200 if d["ok"] else 503,d)
+                    if p=="/openapi.json":
+                        return self._send(200,OPENAPI)
                     if p.startswith("/v1/projects/"):
                         return self._send(200,service.get_project(p.split("/")[3]).model_dump(mode="json"))
                     if p.startswith("/v1/analyses/"):
                         parts=p.strip("/").split("/")
-                        aid=parts[2]; a=service.get_analysis(aid)
-                        if len(parts)==3: return self._send(200,a.model_dump(mode="json"))
-                        if parts[3]=="status": return self._send(200,{"analysis_id":aid,"status":a.status.value})
-                        if parts[3]=="findings": return self._send(200,{"items":service.findings(aid)})
+                        aid=parts[2]
+                        a=service.get_analysis(aid)
+                        if len(parts)==3:
+                            return self._send(200,a.model_dump(mode="json"))
+                        if parts[3]=="status":
+                            return self._send(200,{"analysis_id":aid,"status":a.status.value})
+                        if parts[3]=="findings":
+                            return self._send(200,{"items":service.findings(aid)})
                     if p.startswith("/v1/reports/"):
-                        rid=p.split("/")[3]; return self._send(200,service.store.get("reports",rid))
+                        rid=p.split("/")[3]
+                        return self._send(200,service.store.get("reports",rid))
                     return self._send(404,{"error":{"code":"NOT_FOUND","message":"resource not found"}})
-                except KeyError: return self._send(404,{"error":{"code":"NOT_FOUND","message":"resource not found"}})
-                except ValueError as exc: return self._send(400,{"error":{"code":"INVALID_REQUEST","message":str(exc)}})
-                except Exception as exc: return self._send(500,{"error":{"code":"INTERNAL_ERROR","message":f"{type(exc).__name__}"}})
+                except KeyError:
+                    return self._send(404,{"error":{"code":"NOT_FOUND","message":"resource not found"}})
+                except ValueError as exc:
+                    return self._send(400,{"error":{"code":"INVALID_REQUEST","message":str(exc)}})
+                except Exception as exc:
+                    return self._send(500,{"error":{"code":"INTERNAL_ERROR","message":f"{type(exc).__name__}"}})
             def do_POST(self):
-                if not self._auth(): return self._send(401,{"error":{"code":"UNAUTHORIZED","message":"authentication required"}})
+                if not self._auth():
+                    return self._send(401,{"error":{"code":"UNAUTHORIZED","message":"authentication required"}})
                 try:
                     length=int(self.headers.get("Content-Length","0"))
-                    if length>1_000_000: return self._send(413,{"error":{"code":"PAYLOAD_TOO_LARGE","message":"request body exceeds limit"}})
-                    raw=self.rfile.read(length); data=json.loads(raw or b"{}")
+                    if length>1_000_000:
+                        return self._send(413,{"error":{"code":"PAYLOAD_TOO_LARGE","message":"request body exceeds limit"}})
+                    raw=self.rfile.read(length)
+                    data=json.loads(raw or b"{}")
                     p=urlparse(self.path).path
                     if p=="/v1/projects":
                         project=service.create_project(str(data["name"]),str(data["repository"]),str(data.get("owner","api")))
