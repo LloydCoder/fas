@@ -435,8 +435,11 @@ class GraphEngine:
     def reachable_nodes(self, start_node_id: NodeId, **kwargs) -> TraversalResult:
         return self.traverse(start_node_id, **kwargs)
 
+    def path_query(self, source_node_id: NodeId, target_node_id: NodeId, **kwargs) -> PathResult:
+        return self.shortest_path(source_node_id, target_node_id, **kwargs)
+
     def has_path(self, source_node_id: NodeId, target_node_id: NodeId, **kwargs) -> bool:
-        result = self.shortest_path(source_node_id, target_node_id, **kwargs)
+        result = self.path_query(source_node_id, target_node_id, **kwargs)
         return bool(result.paths)
 
     def shortest_path(self, source_node_id: NodeId, target_node_id: NodeId, **kwargs) -> PathResult:
@@ -886,6 +889,9 @@ class GraphView:
 
     def shortest_path(self, *args, **kwargs):
         return self._engine.shortest_path(*args, **kwargs)
+
+    def path_query(self, *args, **kwargs):
+        return self._engine.path_query(*args, **kwargs)
 
     def all_shortest_paths(self, *args, **kwargs):
         return self._engine.all_shortest_paths(*args, **kwargs)
