@@ -7,7 +7,7 @@ from datetime import datetime
 from pydantic import Field, field_validator, model_validator
 
 from fas.domain.common import (
-    AnalysisId, AnalysisStatus, ArtifactId, ArtifactType, ContentHash,
+    AnalysisId, AnalysisStatus, ArtifactId, ArtifactType, ContentHash, JSONValue,
     DomainModel, ObservationId, Provenance, RepositoryReference, SnapshotId, SourceLocation,
     utc_now,
 )
@@ -81,7 +81,7 @@ class Observation(DomainModel):
     message: str = Field(min_length=1, max_length=16384)
     raw_reference: str | None = Field(default=None, min_length=1, max_length=4096)
     raw_artifact_id: ArtifactId | None = None
-    observed_value: object | None = None
+    observed_value: JSONValue | None = None
     provenance: tuple[Provenance, ...] = Field(min_length=1)
     observed_at: datetime
     metadata: dict[str, str] = Field(default_factory=dict)
