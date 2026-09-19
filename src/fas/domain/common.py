@@ -8,13 +8,17 @@ import secrets
 import time
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Annotated, TypeAlias
+from typing import Annotated
+from typing_extensions import TypeAliasType
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_validator, model_validator
 
 SCHEMA_VERSION = "1.0"
 
-JSONValue: TypeAlias = dict[str, "JSONValue"] | list["JSONValue"] | str | int | float | bool | None
+JSONValue = TypeAliasType(
+    "JSONValue",
+    dict[str, "JSONValue"] | list["JSONValue"] | str | int | float | bool | None,
+)
 
 
 def _ulid() -> str:
