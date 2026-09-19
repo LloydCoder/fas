@@ -70,4 +70,4 @@ def test_diff_does_not_create_cross_snapshot_traversal(engine, context, provenan
     patched.add_node(other)
     diff = GraphEngine.diff(engine, patched)
     assert diff.unchanged_nodes == ()
-    assert diff.added_nodes and diff.removed_nodes
+    assert diff.changed_nodes
