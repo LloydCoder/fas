@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import hashlib
 
+from datetime import datetime
+
 from fas.domain.common import (
     AnalysisId,
     Confidence,
@@ -120,15 +122,9 @@ class GraphBuilder:
         confidence: Confidence | None = None,
         security_relevant: bool = False,
         metadata: dict[str, str] | None = None,
-        observed_at=None,
+        observed_at: datetime | None = None,
     ) -> GraphEdge:
-        semantic = "|".join((
-            analysis_id,
-            snapshot_id,
-            source_node_id,
-            target_node_id,
-            relationship_type.value,
-        ))
+        semantic = f"{analysis_id}|{snapshot_id}|{source_node_id}|{target_node_id}|{relationship_type.value}"
         return GraphEdge(
             id=stable_id("edge", semantic),  # type: ignore[arg-type]
             source_node_id=source_node_id,
