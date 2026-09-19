@@ -171,6 +171,7 @@ class VerificationEngine:
     ) -> VerificationOutcome:
         errors=self._validate_inputs(original_snapshot,candidate_snapshot,original_graph,candidate_graph)
         plan=self.plan(finding,remediation,original_snapshot,candidate_snapshot)
+        verification_id=new_id("verification")
         checks=[]
         missing=list(errors)
         if errors:
@@ -233,7 +234,7 @@ class VerificationEngine:
                 alternate_ids.extend(p.id for p in candidate_attacks)
                 for p in candidate_attacks:
                     residuals.append(ResidualPath(
-                        id=new_id("residual_path"),verification_id=new_id("verification"),path_id=p.id,
+                        id=new_id("residual_path"),verification_id=verification_id,path_id=p.id,
                         security_property=remediation.expected_security_property,
                         evidence_ids=p.supporting_evidence_ids,exploitable=True,equivalent_impact=True,
                         description="Candidate path reaches the original security-impact region.",
@@ -311,7 +312,7 @@ class VerificationEngine:
 
         ve=VerificationEvidence(
             id=new_id("verification_evidence"),
-            verification_id=new_id("verification"),
+            verification_id=verification_id,
             claim="Candidate snapshot was compared against the original security property.",
             evidence_ids=tuple(sorted(supporting)),
             graph_diff_id=graph_diff.id,
@@ -322,7 +323,7 @@ class VerificationEngine:
             supporting.update(ve.evidence_ids)
 
         result=VerificationResult(
-            verification_id=new_id("verification"),
+            verification_id=verification_id,
             finding_id=finding.id,
             analysis_id=original_graph.scope.analysis_id,
             original_snapshot_id=original_snapshot.id,
@@ -347,12 +348,12 @@ class VerificationEngine:
             completed_at=datetime.now(timezone.utc),
         )
         run=VerificationRun(
-            id=new_id("verification_run"),verification_id=result.verification_id,plan_id=plan.id,
+            id=new_id("verification_run"),verification_id=verification_id,plan_id=plan.id,
             started_at=result.created_at,completed_at=result.completed_at,checks_executed=tuple(checks),
             paths_evaluated=len(candidate_paths),alternate_paths_discovered=len(alternate_ids),
         )
         report=VerificationReport(
-            verification_id=result.verification_id,finding_id=finding.id,
+            verification_id=verification_id,finding_id=finding.id,
             security_property=remediation.expected_security_property,
             original_snapshot_id=original_snapshot.id,candidate_snapshot_id=candidate_snapshot.id,
             original_attack_paths=tuple(p.id for p in original_paths),
