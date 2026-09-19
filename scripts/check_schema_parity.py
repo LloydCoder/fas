@@ -15,7 +15,6 @@ from fas.domain.verification import (
 def check_schema(path, models):
     schema=json.loads(Path(path).read_text(encoding="utf-8"))
     failures=[]
-    failures += check_schema("schemas/project.schema.json", {"Project":Project})
     for name, model in models.items():
         expected=model.model_json_schema()
         actual=schema.get("$defs",{}).get(name)
@@ -30,6 +29,7 @@ def check_schema(path, models):
 
 def main():
     failures=[]
+    failures += check_schema("schemas/project.schema.json", {"Project":Project})
     failures += check_schema("schemas/investigation.schema.json", {
         "InvestigationCase":InvestigationCase,"InvestigationHypothesis":InvestigationHypothesis,
         "EvidenceRequest":EvidenceRequest,"InvestigationResult":InvestigationResult,"VerdictProposal":VerdictProposal,
