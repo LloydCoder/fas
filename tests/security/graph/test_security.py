@@ -115,6 +115,7 @@ def test_deterministic_query_order_is_independent_of_insertion_order(context, pr
                 source_node_id=nodes[left].id, target_node_id=nodes[right].id,
                 relationship_type=RelationshipType.CALLS, provenance=(provenance,),
                 evidence_ids=(evidence.id,),
+                observed_at=evidence.observed_at,
             ))
         return engine.to_json()
 
