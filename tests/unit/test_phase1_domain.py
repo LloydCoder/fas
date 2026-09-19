@@ -96,6 +96,7 @@ def test_analysis_snapshot_artifact_observation(context):
     )
     artifact = Artifact(
         id=i["artifact"],
+        analysis_id=i["analysis"],
         type=ArtifactType.SOURCE_FILE,
         name="src/app.py",
         snapshot_id=snapshot.id,
@@ -103,6 +104,8 @@ def test_analysis_snapshot_artifact_observation(context):
     )
     observation = Observation(
         id=i["observation"],
+        analysis_id=i["analysis"],
+        snapshot_id=i["snapshot"],
         source="semgrep",
         category="command-injection",
         message="possible sink",
