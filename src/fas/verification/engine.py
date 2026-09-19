@@ -171,6 +171,8 @@ class VerificationEngine:
     ) -> VerificationOutcome:
         errors=self._validate_inputs(original_snapshot,candidate_snapshot,original_graph,candidate_graph)
         plan=self.plan(finding,remediation,original_snapshot,candidate_snapshot)
+        if security_tests:
+            plan=plan.model_copy(update={"required_checks": tuple((*plan.required_checks, VerificationCheck.VERIFY_SECURITY_TEST))})
         verification_id=new_id("verification")
         checks=[]
         missing=list(errors)
