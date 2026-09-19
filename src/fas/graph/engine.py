@@ -589,40 +589,49 @@ class GraphEngine:
         )
 
     def strongly_connected_components(self) -> tuple[tuple[NodeId, ...], ...]:
-        index = 0
-        indices: dict[NodeId, int] = {}
-        lowlinks: dict[NodeId, int] = {}
-        stack: list[NodeId] = []
-        on_stack: set[NodeId] = set()
+        """Kosaraju SCC using iterative DFS to avoid recursion-depth failures."""
+        nodes = tuple(node.id for node in self.nodes())
+        visited: set[NodeId] = set()
+        finish_order: list[NodeId] = []
+
+        for root in nodes:
+            if root in visited:
+                continue
+            visited.add(root)
+            stack: list[tuple[NodeId, bool]] = [(root, False)]
+            while stack:
+                current, exiting = stack.pop()
+                if exiting:
+                    finish_order.append(current)
+                    continue
+                stack.append((current, True))
+                children = tuple(
+                    sorted((edge.target_node_id for edge in self.outgoing_edges(current)), reverse=True)
+                )
+                for child in children:
+                    if child not in visited:
+                        visited.add(child)
+                        stack.append((child, False))
+
+        visited.clear()
         components: list[tuple[NodeId, ...]] = []
-
-        def visit(node_id: NodeId) -> None:
-            nonlocal index
-            indices[node_id] = index
-            lowlinks[node_id] = index
-            index += 1
-            stack.append(node_id)
-            on_stack.add(node_id)
-            for edge in self.outgoing_edges(node_id):
-                target = edge.target_node_id
-                if target not in indices:
-                    visit(target)
-                    lowlinks[node_id] = min(lowlinks[node_id], lowlinks[target])
-                elif target in on_stack:
-                    lowlinks[node_id] = min(lowlinks[node_id], indices[target])
-            if lowlinks[node_id] == indices[node_id]:
-                component = []
-                while True:
-                    member = stack.pop()
-                    on_stack.remove(member)
-                    component.append(member)
-                    if member == node_id:
-                        break
-                components.append(tuple(sorted(component)))
-
-        for node in self.nodes():
-            if node.id not in indices:
-                visit(node.id)
+        for root in reversed(finish_order):
+            if root in visited:
+                continue
+            component: list[NodeId] = []
+            stack = [root]
+            visited.add(root)
+            while stack:
+                current = stack.pop()
+                component.append(current)
+                parents = tuple(
+                    sorted((edge.source_node_id for edge in self.incoming_edges(current)), reverse=True)
+                )
+                for parent in parents:
+                    if parent not in visited:
+                        visited.add(parent)
+                        stack.append(parent)
+            components.append(tuple(sorted(component)))
         return tuple(sorted(components, key=lambda component: component))
 
     def detect_cycles(self) -> tuple[tuple[NodeId, ...], ...]:
