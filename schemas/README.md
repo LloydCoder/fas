@@ -11,3 +11,6 @@ taxonomies cannot silently disappear from the checked-in schemas.
 The legacy `analysis-result.schema.json` remains for compatibility with the
 initial repository contract; new Phase 1 code must use the canonical domain
 models and the schemas named after those models.
+
+
+Phase 2 adds `graph.schema.json` for canonical graph export. GraphNode and GraphEdge remain Pydantic domain contracts; the graph export preserves analysis/snapshot scope, evidence identifiers, provenance, and deterministic ordering.
