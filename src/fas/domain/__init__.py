@@ -14,6 +14,12 @@ from .common import (
 from .evidence import Evidence
 from .findings import Finding
 from .graph import GraphEdge, GraphNode
+from .investigation import (
+    ControlAssessment, EvidenceRequest, ExploitabilityAnalysis, InvestigationBudget,
+    InvestigationCase, InvestigationConstraints, InvestigationEvent, InvestigationHypothesis,
+    InvestigationResult, InvestigationToolResult, PermissionAssessment, ToolPolicy,
+    TrustBoundaryAssessment, VerdictProposal,
+)
 from .remediation import Remediation, Verification
 from .verdicts import Verdict
 
@@ -25,6 +31,9 @@ __all__ = [
     "AnalysisStatus", "ArtifactType", "ProvenanceCategory", "ProvenanceLevel", "EvidenceType", "FasEnum",
     "GraphNodeType", "RelationshipType", "FindingStatus", "Severity", "VerdictType",
     "RemediationStatus", "VerificationTargetType", "VerificationType", "VerificationStatus",
-    "ActorType", "Confidence", "ContentHash", "IntegrityMetadata", "RepositoryReference",
+    "ActorType", "Confidence", "InvestigationCase", "InvestigationHypothesis", "EvidenceRequest",
+    "InvestigationResult", "InvestigationEvent", "InvestigationBudget", "InvestigationConstraints",
+    "InvestigationToolResult", "ControlAssessment", "PermissionAssessment", "TrustBoundaryAssessment",
+    "ExploitabilityAnalysis", "VerdictProposal", "ToolPolicy", "ContentHash", "IntegrityMetadata", "RepositoryReference",
     "ArtifactReference", "SourceLocation", "Provenance", "MissingEvidence", "new_id", "utc_now",
 ]
