@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/LloydCoder/fas/blob/main/schemas/graph.schema.json",
+  "title": "FAS Evidence Graph",
+  "x-fas-schema-version": "1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "analysis_id", "snapshot_id", "complete", "nodes", "edges", "evidence", "artifacts", "observations"],
+  "properties": {
+    "schema_version": {"type": "string", "const": "1.0"},
+    "analysis_id": {"type": "string", "pattern": "^analysis_[0-9A-HJKMNP-TV-Z]{26}$"},
+    "snapshot_id": {"type": ["string", "null"], "pattern": "^snapshot_[0-9A-HJKMNP-TV-Z]{26}$"},
+    "complete": {"type": "boolean"},
+    "metadata": {"type": "object", "additionalProperties": {"type": "string"}},
+    "nodes": {"type": "array"},
+    "edges": {"type": "array"},
+    "evidence": {"type": "array"},
+    "artifacts": {"type": "array"},
+    "observations": {"type": "array"}
+  },
+  "$defs": {
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "id", "type", "label", "analysis_id", "snapshot_id", "canonical_identity", "evidence_ids", "provenance", "security_relevant", "metadata"]
+    },
+    "edge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "id", "source_node_id", "target_node_id", "relationship_type", "analysis_id", "snapshot_id", "provenance", "evidence_ids", "observed_at", "security_relevant", "metadata"]
+    }
+  }
+}
