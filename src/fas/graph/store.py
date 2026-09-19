@@ -8,10 +8,10 @@ from typing import Protocol
 from fas.domain.analysis import Artifact, Observation
 from fas.domain.evidence import Evidence
 from fas.domain.graph import GraphEdge, GraphNode
-from fas.domain.common import EvidenceId, NodeId
+from fas.domain.common import EvidenceId, NodeId, RelationshipType
 
 from .contracts import GraphScope
-from .errors import DuplicateEdge, DuplicateNode, EdgeNotFound, NodeNotFound, SnapshotMismatch
+from .errors import DuplicateEdge, DuplicateNode, EdgeNotFound, InvalidEdge, NodeNotFound, SnapshotMismatch
 
 
 @dataclass(frozen=True, slots=True)
@@ -45,6 +45,9 @@ class GraphStore(Protocol):
     def evidence(self, evidence_id: EvidenceId) -> Evidence: ...
     def artifacts(self, artifact_id: str) -> Artifact: ...
     def observations(self, observation_id: str) -> Observation: ...
+
+
+SELF_LOOP_ALLOWED_RELATIONSHIPS = frozenset({RelationshipType.CALLS, RelationshipType.FLOWS_TO})
 
 
 class InMemoryGraphStore:
@@ -124,6 +127,8 @@ class InMemoryGraphStore:
             raise DuplicateEdge(f"edge {edge.id} already exists")
         if edge.source_node_id not in self._nodes or edge.target_node_id not in self._nodes:
             raise NodeNotFound("edge endpoints must exist before edge insertion")
+        if edge.source_node_id == edge.target_node_id and edge.relationship_type not in SELF_LOOP_ALLOWED_RELATIONSHIPS:
+            raise InvalidEdge(f"self-loop is not permitted for {edge.relationship_type.value}")
         source = self._nodes[edge.source_node_id]
         target = self._nodes[edge.target_node_id]
         if source.analysis_id != edge.analysis_id or target.analysis_id != edge.analysis_id:
