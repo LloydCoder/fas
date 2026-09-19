@@ -562,12 +562,14 @@ FAS is not intended to:
 
 ### Phase 2 — Evidence Graph
 
-- Graph nodes
-- Graph edges
-- Provenance-aware relationships
-- Path queries
-- Subgraph queries
-- Trust-boundary representation
+- Canonical graph node/edge scope and identity
+- In-memory indexed graph store abstraction
+- Provenance-aware relationships and evidence lookup
+- Deterministic traversal, shortest paths and bounded path enumeration
+- Strongly/weakly connected components and cycle analysis
+- Snapshot-isolated subgraph and trust-boundary queries
+- Deterministic JSON export/import and cross-snapshot graph diff
+- Graph sealing, validation, partial and truncation semantics
 
 ### Phase 3 — Security Collection
 
