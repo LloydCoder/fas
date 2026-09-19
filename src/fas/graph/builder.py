@@ -48,8 +48,17 @@ class NodeIdentityResolver:
         return f"{kind.value.lower()}:{value}"
 
     @classmethod
-    def node_id(cls, kind: GraphNodeType, identity: str) -> NodeId:
-        return stable_id("node", cls.canonical(kind, identity))  # type: ignore[return-value]
+    def node_id(
+        cls,
+        kind: GraphNodeType,
+        identity: str,
+        *,
+        analysis_id: AnalysisId | None = None,
+        snapshot_id: SnapshotId | None = None,
+    ) -> NodeId:
+        canonical = cls.canonical(kind, identity)
+        material = f"{analysis_id}|{snapshot_id}|{canonical}" if analysis_id and snapshot_id else canonical
+        return stable_id("node", material)  # type: ignore[return-value]
 
 
 class GraphBuilder:
@@ -95,9 +104,8 @@ class GraphBuilder:
         metadata: dict[str, str] | None = None,
     ) -> GraphNode:
         canonical = NodeIdentityResolver.canonical(node_type, canonical_identity)
-        scoped_identity = f"{analysis_id}|{snapshot_id}|{canonical}"
         return GraphNode(
-            id=stable_id("node", scoped_identity),
+            id=NodeIdentityResolver.node_id(node_type, canonical_identity, analysis_id=analysis_id, snapshot_id=snapshot_id),
             type=node_type,
             label=label,
             analysis_id=analysis_id,
