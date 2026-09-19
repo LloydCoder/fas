@@ -67,6 +67,7 @@ class Snapshot(DomainModel):
     configuration_identity: str | None = Field(default=None, min_length=1, max_length=2048)
     artifact_ids: tuple[ArtifactId, ...] = ()
     immutable: Literal[True] = True
+    metadata: dict[str, str] = Field(default_factory=dict)
 
     @field_validator("captured_at")
     @classmethod
