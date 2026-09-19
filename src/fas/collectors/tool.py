@@ -25,7 +25,7 @@ class ToolCollector:
         self.raw_dir.mkdir(parents=True,exist_ok=True)
         argv=tuple(context.root.as_posix() if item=="{target}" else item for item in self.argv)
         result=self.executor.run(argv,cwd=self.raw_dir,cancel=getattr(context,"cancel",None))
-        run_id=stable_run_id(context)
+        run_id=stable_run_id(context,self.tool_name)
         raw_name=f"{run_id}-{self.tool_name}.stdout"
         raw_path=self.raw_dir/raw_name
         raw_path.write_bytes(result.stdout)
