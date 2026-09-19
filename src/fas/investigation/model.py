@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Protocol
 from pydantic import BaseModel, ConfigDict, Field
+from fas.domain.common import JSONValue
 
 class ModelToolCall(BaseModel):
     model_config=ConfigDict(extra="forbid",frozen=True)
@@ -20,7 +21,7 @@ class InvestigatorRequest(BaseModel):
 class InvestigatorResponse(BaseModel):
     model_config=ConfigDict(extra="forbid",frozen=True)
     kind:str=Field(min_length=1,max_length=64)
-    payload:dict[str,str]=Field(default_factory=dict)
+    payload:dict[str,JSONValue]=Field(default_factory=dict)
     tool_calls:tuple[ModelToolCall,...]=()
     model_id:str=Field(min_length=1,max_length=256)
     usage_tokens:int|None=Field(default=None,ge=0)
