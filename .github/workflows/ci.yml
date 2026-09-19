@@ -38,7 +38,7 @@ jobs:
         run: pytest --cov=fas --cov-report=term-missing --cov-report=xml
 
       - name: Type check
-        run: python -m compileall -q src tests
+        run: mypy src/fas --ignore-missing-imports
 
       - name: Security tests
         run: pytest tests/security
@@ -74,6 +74,9 @@ jobs:
 
       - name: API smoke
         run: pytest tests -k "api"
+
+      - name: End-to-end smoke
+        run: pytest tests/e2e
 
       - name: Reproducibility tests
         run: pytest tests -k "reproduc"
