@@ -115,6 +115,7 @@ def test_analysis_snapshot_artifact_observation(context):
         project="example/project",
         status=AnalysisStatus.COLLECTING,
         snapshot_ids=(snapshot.id,),
+        created_at=NOW,
         started_at=NOW,
     )
     assert analysis.snapshot_ids == (snapshot.id,)
