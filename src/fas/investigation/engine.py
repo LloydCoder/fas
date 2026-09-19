@@ -383,8 +383,7 @@ class InvestigationEngine:
         if path is None:
             missing_values.add("validated attack path unavailable")
             return ExploitabilityAnalysis(evidence_sufficient=False,missing_evidence=tuple(sorted(missing_values)),contradictions=tuple(sorted(contradiction_values)))
-        evidence_records=[context.graph.store.evidence(eid) for eid in sorted(path.supporting_evidence_ids)]
-        attacker_influence=None; identity=None
+        for step in path.steps:\n            edge = context.graph.get_edge(step.edge_id)\n            if edge.snapshot_id != context.case.snapshot_id or not edge.evidence_ids:\n                contradiction_values.add(f"attack path step {step.edge_id} is not evidence-backed")\n        evidence_records=[context.graph.store.evidence(eid) for eid in sorted(path.supporting_evidence_ids)]\n        attacker_influence=None; identity=None
         for evidence in evidence_records:
             value=evidence.observed_value
             if isinstance(value,dict):
