@@ -26,7 +26,7 @@ Verification
 Reporting
 ```
 
-Phase 5 is implemented by [verification-engine.md](verification-engine.md).
+Phase 5 is implemented by [verification-engine.md](verification-engine.md). Canonical terminology is in [terminology.md](terminology.md).
 
 ## Phase boundaries
 
