@@ -143,8 +143,14 @@ class VerificationEngine:
     def _candidate_paths(self, original_path: AttackPath, before: GraphEngine, after: GraphEngine, limit: int = 20):
         original_nodes=[before.get_node(original_path.entry)] + [before.get_node(s.next_node_id) for s in original_path.steps]
         source_target=(original_nodes[0], original_nodes[-1])
-        sources=sorted(after.nodes(), key=lambda n:(- _candidate_matches(n,source_target[0]),n.id))[:10]
-        sinks=sorted(after.nodes(), key=lambda n:(- _candidate_matches(n,source_target[1]),n.id))[:10]
+        sources=sorted(
+            (n for n in after.nodes() if n.type == source_target[0].type and _candidate_matches(n,source_target[0]) > 0),
+            key=lambda n:(- _candidate_matches(n,source_target[0]),n.id),
+        )[:10]
+        sinks=sorted(
+            (n for n in after.nodes() if n.type == source_target[1].type and _candidate_matches(n,source_target[1]) > 0),
+            key=lambda n:(- _candidate_matches(n,source_target[1]),n.id),
+        )[:10]
         paths=[]
         for source in sources:
             for sink in sinks:
