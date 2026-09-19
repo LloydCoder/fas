@@ -71,10 +71,10 @@ jobs:
           fas tools --format json
 
       - name: API smoke
-        run: pytest tests/integration/api
+        run: pytest tests -k "api"
 
       - name: Reproducibility tests
-        run: pytest tests/integration -k "reproduc"
+        run: pytest tests -k "reproduc"
 
       - name: Product integration smoke
         run: pytest tests/integration/product
