@@ -263,6 +263,34 @@ class DeterministicInvestigator:
     def inspect_trust_boundary(self,node_id:str)->InvestigationToolResult:
         return self._inspect_typed("inspect_trust_boundary",node_id,GraphNodeType.TRUST_BOUNDARY)
 
+    def inspect_dependency(self,node_id:str)->InvestigationToolResult:
+        return self._inspect_typed("inspect_dependency",node_id,GraphNodeType.DEPENDENCY)
+
+    def inspect_configuration(self,node_id:str)->InvestigationToolResult:
+        return self._inspect_typed("inspect_configuration",node_id,GraphNodeType.CONFIGURATION)
+
+    def trace_endpoint(self,node_id:str)->InvestigationToolResult:
+        return self._inspect_typed("trace_endpoint",node_id,GraphNodeType.ENDPOINT)
+
+    def inspect_mcp(self,node_id:str)->InvestigationToolResult:
+        node=self._node("inspect_mcp",node_id)
+        if node.type not in {GraphNodeType.MCP_SERVER,GraphNodeType.MCP_TOOL}:
+            return self._result("inspect_mcp","EMPTY",{},missing=["MCP node not found"])
+        return self._result("inspect_mcp","SUCCESS",{"node":node.model_dump(mode="json")},node.evidence_ids)
+
+    def find_alternate_paths(self,source_id:str,target_id:str,primary_edge_ids:frozenset[str]=frozenset())->InvestigationToolResult:
+        self._call("find_alternate_paths",{"source_id":source_id,"target_id":target_id})
+        paths=self.ctx.graph.bounded_paths(source_id,target_id,max_depth=self.ctx.case.budget.max_depth,max_paths=min(100,self.ctx.case.budget.max_tool_calls))
+        alternate=tuple(p for p in paths.paths if not primary_edge_ids.intersection(e.id for e in p.edges))
+        evidence=tuple(sorted({e for p in alternate for e in p.evidence_ids}))
+        return self._result("find_alternate_paths","SUCCESS" if alternate else "EMPTY",{"paths":[p.path_id for p in alternate]},evidence)
+
+    def inspect_permission_chain(self,node_id:str)->InvestigationToolResult:
+        self._call("inspect_permission",{"node_id":node_id})
+        result=self.ctx.graph.traverse(node_id,direction=TraversalDirection.OUTBOUND,max_depth=self.ctx.case.budget.max_depth,max_nodes=self.ctx.case.budget.max_graph_nodes,max_edges=self.ctx.case.budget.max_graph_edges,allowed_relationship_types=frozenset({RelationshipType.HAS_PERMISSION,RelationshipType.CAN_ACCESS,RelationshipType.CAN_MODIFY,RelationshipType.AUTHENTICATES_AS,RelationshipType.CAN_USE}))
+        evidence=tuple(sorted({e for edge_id in result.edge_ids for e in self.ctx.graph.get_edge(edge_id).evidence_ids}))
+        return self._result("inspect_permission","SUCCESS" if result.node_ids else "EMPTY",{"node_ids":result.node_ids},evidence)
+
     def find_controls(self)->InvestigationToolResult:
         self._call("find_controls",{})
         nodes=self.ctx.graph.nodes()
