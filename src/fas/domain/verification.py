@@ -13,7 +13,7 @@ from pydantic import Field, model_validator
 
 from fas.domain.common import (
     AnalysisId, AttackPathComparisonId, AttackPathId, DomainModel, EvidenceId, FindingId,
-    GraphDiffId, GraphNodeType, Provenance, RegressionTestId, RemediationId, RemediationStatus,
+    GraphDiffId, Provenance, RegressionTestId, RemediationId, RemediationStatus,
     ResidualPathId, SecurityBaselineId, SecurityRegressionId, SnapshotId, VerificationEvidenceId,
     VerificationId, VerificationPlanId, VerificationRunId, VerificationStatus, VerdictType,
     utc_now,
