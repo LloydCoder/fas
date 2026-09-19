@@ -6,7 +6,7 @@ import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 from fas.domain import Analysis, AnalysisStatus, AuditEvent, ContentHash, Project, RepositoryReference, Snapshot, new_id
-from fas.collectors import CollectionContext, CollectionPlan, CollectionOrchestrator, CodeDiscoveryCollector, DependencyDiscoveryCollector
+from fas.collectors import CollectionContext, CollectionPlan, CollectionOrchestrator, CodeDiscoveryCollector, DependencyDiscoveryCollector, ConfigurationCollector, CICDCollector, AgentConfigurationCollector
 from .config import Settings
 from .storage import SQLiteStore, LocalObjectStore
 from .reports import ReportService
@@ -77,9 +77,7 @@ class ProductService:
         self._replace_analysis(analysis,project_id)
         context=CollectionContext(analysis_id=analysis.id,snapshot_id=snap.id,root=root,repository=str(root),
                                   revision=snap.repository.revision,max_files=10000,max_file_bytes=self.settings.max_artifact_bytes)
-        collectors = [CodeDiscoveryCollector(), DependencyDiscoveryCollector()]
-        from fas.collectors import ConfigurationCollector, CICDCollector, AgentConfigurationCollector
-        collectors.extend((ConfigurationCollector(), CICDCollector(), AgentConfigurationCollector()))
+        collectors = [CodeDiscoveryCollector(), DependencyDiscoveryCollector(), ConfigurationCollector(), CICDCollector(), AgentConfigurationCollector()]
         plan = CollectionPlan(context=context, collectors=tuple(collectors))
         collection = CollectionOrchestrator().run(plan, cancel=cancel)
         for artifact in collection.batch.artifacts:
