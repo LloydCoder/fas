@@ -383,7 +383,7 @@ class VerificationResult(DomainModel):
             raise ValueError("UNKNOWN requires missing evidence")
         if self.result == VerdictType.REGRESSED and not self.regression_ids:
             raise ValueError("REGRESSED requires regression records")
-        if self.result == VerdictType.REMEDIATION_FAILED and not (self.residual_path_ids or self.alternate_path_ids or self.contradicting_evidence_ids):
+        if self.result == VerdictType.REMEDIATION_FAILED and not (self.residual_path_ids or self.alternate_path_ids or self.contradicting_evidence_ids or any(c.status == CheckStatus.FAILED for c in self.checks)):
             raise ValueError("REMEDIATION_FAILED requires failure evidence")
         return self
 
