@@ -41,6 +41,7 @@ def _node_semantics(node) -> tuple[str, ...]:
     m=node.metadata
     return (
         node.type.value,
+        node.canonical_identity,
         m.get("source", ""),
         m.get("sink", ""),
         m.get("resource", ""),
