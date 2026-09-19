@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/LloydCoder/fas/blob/main/schemas/analysis.schema.json",
+  "title": "FAS Analysis",
+  "x-fas-canonical-model": "Analysis",
+  "x-fas-schema-version": "1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "id", "project"],
+  "properties": {
+    "schema_version": {"type": "string"},
+    "id": {"type": "string", "pattern": "^analysis_[0-9A-HJKMNP-TV-Z]{26}$"},
+    "project": {"type": "string", "minLength": 1},
+    "status": {"type": "string", "enum": ["CREATED","INGESTING","DISCOVERING","COLLECTING","NORMALIZING","GRAPH_BUILDING","ANALYZING","VERIFYING","VERDICT_READY","REMEDIATION_PENDING","REMEDIATION_ANALYZING","VERIFIED","FAILED","PARTIAL","CANCELLED"]},
+    "created_at": {"type": "string", "format": "date-time"},
+    "started_at": {"type": ["string","null"], "format": "date-time"},
+    "completed_at": {"type": ["string","null"], "format": "date-time"},
+    "snapshot_ids": {"type": "array", "items": {"type": "string"}},
+    "configuration_ref": {"type": ["string","null"]},
+    "metadata": {"type": "object", "additionalProperties": {"type": "string"}},
+    "failure_reason": {"type": ["string","null"]}
+  }
+}
