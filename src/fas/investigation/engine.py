@@ -375,7 +375,7 @@ class InvestigationEngine:
             if not step.evidence_ids:
                 raise InvestigationError("attack path contains an evidence-less transition")
             steps.append(step)
-        return AttackPath(id=new_id("attack_path"),entry=path.nodes[0].id,steps=tuple(steps),trust_boundaries_crossed=path.trust_boundary_node_ids,supporting_evidence_ids=path.evidence_ids,snapshot_id=path.snapshot_id,observed_at=utc_now())
+        return AttackPath(id=new_id("attack_path"),entry=path.nodes[0].id,steps=tuple(steps),trust_boundaries_crossed=path.trust_boundary_node_ids,supporting_evidence_ids=path.evidence_ids,snapshot_id=path.snapshot_id,status=path.status.value if path.status.value in {"COMPLETE", "PARTIAL", "TRUNCATED"} else "PARTIAL",observed_at=utc_now())
 
     def validate_attack_path(self, context: InvestigationContext, path: GraphPath) -> tuple[bool, tuple[str, ...]]:
         if path.snapshot_id != context.case.snapshot_id:
