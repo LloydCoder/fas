@@ -9,7 +9,7 @@ from datetime import datetime
 from typing import Literal
 from pydantic import Field, model_validator
 from .common import (
-    AnalysisId, AttackPathId, ControlId, DomainModel, EvidenceId, EvidenceRequestId,
+    AnalysisId, AttackPathId, ControlId, DomainModel, EvidenceId, EvidenceRequestId, JSONValue,
     EvidenceRequestType, FindingId, HypothesisId, HypothesisStatus, InvestigationEventId,
     InvestigationEventType, InvestigationId, InvestigationStatus, InvestigationToolStatus,
     NodeId, SnapshotId, utc_now,
@@ -64,7 +64,7 @@ class InvestigationToolResult(DomainModel):
     status: InvestigationToolStatus
     analysis_id: AnalysisId
     snapshot_id: SnapshotId
-    result: dict[str, object] = Field(default_factory=dict)
+    result: dict[str, JSONValue] = Field(default_factory=dict)
     evidence_ids: tuple[EvidenceId, ...] = ()
     artifact_ids: tuple[str, ...] = ()
     warnings: tuple[str, ...] = ()
