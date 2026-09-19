@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Literal
 
 from pydantic import Field, field_validator, model_validator
 
@@ -50,7 +51,7 @@ class Snapshot(DomainModel):
     environment_identity: str | None = Field(default=None, min_length=1, max_length=2048)
     configuration_identity: str | None = Field(default=None, min_length=1, max_length=2048)
     artifact_ids: tuple[ArtifactId, ...] = ()
-    immutable: bool = True
+    immutable: Literal[True] = True
 
     @field_validator("captured_at")
     @classmethod
