@@ -1,4 +1,4 @@
-"""Evidence graph node and edge contracts. Traversal belongs to Phase 2."""
+"""Evidence graph node and edge contracts; graph algorithms belong to Phase 2."""
 
 from __future__ import annotations
 
@@ -6,10 +6,7 @@ from datetime import datetime, timezone
 
 from pydantic import Field, field_validator, model_validator
 
-from fas.domain.common import (
-    Confidence, DomainModel, EdgeId, EvidenceId, GraphNodeType, NodeId, Provenance,
-    RelationshipType,
-)
+from fas.domain.common import Confidence, DomainModel, EdgeId, EvidenceId, GraphNodeType, NodeId, Provenance, RelationshipType
 
 
 class GraphNode(DomainModel):
@@ -19,7 +16,13 @@ class GraphNode(DomainModel):
     evidence_ids: tuple[EvidenceId, ...] = ()
     provenance: tuple[Provenance, ...] = Field(min_length=1)
     security_relevant: bool = False
-    metadata: dict[str, str] = {}
+    metadata: dict[str, str] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def security_nodes_require_evidence(self) -> "GraphNode":
+        if self.security_relevant and not self.evidence_ids:
+            raise ValueError("security-relevant graph nodes require evidence_ids")
+        return self
 
 
 class GraphEdge(DomainModel):
@@ -32,7 +35,7 @@ class GraphEdge(DomainModel):
     evidence_ids: tuple[EvidenceId, ...] = ()
     observed_at: datetime
     security_relevant: bool = False
-    metadata: dict[str, str] = {}
+    metadata: dict[str, str] = Field(default_factory=dict)
 
     @field_validator("observed_at")
     @classmethod
@@ -45,4 +48,6 @@ class GraphEdge(DomainModel):
     def security_edges_require_evidence(self) -> "GraphEdge":
         if self.security_relevant and not self.evidence_ids:
             raise ValueError("security-relevant graph edges require evidence_ids")
+        if self.source_node_id == self.target_node_id:
+            raise ValueError("graph edge cannot connect a node to itself")
         return self
