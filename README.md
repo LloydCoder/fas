@@ -424,7 +424,7 @@ The public repository is being established around the formal domain model and ev
 - [ ] Remediation verification
 - [ ] CLI
 - [ ] API
-- [ ] Production hardening
+- [x] Phase 3 collection security hardening and acceptance contract
 
 Until these components are implemented and tested, FAS should be considered experimental software.
 
@@ -581,6 +581,10 @@ FAS is not intended to:
 - Secret-safe tool-output handling
 - Explicit partial-collection semantics and bounded discovery
 - Collector/adapter boundary that cannot create findings or verdicts
+
+### Phase 3 acceptance
+
+Phase 3 is complete only when the repository passes the acceptance contract in [docs/architecture/phase-3-acceptance.md](docs/architecture/phase-3-acceptance.md). The implementation includes bounded collection orchestration, raw tool artifacts and ToolRun replay metadata, secure external execution, hostile-input parser limits, agent/MCP and CI/CD configuration discovery, filesystem safety controls, deterministic replay manifests, and security/fuzz/property coverage.
 
 ### Phase 4 — Investigation
 
