@@ -5,7 +5,7 @@ from fas.domain import (
     AttackPath, AttackPathStep, ContentHash, Evidence, EvidenceType, Finding, FindingStatus,
     GraphEdge, GraphNode, GraphNodeType, Provenance, ProvenanceCategory, ProvenanceLevel,
     RelationshipType, Remediation, RemediationType, RepositoryReference, Severity, Snapshot,
-    SourceLocation, new_id,
+    new_id,
 )
 from fas.graph import GraphEngine
 from fas.verification import DeterministicSecurityTestExecutor, VerificationEngine
