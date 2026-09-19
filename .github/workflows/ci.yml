@@ -43,6 +43,22 @@ jobs:
       - name: Package build
         run: python -m build
 
+      - name: Clean wheel installation
+        run: |
+          python -m venv /tmp/fas-clean
+          /tmp/fas-clean/bin/python -m pip install --upgrade pip
+          /tmp/fas-clean/bin/python -m pip install dist/*.whl
+          /tmp/fas-clean/bin/fas --version
+
+      - name: CLI smoke
+        run: |
+          fas --version
+          fas doctor --format json
+          fas tools --format json
+
+      - name: Product integration smoke
+        run: pytest tests/integration/product tests/security/test_phase6_product.py
+
       - name: Graph baseline benchmark
         if: matrix.python-version == '3.13'
         run: python benchmarks/graph_baseline.py
