@@ -301,7 +301,7 @@ class VerificationEngine:
             elif status == AttackPathComparisonStatus.ORIGINAL_PATH_PERSISTENT:
                 for p in candidate_attacks:
                     residuals.append(ResidualPath(
-                        id=new_id("residual_path"),verification_id=new_id("verification"),path_id=p.id,
+                        id=new_id("residual_path"),verification_id=verification_id,path_id=p.id,
                         security_property=remediation.expected_security_property,
                         evidence_ids=p.supporting_evidence_ids,exploitable=True,equivalent_impact=True,
                         description="Original semantic attack path remains reachable.",
