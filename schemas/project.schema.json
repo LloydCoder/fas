@@ -7,7 +7,7 @@
       "type":"object",
       "required":["id","name","repository","owner"],
       "properties":{
-        "id":{"type":"string"},
+        "schema_version":{"type":"string"},"id":{"type":"string"},
         "name":{"type":"string"},
         "repository":{"type":"string"},
         "owner":{"type":"string"},
