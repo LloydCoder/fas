@@ -78,11 +78,11 @@ def test_tool_run_identity_is_stable_and_tool_scoped() -> None:
     assert len(semgrep_a.split("_", 1)[1]) == 26
 
 
-def test_api_auth_required_fails_closed() -> None:
+def test_api_auth_required_fails_closed(tmp_path: Path) -> None:
     from fas.product.api import ApiServer
     from fas.product.config import Settings
     from fas.product.service import ProductService
-    service = ProductService(Settings(auth_required=True, api_token=None, database_url="sqlite:///" + str(Path.cwd() / "fas-auth-test.db")))
+    service = ProductService(Settings(auth_required=True, api_token=None, database_url="sqlite:///" + str(tmp_path / "fas-auth-test.db")))
     with pytest.raises(ValueError):
         ApiServer(service).serve("127.0.0.1", 0)
 
