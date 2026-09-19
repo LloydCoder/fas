@@ -54,7 +54,6 @@ class DomainModel(BaseModel):
         extra="forbid",
         frozen=True,
         validate_assignment=True,
-        use_enum_values=True,
     )
     schema_version: str = Field(default=SCHEMA_VERSION, min_length=1, max_length=32)
 
