@@ -3,8 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from fas.domain.analysis import Artifact,Observation
 from fas.domain.evidence import Evidence
-from fas.graph import GraphBuilder,GraphEngine
-from .base import CollectionBatch,CollectionContext,Collector
+from fas.graph import GraphBuilder
+from .base import CollectionBatch
 from .normalize import ObservationNormalizer
 @dataclass(frozen=True,slots=True)
 class CollectionResult:
