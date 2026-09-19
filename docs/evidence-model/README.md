@@ -22,3 +22,8 @@ These are provenance/trust classifications, not probabilities of truth.
 claim must reference traceable evidence, an artifact, graph diff, attack-path comparison, or
 controlled test result. Missing evidence is explicit and never converted into a successful
 remediation conclusion.
+
+
+## Phase 6 product boundary
+
+The product layer preserves the same evidence chain and adds durable projections, content-addressed artifact storage, snapshot manifests, audit-chain integrity, and explicit completeness metadata. PARTIAL, TRUNCATED, FAILED and UNKNOWN are preserved across collection, investigation, verification and reporting; absence is never silently promoted to negative evidence.
