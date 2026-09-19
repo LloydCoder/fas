@@ -20,7 +20,8 @@ class ExecutionLimits:
     non_root:bool=True
 
 def validate_argv(argv: list[str]) -> tuple[str,...]:
-    if not argv or any("\x00" in x for x in argv): raise ValueError("invalid argv")
+    if not argv or any("\x00" in x for x in argv):
+        raise ValueError("invalid argv")
     return tuple(argv)
 
 def safe_environment(allow: dict[str,str]|None=None) -> dict[str,str]:
