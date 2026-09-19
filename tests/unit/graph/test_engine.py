@@ -263,3 +263,19 @@ def test_same_snapshot_graph_merge_accumulates_relationship_evidence(context, pr
     engine_b.add_edge(edge)
     engine_a.merge_graph(engine_b)
     assert set(engine_a.get_edge_evidence(edge.id)) == {evidence_a, evidence_b}
+
+
+def test_disallowed_self_loop_relationship_is_rejected(engine, context, provenance):
+    evidence = add_evidence(engine, context, provenance)
+    node = add_node(engine, context, provenance, node_type=GraphNodeType.PRINCIPAL, identity="principal", evidence=evidence)
+    engine.add_node(node)
+    edge = GraphBuilder.make_edge(
+        analysis_id=context["analysis"], snapshot_id=context["snapshot"],
+        source_node_id=node.id, target_node_id=node.id,
+        relationship_type=RelationshipType.CAN_ACCESS, provenance=(provenance,),
+        evidence_ids=(evidence.id,),
+    )
+    from fas.graph.errors import InvalidEdge
+    import pytest
+    with pytest.raises(InvalidEdge):
+        engine.add_edge(edge)
