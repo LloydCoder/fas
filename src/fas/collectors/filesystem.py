@@ -30,3 +30,24 @@ def safe_walk(root:Path,policy:PathPolicy):
             if size>policy.max_file_bytes: continue
             yield path
 class ResourceLimitError(RuntimeError): pass
+
+def safe_read_bytes(path:Path,root:Path,max_bytes:int)->bytes:
+    """Read a regular file without following a final symlink when the platform exposes O_NOFOLLOW."""
+    resolved=Path(path).resolve()
+    root=Path(root).resolve()
+    try: resolved.relative_to(root)
+    except ValueError as exc: raise ValueError("path escapes collection root") from exc
+    flags=os.O_RDONLY|getattr(os,"O_CLOEXEC",0)|getattr(os,"O_NOFOLLOW",0)
+    fd=os.open(resolved,flags)
+    try:
+        stat=os.fstat(fd)
+        if not __import__("stat").S_ISREG(stat.st_mode): raise ValueError("not a regular file")
+        if stat.st_size>max_bytes: raise ResourceLimitError("file exceeds max_bytes")
+        chunks=[]; remaining=max_bytes
+        while remaining:
+            chunk=os.read(fd,min(1024*1024,remaining))
+            if not chunk: break
+            chunks.append(chunk); remaining-=len(chunk)
+        return b"".join(chunks)
+    finally:
+        os.close(fd)
