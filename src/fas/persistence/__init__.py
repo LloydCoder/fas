@@ -8,3 +8,5 @@ provides the persistence-facing import surface.
 from fas.graph.store import GraphStore, InMemoryGraphStore, MutationEvent
 
 __all__ = ["GraphStore", "InMemoryGraphStore", "MutationEvent"]
+
+from .investigation import InvestigationRepository, JsonlInvestigationRepository
