@@ -4,6 +4,7 @@ import hashlib, json, subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 from fas.domain import Analysis, AnalysisStatus, ContentHash, Project, RepositoryReference, Snapshot, new_id
+from fas.collectors import CollectionContext, CollectionPlan, CollectionOrchestrator, CodeDiscoveryCollector, DependencyDiscoveryCollector
 from .config import Settings
 from .storage import SQLiteStore, LocalObjectStore
 from .reports import ReportService
@@ -64,6 +65,21 @@ class ProductService:
         analysis=analysis.model_copy(update={"status":AnalysisStatus.DISCOVERING,"started_at":datetime.now(timezone.utc)})
         self._replace_analysis(analysis,project_id)
         snap=self.snapshot(analysis,root)
+        analysis=analysis.model_copy(update={"snapshot_ids":(snap.id,),"status":AnalysisStatus.COLLECTING})
+        self._replace_analysis(analysis,project_id)
+        context=CollectionContext(analysis_id=analysis.id,snapshot_id=snap.id,root=root,repository=str(root),
+                                  revision=snap.repository.revision,max_files=10000,max_file_bytes=self.settings.max_artifact_bytes)
+        plan=CollectionPlan(context=context,collectors=(CodeDiscoveryCollector(),DependencyDiscoveryCollector()))
+        collection=CollectionOrchestrator().run(plan,cancel=cancel)
+        for artifact in collection.batch.artifacts:
+            self.store.put("artifacts",artifact.id,snap.id,artifact.model_dump(mode="json"),artifact.provenance[0].observed_at.isoformat())
+        for observation in collection.batch.observations:
+            self.store.put("observations",observation.id,snap.id,observation.model_dump(mode="json"),observation.observed_at.isoformat())
+        analysis=analysis.model_copy(update={"status":AnalysisStatus.NORMALIZING,
+            "metadata":{**analysis.metadata,"collection_status":collection.summary.status.value,
+                        "artifact_count":str(collection.summary.artifacts),
+                        "observation_count":str(collection.summary.observations)}})
+        self._replace_analysis(analysis,project_id)
         if cancel is not None and getattr(cancel,"is_set",lambda:False)():
             cancelled=analysis.model_copy(update={"snapshot_ids":(snap.id,),"status":AnalysisStatus.CANCELLED,
                 "completed_at":datetime.now(timezone.utc),"failure_reason":"analysis cancelled"})
