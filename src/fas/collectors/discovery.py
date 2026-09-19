@@ -46,7 +46,7 @@ class RepositoryDiscoveryCollector:
                 except OSError as exc:
                     builder.skipped+=1; builder.complete=False; builder.warnings.append(f"unreadable file {path}: {exc}"); continue
                 digest=hashlib.sha256(data).hexdigest(); aid=_stable_id("artifact",f"{context.snapshot_id}|{relative}|{digest}"); prov=_provenance("filesystem_hash",relative)
-                builder.artifacts.append(Artifact(id=aid,type=_artifact_type(path),name=relative,size_bytes=size,content_hash=ContentHash(digest=digest),snapshot_id=context.snapshot_id,provenance=(prov,),external_reference=str(path),metadata={"repository":context.repository,**({"revision":context.revision} if context.revision else {})}))
+                builder.artifacts.append(Artifact(id=aid,analysis_id=context.analysis_id,type=_artifact_type(path),name=relative,size_bytes=size,content_hash=ContentHash(digest=digest),snapshot_id=context.snapshot_id,provenance=(prov,),external_reference=str(path),metadata={"repository":context.repository,**({"revision":context.revision} if context.revision else {})}))
                 count+=1
         return builder.build()
 
