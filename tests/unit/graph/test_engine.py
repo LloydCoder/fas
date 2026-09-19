@@ -1,3 +1,5 @@
+from tests.fixtures.graph.conftest import add_evidence, add_node
+
 from fas.domain.common import GraphNodeType, RelationshipType
 from fas.graph import (
     GraphBuilder,
@@ -13,8 +15,8 @@ from fas.graph.errors import (
 
 
 def test_insert_lookup_and_direction(engine, context, provenance):
-    evidence = __import__("conftest").add_evidence(engine, context, provenance)
-    source = __import__("conftest").add_node(
+    evidence = add_evidence(engine, context, provenance)
+    source = add_node(
         engine, context, provenance, node_type=GraphNodeType.ENDPOINT, identity="/fetch", evidence=evidence
     )
     target = __import__("conftest").add_node(
