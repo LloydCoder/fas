@@ -1,6 +1,7 @@
 """Installed tool capability discovery without executing repository content."""
 from __future__ import annotations
-import shutil, subprocess
+import shutil
+import subprocess
 TOOLS=("git","semgrep","trivy","gitleaks","osv-scanner")
 def discover() -> list[dict[str,object]]:
     out=[]
