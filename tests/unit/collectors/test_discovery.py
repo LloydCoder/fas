@@ -1,5 +1,4 @@
-from pathlib import Path
-from fas.collectors import CollectionContext,CodeDiscoveryCollector,DependencyDiscoveryCollector,RepositoryDiscoveryCollector
+from fas.collectors import CollectionContext,DependencyDiscoveryCollector,RepositoryDiscoveryCollector
 
 def test_repository_discovery_hashes_files_and_skips_git(tmp_path):
     (tmp_path/"app.py").write_text("print('ok')",encoding="utf-8")
