@@ -410,13 +410,14 @@ The public repository is being established around the formal domain model and ev
 
 ### Current priorities
 
-- [ ] Canonical domain schemas
-- [ ] Immutable analysis snapshots
-- [ ] Evidence store and provenance
-- [ ] Graph node/edge model
-- [ ] Repository and code discovery
-- [ ] First security-tool adapter
-- [ ] Deterministic investigation primitives
+- [x] Canonical domain schemas
+- [x] Immutable analysis snapshots
+- [x] Evidence store and provenance
+- [x] Graph node/edge model
+- [x] Repository, code, and dependency discovery
+- [x] Initial security-tool adapters
+- [x] Observation-to-evidence normalization
+- [x] Deterministic graph investigation primitives
 - [ ] Exploitability analysis
 - [ ] Attack-path reconstruction
 - [ ] Formal verdict engine
@@ -573,11 +574,13 @@ FAS is not intended to:
 
 ### Phase 3 — Security Collection
 
-- Repository discovery
-- Code discovery
-- Dependency discovery
-- Initial tool adapters
-- Observation normalization
+- Scoped repository, code, and dependency discovery
+- Deterministic artifact hashing and immutable collection records
+- Observation normalization into provenance-preserving evidence
+- SARIF 2.1.x, Semgrep JSON, Trivy JSON, and Gitleaks JSON adapters
+- Secret-safe tool-output handling
+- Explicit partial-collection semantics and bounded discovery
+- Collector/adapter boundary that cannot create findings or verdicts
 
 ### Phase 4 — Investigation
 
