@@ -1,0 +1,11 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://github.com/LloydCoder/fas/blob/main/schemas/collection-batch.schema.json",
+  "title":"FAS Collection Batch","x-fas-schema-version":"1.0",
+  "type":"object","additionalProperties":false,
+  "required":["artifacts","observations","complete","skipped","warnings"],
+  "properties":{
+    "artifacts":{"type":"array"},"observations":{"type":"array"},"complete":{"type":"boolean"},
+    "skipped":{"type":"integer","minimum":0},"warnings":{"type":"array","items":{"type":"string"}}
+  }
+}
