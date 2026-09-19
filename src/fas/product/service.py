@@ -95,8 +95,7 @@ class ProductService:
             return {"analysis":cancelled.model_dump(mode="json"),"snapshot":snap.model_dump(mode="json"),"findings":[]}
         analysis=analysis.model_copy(update={"snapshot_ids":(snap.id,),"status":AnalysisStatus.PARTIAL,
             "completed_at":datetime.now(timezone.utc),
-            "metadata":{**analysis.metadata,"limitations":"Core product pipeline records an immutable source snapshot and collection metadata. Deterministic verdicts require normalized security evidence
-            no evidence is fabricated."}})
+            "metadata":{**analysis.metadata,"limitations":"Core product pipeline records an immutable source snapshot and collection metadata. Deterministic verdicts require normalized security evidence; no evidence is fabricated."}})
         fixture=root/".fas-fixture.json"
         if fixture.exists():
             data=json.loads(fixture.read_text(encoding="utf-8"))
