@@ -8,9 +8,9 @@ from fas.domain.common import ArtifactType,ContentHash,Provenance,ProvenanceCate
 from .base import _BatchBuilder
 from .filesystem import safe_read_bytes,ResourceLimitError
 
-_SKIP_DIRS=frozenset({".git",".hg",".svn",".venv","venv","node_modules","__pycache__",".mypy_cache",".pytest_cache",".ruff_cache","dist","build","coverage",".tox",".idea",".vscode"})
+_SKIP_DIRS=frozenset({".git",".fas",".hg",".svn",".venv","venv","node_modules","__pycache__",".mypy_cache",".pytest_cache",".ruff_cache","dist","build","coverage",".tox",".idea",".vscode"})
 _SOURCE_SUFFIXES=frozenset({".py",".pyi",".js",".jsx",".ts",".tsx",".java",".kt",".go",".rs",".c",".h",".cc",".cpp",".hpp",".cs",".php",".rb",".swift",".scala",".sh",".bash",".zsh",".sql",".yaml",".yml",".json",".toml",".ini"})
-_MANIFEST_NAMES=frozenset({"pyproject.toml","requirements.txt","requirements-dev.txt","Pipfile","Pipfile.lock","poetry.lock","package.json","package-lock.json","npm-shrinkwrap.json","yarn.lock","pnpm-lock.yaml","go.mod","go.sum","Cargo.toml","Cargo.lock","Gemfile","Gemfile.lock","composer.json","composer.lock","pom.xml","build.gradle","build.gradle.kts"})
+_MANIFEST_NAMES=frozenset({"Dockerfile","docker-compose.yml","docker-compose.yaml",".env","pyproject.toml","requirements.txt","requirements-dev.txt","Pipfile","Pipfile.lock","poetry.lock","package.json","package-lock.json","npm-shrinkwrap.json","yarn.lock","pnpm-lock.yaml","go.mod","go.sum","Cargo.toml","Cargo.lock","Gemfile","Gemfile.lock","composer.json","composer.lock","pom.xml","build.gradle","build.gradle.kts"})
 
 def _stable_id(prefix,material):
     alphabet="0123456789ABCDEFGHJKMNPQRSTVWXYZ"
@@ -28,7 +28,7 @@ def _artifact_type(path):
     name=path.name
     if name in _MANIFEST_NAMES or name.endswith((".lock",".sum")):
         return ArtifactType.DEPENDENCY_METADATA
-    if path.suffix.lower() in {".yaml",".yml",".toml",".ini",".env"}:
+    if name == "Dockerfile" or path.suffix.lower() in {".yaml",".yml",".toml",".ini",".env",".tf",".tfvars"}:
         return ArtifactType.CONFIGURATION
     if path.suffix.lower() in {".sarif",".json"} and any(x in name.lower() for x in ("report","result","scan")):
         return ArtifactType.TOOL_OUTPUT
@@ -41,7 +41,7 @@ class RepositoryDiscoveryCollector:
     def collect(self,context):
         builder,count=_BatchBuilder(),0
         for root,dirs,files in os.walk(context.root,followlinks=False):
-            dirs[:]=sorted(d for d in dirs if d not in _SKIP_DIRS and not d.startswith(".git"))
+            dirs[:]=sorted(d for d in dirs if d not in _SKIP_DIRS)
             for filename in sorted(files):
                 if count>=context.max_files:
                     builder.complete=False
