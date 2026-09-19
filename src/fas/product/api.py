@@ -47,6 +47,9 @@ class ApiServer:
         class Handler(BaseHTTPRequestHandler):
             server_version="FAS/1"
             protocol_version="HTTP/1.1"
+            def setup(self):
+                super().setup()
+                self.request.settimeout(15)
             def _send(self,status,payload):
                 body=json.dumps(payload,sort_keys=True,separators=(",",":")).encode("utf-8")
                 self.send_response(status)
@@ -117,4 +120,6 @@ class ApiServer:
                 except (KeyError,TypeError,ValueError,UnicodeError): return self._send(400,{"error":{"code":"INVALID_REQUEST","message":"invalid request"}})
                 except (OSError,RuntimeError) as exc: return self._send(500,{"error":{"code":"INTERNAL_ERROR","message":type(exc).__name__}})
             def log_message(self,fmt,*args): return
-        ThreadingHTTPServer((host,port),Handler).serve_forever()
+        server=ThreadingHTTPServer((host,port),Handler)
+        server.daemon_threads=True
+        server.serve_forever()
