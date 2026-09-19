@@ -1,8 +1,4 @@
-"""Shared FAS domain primitives and invariants.
-
-The domain package intentionally depends only on Pydantic and the Python standard
-library. These types are the canonical semantic contracts used by later phases.
-"""
+"""Shared FAS domain primitives and invariants."""
 
 from __future__ import annotations
 
@@ -12,7 +8,7 @@ import secrets
 import time
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Annotated, Any, ClassVar
+from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_validator, model_validator
 
@@ -20,10 +16,10 @@ SCHEMA_VERSION = "1.0"
 
 
 def _ulid() -> str:
-    """Generate a sortable, URL-safe 26-character Crockford-style ULID."""
+    """Generate a sortable 26-character ULID using only the standard library."""
     alphabet = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
     value = (int(time.time_ns() // 1_000_000) << 80) | secrets.randbits(80)
-    chars = []
+    chars: list[str] = []
     for _ in range(26):
         chars.append(alphabet[value & 31])
         value >>= 5
@@ -36,14 +32,7 @@ def new_id(prefix: str) -> str:
     return f"{prefix}_{_ulid()}"
 
 
-FasId = Annotated[
-    str,
-    StringConstraints(
-        min_length=4,
-        max_length=64,
-        pattern=r"^[a-z][a-z0-9_]*_[0-9A-HJKMNP-TV-Z]{26}$",
-    ),
-]
+FasId = Annotated[str, StringConstraints(min_length=4, max_length=64, pattern=r"^[a-z][a-z0-9_]*_[0-9A-HJKMNP-TV-Z]{26}$")]
 AnalysisId = Annotated[FasId, StringConstraints(pattern=r"^analysis_[0-9A-HJKMNP-TV-Z]{26}$")]
 SnapshotId = Annotated[FasId, StringConstraints(pattern=r"^snapshot_[0-9A-HJKMNP-TV-Z]{26}$")]
 ArtifactId = Annotated[FasId, StringConstraints(pattern=r"^artifact_[0-9A-HJKMNP-TV-Z]{26}$")]
@@ -59,24 +48,18 @@ VerificationId = Annotated[FasId, StringConstraints(pattern=r"^verification_[0-9
 
 
 class DomainModel(BaseModel):
-    """Base for immutable, JSON-compatible canonical contracts."""
+    """Immutable canonical model with deterministic JSON support."""
 
     model_config = ConfigDict(
         extra="forbid",
         frozen=True,
         validate_assignment=True,
         use_enum_values=True,
-        str_strip_whitespace=False,
     )
     schema_version: str = Field(default=SCHEMA_VERSION, min_length=1, max_length=32)
 
     def canonical_json(self) -> str:
-        return json.dumps(
-            self.model_dump(mode="json"),
-            sort_keys=True,
-            separators=(",", ":"),
-            ensure_ascii=False,
-        )
+        return json.dumps(self.model_dump(mode="json"), sort_keys=True, separators=(",", ":"), ensure_ascii=False)
 
 
 class FasEnum(str, Enum):
@@ -246,6 +229,14 @@ class RemediationStatus(FasEnum):
     FAILED = "FAILED"
 
 
+class VerificationTargetType(FasEnum):
+    FINDING = "FINDING"
+    REMEDIATION = "REMEDIATION"
+    VERDICT = "VERDICT"
+    ATTACK_PATH = "ATTACK_PATH"
+    CLAIM = "CLAIM"
+
+
 class VerificationType(FasEnum):
     REMEDIATION = "REMEDIATION"
     EXPLOITABILITY = "EXPLOITABILITY"
@@ -284,7 +275,7 @@ class ContentHash(DomainModel):
     @classmethod
     def parse(cls, value: str) -> "ContentHash":
         if not isinstance(value, str) or not value.startswith("sha256:"):
-            raise ValueError("content hash must use the sha256:<64-hex> form")
+            raise ValueError("content hash must use sha256:<64-hex> form")
         return cls(digest=value[7:])
 
 
@@ -322,11 +313,7 @@ class SourceLocation(DomainModel):
             raise ValueError("line_end cannot precede line_start")
         if self.column_start is None and self.column_end is not None:
             raise ValueError("column_end requires column_start")
-        if (
-            self.column_start is not None
-            and self.column_end is not None
-            and self.column_end < self.column_start
-        ):
+        if self.column_start is not None and self.column_end is not None and self.column_end < self.column_start:
             raise ValueError("column_end cannot precede column_start")
         return self
 
