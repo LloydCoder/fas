@@ -1,44 +1,59 @@
 # Contributing to FAS
 
-Thank you for contributing to FAS.
-
-FAS is security-analysis software. Contributions should prioritize correctness, reproducibility, provenance, and safe execution.
+FAS is security-analysis software. Contributions should prioritize correctness, reproducibility,
+provenance, immutable history, and safe execution.
 
 ## Before contributing
 
-1. Read the README and relevant architecture documentation.
-2. Check existing issues before starting substantial work.
-3. Keep changes scoped to one architectural concern where practical.
-4. Do not commit secrets, customer data, private repositories, credentials, or production artifacts.
-5. Add or update tests for security-sensitive behavior.
+1. Read the README and the applicable architecture/ADR documentation.
+2. Keep changes within one architectural phase where practical.
+3. Do not commit secrets, credentials, customer data, or production artifacts.
+4. Add security-focused regression tests for security-sensitive changes.
+5. Keep schemas and documentation synchronized with domain contracts.
 
-## Engineering principles
+## Domain and evidence rules
 
-- Evidence must have provenance.
-- Do not manufacture security evidence.
-- Keep deterministic collection separate from model inference.
-- Preserve immutable analysis state.
-- Prefer explicit domain contracts over implicit dictionaries.
-- Treat analyzed repositories and tool output as untrusted input.
-- Prefer small, reviewable changes.
-- Avoid introducing dependencies without a clear architectural reason.
-- Keep documented public interfaces stable.
+- Observation, evidence, finding, investigation, verdict, remediation, and verification are distinct.
+- Every security-relevant relationship must be provenance/evidence backed.
+- Original snapshot/evidence history is immutable.
+- Candidate verification data must never silently cross snapshot boundaries.
+- Missing evidence is explicit; do not turn absence into a negative fact.
+- LLM output is advisory and never the source of truth.
 
-## Pull requests
+## Verification rules
 
-A pull request should explain:
+- A remediation declares an expected security property and root cause.
+- Verification compares explicit before/after snapshots.
+- Semantic graph diff must distinguish security-relevant changes from identifier churn.
+- Original attack paths must be accounted for.
+- Bounded residual/alternate-path analysis is required where technically applicable.
+- `REMEDIATED` requires completed required checks, verification evidence, and no blocking
+  contradiction or missing evidence.
+- `UNKNOWN` is the correct outcome when required evidence is unavailable.
+- Candidate repositories are untrusted and must not receive ambient credentials or arbitrary
+  execution privileges.
 
-- what changed
-- why it changed
-- security implications
-- tests performed
-- schema/API compatibility impact
-- new dependencies or execution capabilities
+## CI requirements
 
-Security-sensitive changes should include focused regression tests.
+Run:
+
+```bash
+python -m pip install -e ".[dev]"
+ruff check .
+pytest
+python scripts/check_schema_parity.py
+python -m build
+```
+
+Do not weaken assertions, remove security tests, skip workflows, or reduce permissions merely to
+obtain a green build.
+
+## Documentation
+
+Update the relevant ADR, schema, README, threat model, CLI documentation, and changelog whenever
+the public architecture or security semantics change.
 
 ## Security research
 
-Do not use FAS to test systems without authorization. Demonstrations should use controlled fixtures or authorized environments.
-
-See [SECURITY.md](SECURITY.md) for vulnerability reporting.
+Use FAS only against systems you are authorized to analyze. Demonstrations should use controlled
+fixtures or authorized environments.
