@@ -107,7 +107,7 @@ class SQLiteStore:
                 previous=json.loads(rows[-1]["payload"]).get("_audit_event_hash")
             canonical=json.dumps(payload,sort_keys=True,separators=(",",":"),ensure_ascii=False)
             payload_hash=hashlib.sha256(canonical.encode("utf-8")).hexdigest()
-            chain_material=f"{previous or 'GENESIS'}|{payload_hash}".encode("utf-8")
+            chain_material=f"{previous or 'GENESIS'}|{payload_hash}".encode()
             event_hash=hashlib.sha256(chain_material).hexdigest()
             chained=dict(payload)
             chained["_audit_previous_hash"]=previous
@@ -186,7 +186,7 @@ class LocalObjectStore:
                 tmp = Path(handle.name)
             if hashlib.sha256(tmp.read_bytes()).hexdigest() != digest:
                 tmp.unlink(missing_ok=True)
-                raise IOError("content-addressed object integrity check failed before commit")
+                raise OSError("content-addressed object integrity check failed before commit")
             try:
                 tmp.replace(target)
             finally:
@@ -200,5 +200,5 @@ class LocalObjectStore:
         target = self.root / digest[:2] / digest
         data = target.read_bytes()
         if hashlib.sha256(data).hexdigest() != digest:
-            raise IOError("content-addressed object integrity check failed")
+            raise OSError("content-addressed object integrity check failed")
         return data
