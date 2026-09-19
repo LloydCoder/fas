@@ -168,3 +168,14 @@ def test_security_test_failure_blocks_remediation():
         original_graph=bg,candidate_graph=cg,original_paths=(path,),security_tests=(definition,),
         test_executor=DeterministicSecurityTestExecutor({"command-injection-regression":False}))
     assert out.result.result.value=="REMEDIATION_FAILED"
+
+def test_successful_verification_establishes_regression_baseline():
+    analysis=new_id("analysis"); before=snapshot(analysis,"a"); after=snapshot(analysis,"b")
+    bg,nodes=build_graph(analysis,before)
+    cg,cnodes=build_graph(analysis,after); cg.remove_edge(cg.get_edges_between(cnodes[1].id,cnodes[2].id)[0].id); cg.remove_node(cnodes[2].id)
+    ev=bg.get_node_evidence(nodes[0].id)[0]; f=finding(analysis,before,ev); r=remediation(analysis,f,before)
+    path=original_attack_path(analysis,before,bg,nodes)
+    out=VerificationEngine().verify(finding=f,remediation=r,original_snapshot=before,candidate_snapshot=after,
+        original_graph=bg,candidate_graph=cg,original_paths=(path,))
+    assert out.result.result.value=="REMEDIATED"
+    assert out.baseline is not None
