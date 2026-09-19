@@ -42,8 +42,10 @@ class ToolCollector:
             status="OUTPUT_LIMITED"
         elif result.returncode is None:
             status="FAILED"
-        elif result.returncode not in (0,1):
+        elif result.returncode not in (0, 1):
             status="FAILED"
+        elif not result.stdout and not result.stderr and result.returncode == 0:
+            status="NO_FINDINGS"
         else:
             status="SUCCESS"
         run=ToolRun(run_id,context.analysis_id,context.snapshot_id,self.tool_name,None,argv,str(self.raw_dir),environment_fingerprint(),started.isoformat(),datetime.now(timezone.utc).isoformat(),result.returncode,status,"sha256:"+stdout_hash,"sha256:"+stderr_hash,artifact_id,repository_revision=context.revision)
