@@ -43,8 +43,11 @@ jobs:
       - name: Security tests
         run: pytest tests/security
 
-      - name: Dependency audit
+      - name: Dependency integrity
         run: python -m pip check
+
+      - name: Dependency vulnerability audit
+        run: pip-audit --strict
 
       - name: Secret scan
         uses: gitleaks/gitleaks-action@bcfb9cce635345aac9996cedc19b2de8e01b894f
