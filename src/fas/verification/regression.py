@@ -1,6 +1,6 @@
 """Security baseline and regression detection."""
 from __future__ import annotations
-from fas.domain import Finding, Snapshot, new_id, VerdictType
+from fas.domain import Finding, Snapshot, new_id
 from fas.domain.verification import (
     RegressionStatus, SecurityBaseline, SecurityRegression,
 )
