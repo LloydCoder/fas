@@ -8,7 +8,7 @@ import json
 from collections.abc import Callable, Iterable
 
 from fas.domain.analysis import Artifact, Observation
-from fas.domain.common import EvidenceId, GraphNodeType, NodeId, RelationshipType
+from fas.domain.common import AnalysisId, EvidenceId, GraphNodeType, NodeId, RelationshipType, SnapshotId
 from fas.domain.evidence import Evidence
 from fas.domain.graph import GraphEdge, GraphNode
 
@@ -56,8 +56,8 @@ class GraphEngine:
         self,
         store: GraphStore | None = None,
         *,
-        analysis_id: str,
-        snapshot_id: str | None = None,
+        analysis_id: AnalysisId,
+        snapshot_id: SnapshotId | None = None,
         limits: GraphLimits | None = None,
         complete: bool = False,
     ) -> None:
@@ -79,7 +79,7 @@ class GraphEngine:
         if self._sealed:
             raise GraphSealedError("graph is sealed")
 
-    def _ensure_scope(self, analysis_id: str, snapshot_id: str) -> None:
+    def _ensure_scope(self, analysis_id: AnalysisId, snapshot_id: SnapshotId) -> None:
         if not self.scope.accepts(analysis_id, snapshot_id):
             raise SnapshotMismatch("object lies outside graph scope")
 
