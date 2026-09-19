@@ -63,6 +63,7 @@ class Snapshot(DomainModel):
 
 class Artifact(DomainModel):
     id: ArtifactId
+    analysis_id: AnalysisId
     type: ArtifactType
     name: str = Field(min_length=1, max_length=4096)
     media_type: str | None = Field(default=None, min_length=1, max_length=256)
@@ -76,6 +77,8 @@ class Artifact(DomainModel):
 
 class Observation(DomainModel):
     id: ObservationId
+    analysis_id: AnalysisId
+    snapshot_id: SnapshotId
     source: str = Field(min_length=1, max_length=512)
     category: str = Field(min_length=1, max_length=512)
     location: SourceLocation | None = None
