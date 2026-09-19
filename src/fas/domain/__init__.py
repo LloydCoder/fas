@@ -23,7 +23,7 @@ from .investigation import (
 )
 from .remediation import Remediation, Verification
 from .verification import (
-    AttackPathComparison, AttackPathComparisonStatus, CheckStatus, GraphDiff, RegressionStatus,
+    AttackPathComparison, AttackPathComparisonStatus, CheckStatus, DiffKind, GraphDiff, RegressionStatus,
     RegressionTest, RemediationType, ResidualPath, SecurityBaseline, SecurityPropertyOutcome,
     SecurityRegression, SecurityTestDefinition, SecurityTestResult, VerificationCheck,
     VerificationCheckResult, VerificationEvidence, VerificationPlan, VerificationReport,
