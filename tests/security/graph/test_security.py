@@ -25,8 +25,6 @@ def test_cross_snapshot_edge_injection_is_rejected(engine, context, provenance):
 
 
 def test_fake_evidence_reference_cannot_enter_graph(engine, context, provenance):
-    from tests.fixtures.graph.conftest import add_node
-
     fake = type("FakeEvidence", (), {"id": "evidence_01J00000000000000000000000"})()
     node = GraphBuilder.make_node(
         analysis_id=context["analysis"],
