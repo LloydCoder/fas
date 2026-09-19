@@ -6,6 +6,7 @@ from pathlib import Path
 from fas.domain.analysis import Artifact,Observation
 from fas.domain.common import ArtifactType,ContentHash,Provenance,ProvenanceCategory,ProvenanceLevel,SourceLocation
 from .base import _BatchBuilder
+from .filesystem import safe_read_bytes,ResourceLimitError
 
 _SKIP_DIRS=frozenset({".git",".hg",".svn",".venv","venv","node_modules","__pycache__",".mypy_cache",".pytest_cache",".ruff_cache","dist","build","coverage",".tox",".idea",".vscode"})
 _SOURCE_SUFFIXES=frozenset({".py",".pyi",".js",".jsx",".ts",".tsx",".java",".kt",".go",".rs",".c",".h",".cc",".cpp",".hpp",".cs",".php",".rb",".swift",".scala",".sh",".bash",".zsh",".sql",".yaml",".yml",".json",".toml",".ini"})
@@ -42,8 +43,8 @@ class RepositoryDiscoveryCollector:
                     relative=path.relative_to(context.root).as_posix(); size=path.stat().st_size
                     if size>context.max_file_bytes:
                         builder.skipped+=1; builder.warnings.append(f"file exceeds max_file_bytes: {relative}"); continue
-                    data=path.read_bytes()
-                except OSError as exc:
+                    data=safe_read_bytes(path,context.root,context.max_file_bytes)
+                except (OSError,ValueError,ResourceLimitError) as exc:
                     builder.skipped+=1; builder.complete=False; builder.warnings.append(f"unreadable file {path}: {exc}"); continue
                 digest=hashlib.sha256(data).hexdigest(); aid=_stable_id("artifact",f"{context.snapshot_id}|{relative}|{digest}"); prov=_provenance("filesystem_hash",relative)
                 builder.artifacts.append(Artifact(id=aid,analysis_id=context.analysis_id,type=_artifact_type(path),name=relative,size_bytes=size,content_hash=ContentHash(digest=digest),snapshot_id=context.snapshot_id,provenance=(prov,),external_reference=str(path),metadata={"repository":context.repository,**({"revision":context.revision} if context.revision else {})}))
