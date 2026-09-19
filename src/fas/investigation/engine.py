@@ -87,6 +87,12 @@ class InvestigationStore:
     def add_tool_result(self, result: InvestigationToolResult) -> None:
         self.tool_results.append(result)
 
+    def acquire_evidence(self, investigation_id: str, evidence_ids: Iterable[str]) -> None:
+        case = self.cases[investigation_id]
+        merged = tuple(sorted(set(case.acquired_evidence).union(evidence_ids)))
+        self.save_case(case.model_copy(update={"acquired_evidence": merged, "updated_at": utc_now()}))
+        self.event(case, "EVIDENCE_ACQUIRED", {"count": str(len(merged))})
+
     def event(self, case: InvestigationCase, event_type: str, payload: dict[str, str]) -> None:
         self.events.append(InvestigationEvent(
             id=new_id("investigation_event"),
@@ -163,9 +169,7 @@ class DeterministicInvestigator:
 
     def get_evidence(self, evidence_id: str) -> InvestigationToolResult:
         self._call("get_evidence", {"evidence_id": evidence_id})
-        evidence = self.ctx.graph.store.evidence(evidence_id)
-        self._scope(evidence.snapshot_id)
-        return self._result("get_evidence", "SUCCESS", {"evidence": evidence.model_dump(mode="json")}, [evidence.id])
+        evidence = self.ctx.graph.store.evidence(evidence_id)\n        self._scope(evidence.snapshot_id)\n        self.ctx.store.acquire_evidence(self.ctx.case.id, (evidence.id,))\n        return self._result("get_evidence", "SUCCESS", {"evidence": evidence.model_dump(mode="json")}, [evidence.id])
 
     def query_graph(self, *, node_type: GraphNodeType | None = None, relationship: RelationshipType | None = None) -> InvestigationToolResult:
         args={"node_type": node_type.value if node_type else "", "relationship": relationship.value if relationship else ""}
