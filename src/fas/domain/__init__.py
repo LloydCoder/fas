@@ -19,6 +19,8 @@ from .verdicts import Verdict
 
 __all__ = [
     "Analysis", "Snapshot", "Artifact", "Observation", "Evidence", "GraphNode", "GraphEdge",
+    "AnalysisId", "SnapshotId", "ArtifactId", "ObservationId", "EvidenceId", "NodeId", "EdgeId",
+    "FindingId", "AttackPathId", "VerdictId", "RemediationId", "VerificationId",
     "Finding", "AttackPath", "AttackPathStep", "Verdict", "Remediation", "Verification",
     "AnalysisStatus", "ArtifactType", "ProvenanceCategory", "ProvenanceLevel", "EvidenceType",
     "GraphNodeType", "RelationshipType", "FindingStatus", "Severity", "VerdictType",
