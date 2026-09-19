@@ -25,17 +25,12 @@
         "status": {},
         "created_at": {},
         "updated_at": {},
-        "provenance": {}
+        "provenance": {},
+        "expected_broken_path_ids": {}
       },
       "required": [
         "id",
-        "finding_id",
-        "analysis_id",
-        "original_snapshot_id",
-        "type",
-        "description",
-        "root_cause",
-        "expected_security_property"
+        "original_snapshot_id"
       ]
     },
     "Verification": {
@@ -58,6 +53,12 @@
         "alternate_paths": {},
         "supporting_evidence": {},
         "contradicting_evidence": {},
+        "evidence_ids": {},
+        "target_type": {},
+        "verification_type": {},
+        "before_snapshot_id": {},
+        "after_snapshot_id": {},
+        "verified_at": {},
         "missing_evidence": {},
         "result": {},
         "limitations": {},
@@ -66,11 +67,8 @@
       },
       "required": [
         "id",
-        "remediation_id",
-        "finding_id",
         "original_snapshot_id",
-        "candidate_snapshot_id",
-        "verification_plan_id"
+        "candidate_snapshot_id"
       ]
     },
     "VerificationPlan": {
