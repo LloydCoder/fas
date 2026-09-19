@@ -4,7 +4,9 @@ SQLite is the supported local/system-test backend. The interface is intentionall
 PostgreSQL/S3 implementations can be added without changing domain semantics.
 """
 from __future__ import annotations
-import hashlib, json, sqlite3
+import hashlib
+import json
+import sqlite3
 from pathlib import Path
 from typing import Any
 
