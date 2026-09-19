@@ -177,3 +177,35 @@ def test_successful_verification_establishes_regression_baseline():
         original_graph=bg,candidate_graph=cg,original_paths=(path,))
     assert out.result.result.value=="REMEDIATED"
     assert out.baseline is not None
+
+def test_agent_and_mcp_capability_differentials_are_security_relevant():
+    analysis=new_id("analysis"); before=snapshot(analysis,"a"); after=snapshot(analysis,"b")
+    bg,_=build_graph(analysis,before); cg,_=build_graph(analysis,after)
+    ev=evidence(analysis,before,"agent capability")
+    bg.add_evidence(ev)
+    agent=node(analysis,before,GraphNodeType.AGENT,"agent:worker","worker",ev,capability="deploy",principal="agent")
+    bg.add_node(agent)
+    cg_ev=evidence(analysis,after,"agent capability")
+    cg.add_evidence(cg_ev)
+    cg_agent=node(analysis,after,GraphNodeType.AGENT,"agent:worker","worker",cg_ev,capability="read",principal="agent")
+    cg.add_node(cg_agent)
+    m1=node(analysis,before,GraphNodeType.MCP_TOOL,"mcp:deploy","deploy",ev,authorization="allow",capability="production-write")
+    m2=node(analysis,after,GraphNodeType.MCP_TOOL,"mcp:deploy","deploy",cg_ev,authorization="deny",capability="production-write")
+    bg.add_node(m1); cg.add_node(m2)
+    diff=VerificationEngine().diff_engine.compare(bg,cg)
+    assert diff.agent_capability_changed
+    assert diff.mcp_capability_changed
+
+
+def test_regression_engine_detects_reappearance_against_baseline():
+    from fas.verification.regression import RegressionEngine
+    analysis=new_id("analysis"); before=snapshot(analysis,"a")
+    graph,_=build_graph(analysis,before)
+    ev=graph.get_node_evidence(next(n.id for n in graph.nodes() if n.type==GraphNodeType.REQUEST))[0]
+    f=finding(analysis,before,ev)
+    baseline=RegressionEngine().establish_baseline(
+        finding=f,verification_id=new_id("verification"),security_property="agent must not deploy production",
+        snapshot=before,graph=graph,
+    )
+    regression=RegressionEngine().detect(baseline=baseline,current=before,graph=graph,reachable_baseline_path=True)
+    assert regression.status.value=="DETECTED"
