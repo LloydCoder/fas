@@ -16,7 +16,7 @@ class InvestigatorRequest(BaseModel):
     objective:str=Field(min_length=1,max_length=8192)
     context:dict[str,str]=Field(default_factory=dict)
     allowed_tools:tuple[str,...]=()
-    max_tokens:int|None=Field(default=None,ge=1,max=200000)
+    max_tokens:int|None=Field(default=None,ge=1,le=200000)
 
 class InvestigatorResponse(BaseModel):
     model_config=ConfigDict(extra="forbid",frozen=True)
