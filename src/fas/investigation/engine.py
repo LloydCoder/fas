@@ -16,7 +16,7 @@ from fas.domain import (
     ControlAssessment, PermissionAssessment, TrustBoundaryAssessment, ToolPolicy, AttackPath,
     AttackPathStep, new_id, utc_now,
 )
-from fas.domain.common import GraphNodeType, RelationshipType
+from fas.domain.common import GraphNodeType, RelationshipType, JSONValue
 from fas.graph import GraphEngine, GraphPath, TraversalDirection
 from fas.graph.errors import NodeNotFound
 
@@ -149,7 +149,7 @@ class DeterministicInvestigator:
         if snapshot_id is not None and snapshot_id != self.ctx.case.snapshot_id:
             raise SnapshotScopeError("investigator tool attempted cross-snapshot access")
 
-    def _result(self, tool: str, status: str, result: dict[str, object], evidence: Iterable[str] = (), missing: Iterable[str] = ()) -> InvestigationToolResult:
+    def _result(self, tool: str, status: str, result: dict[str, JSONValue], evidence: Iterable[str] = (), missing: Iterable[str] = ()) -> InvestigationToolResult:
         return InvestigationToolResult(
             tool_call_id=f"{self.ctx.case.id}:{self.ctx.tool_calls_used}",
             tool=tool,
