@@ -587,6 +587,7 @@ hardened arbitrary runtime execution, and universal scanner/vulnerability covera
 - [Architecture](docs/architecture/README.md)
 - [Evidence Model](docs/evidence-model/README.md)
 - [Threat Model](docs/threat-model/README.md)
+- [Phase 6 Security Verification Matrix](docs/security/phase6-verification-matrix.md)
 - [Architecture Decision Records](docs/decisions/README.md)
 - [Contributing](CONTRIBUTING.md)
 - [Security Policy](SECURITY.md)
