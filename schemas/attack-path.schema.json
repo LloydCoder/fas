@@ -2,34 +2,21 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/LloydCoder/fas/blob/main/schemas/attack-path.schema.json",
   "title": "FAS Attack Path",
+  "x-fas-canonical-model": "AttackPath",
+  "x-fas-schema-version": "1.0",
   "type": "object",
   "additionalProperties": false,
-  "required": ["attack_path_id", "entry", "steps"],
+  "required": ["schema_version","id","entry","steps","snapshot_id","observed_at"],
   "properties": {
-    "attack_path_id": { "type": "string", "minLength": 1 },
-    "entry": { "type": "string", "minLength": 1 },
-    "steps": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["node", "edge", "next"],
-        "properties": {
-          "node": { "type": "string", "minLength": 1 },
-          "edge": { "type": "string", "minLength": 1 },
-          "next": { "type": "string", "minLength": 1 },
-          "evidence_ids": {
-            "type": "array",
-            "items": { "type": "string", "minLength": 1 },
-            "uniqueItems": true
-          }
-        }
-      }
-    },
-    "trust_boundaries_crossed": {
-      "type": "array",
-      "items": { "type": "string" },
-      "uniqueItems": true
-    }
+    "schema_version":{"type":"string"},
+    "id":{"type":"string","pattern":"^attack_path_[0-9A-HJKMNP-TV-Z]{26}$"},
+    "entry":{"type":"string","pattern":"^node_[0-9A-HJKMNP-TV-Z]{26}$"},
+    "steps":{"type":"array","minItems":1},
+    "trust_boundaries_crossed":{"type":"array","items":{"type":"string"}},
+    "supporting_evidence_ids":{"type":"array","items":{"type":"string"}},
+    "confidence":{"type":["object","null"]},
+    "snapshot_id":{"type":"string","pattern":"^snapshot_[0-9A-HJKMNP-TV-Z]{26}$"},
+    "observed_at":{"type":"string","format":"date-time"},
+    "metadata":{"type":"object","additionalProperties":{"type":"string"}}
   }
 }
