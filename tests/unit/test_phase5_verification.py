@@ -1,6 +1,4 @@
 from datetime import datetime, timezone
-import pytest
-
 from fas.domain import (
     AttackPath, AttackPathStep, ContentHash, Evidence, EvidenceType, Finding, FindingStatus,
     GraphEdge, GraphNode, GraphNodeType, Provenance, ProvenanceCategory, ProvenanceLevel,
@@ -143,9 +141,9 @@ def test_incomplete_candidate_graph_returns_unknown():
     bg,nodes=build_graph(analysis,before); cg,_=build_graph(analysis,after,complete=False)
     ev=bg.get_node_evidence(nodes[0].id)[0]; f=finding(analysis,before,ev); r=remediation(analysis,f,before)
     path=original_attack_path(analysis,before,bg,nodes)
-    with pytest.raises(ValueError):
-        VerificationEngine().verify(finding=f,remediation=r,original_snapshot=before,candidate_snapshot=after,
-            original_graph=bg,candidate_graph=cg,original_paths=(path,))
+    out=VerificationEngine().verify(finding=f,remediation=r,original_snapshot=before,candidate_snapshot=after,
+        original_graph=bg,candidate_graph=cg,original_paths=(path,))
+    assert out.result.result.value=="UNKNOWN"
 
 
 def test_permission_widening_is_semantic_regression_signal():
