@@ -93,8 +93,9 @@ class GraphBuilder:
         metadata: dict[str, str] | None = None,
     ) -> GraphNode:
         canonical = NodeIdentityResolver.canonical(node_type, canonical_identity)
+        scoped_identity = f"{analysis_id}|{snapshot_id}|{canonical}"
         return GraphNode(
-            id=NodeIdentityResolver.node_id(node_type, canonical_identity),
+            id=stable_id("node", scoped_identity),
             type=node_type,
             label=label,
             analysis_id=analysis_id,
@@ -119,6 +120,7 @@ class GraphBuilder:
         confidence: Confidence | None = None,
         security_relevant: bool = False,
         metadata: dict[str, str] | None = None,
+        observed_at=None,
     ) -> GraphEdge:
         semantic = "|".join((
             analysis_id,
@@ -137,7 +139,7 @@ class GraphBuilder:
             provenance=provenance,
             evidence_ids=evidence_ids,
             confidence=confidence,
-            observed_at=utc_now(),
+            observed_at=observed_at or utc_now(),
             security_relevant=security_relevant,
             metadata=metadata or {},
         )
