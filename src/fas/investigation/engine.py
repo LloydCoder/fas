@@ -408,7 +408,7 @@ class InvestigationEngine:
         if path.snapshot_id != context.case.snapshot_id:
             contradiction_values.add("attack path is outside investigation scope")
         if path.status in {"TRUNCATED", "PARTIAL"}:
-            missing_values.add(f"attack path search is {path.status.name}")
+            missing_values.add(f"attack path search is {path.status}")
         edges=[]
         for step in path.steps:
             try:
@@ -444,7 +444,7 @@ class InvestigationEngine:
                     permissions.append(value["permission"])
         if attacker_influence is not True:
             missing_values.add("attacker influence is not deterministically established")
-        reachable=bool(edges) and not contradiction_values and path.status.name == "COMPLETE"
+        reachable=bool(edges) and not contradiction_values and path.status == "COMPLETE"
         data_flow_established=any(edge.relationship_type == RelationshipType.FLOWS_TO for edge in edges)
         if not data_flow_established:
             missing_values.add("deterministic data-flow relationship is not established")
@@ -452,7 +452,7 @@ class InvestigationEngine:
         if edges:
             alternate=self.find_alternate_paths(context,path.entry,path.steps[-1].next_node_id,frozenset(edge.id for edge in edges))
         alternate_paths_found=bool(alternate)
-        if alternate and path.status.name != "COMPLETE":
+        if alternate and path.status != "COMPLETE":
             missing_values.add("alternate-path search was not complete")
         return ExploitabilityAnalysis(
             attacker_influence=attacker_influence,
