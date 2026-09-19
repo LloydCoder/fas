@@ -51,6 +51,15 @@ AttackPathId = Annotated[FasId, StringConstraints(pattern=r"^attack_path_[0-9A-H
 VerdictId = Annotated[FasId, StringConstraints(pattern=r"^verdict_[0-9A-HJKMNP-TV-Z]{26}$")]
 RemediationId = Annotated[FasId, StringConstraints(pattern=r"^remediation_[0-9A-HJKMNP-TV-Z]{26}$")]
 VerificationId = Annotated[FasId, StringConstraints(pattern=r"^verification_[0-9A-HJKMNP-TV-Z]{26}$")]
+InvestigationId = Annotated[FasId, StringConstraints(pattern=r"^investigation_[0-9A-HJKMNP-TV-Z]{26}$")]
+HypothesisId = Annotated[FasId, StringConstraints(pattern=r"^hypothesis_[0-9A-HJKMNP-TV-Z]{26}$")]
+EvidenceRequestId = Annotated[FasId, StringConstraints(pattern=r"^evidence_request_[0-9A-HJKMNP-TV-Z]{26}$")]
+InvestigationEventId = Annotated[FasId, StringConstraints(pattern=r"^investigation_event_[0-9A-HJKMNP-TV-Z]{26}$")]
+InvestigatorToolCallId = Annotated[FasId, StringConstraints(pattern=r"^tool_call_[0-9A-HJKMNP-TV-Z]{26}$")]
+ControlId = Annotated[FasId, StringConstraints(pattern=r"^control_[0-9A-HJKMNP-TV-Z]{26}$")]
+AuditEventId = Annotated[FasId, StringConstraints(pattern=r"^audit_event_[0-9A-HJKMNP-TV-Z]{26}$")]
+ReportId = Annotated[FasId, StringConstraints(pattern=r"^report_[0-9A-HJKMNP-TV-Z]{26}$")]
+ToolRunId = Annotated[FasId, StringConstraints(pattern=r"^tool_run_[0-9A-HJKMNP-TV-Z]{26}$")]
 
 
 class DomainModel(BaseModel):
@@ -69,6 +78,46 @@ class DomainModel(BaseModel):
 
 class FasEnum(str, Enum):
     pass
+
+
+class InvestigationStatus(FasEnum):
+    CREATED = "CREATED"
+    PLANNING = "PLANNING"
+    COLLECTING = "COLLECTING"
+    ANALYZING = "ANALYZING"
+    AWAITING_EVIDENCE = "AWAITING_EVIDENCE"
+    READY_FOR_VERDICT = "READY_FOR_VERDICT"
+    COMPLETED = "COMPLETED"
+    PARTIAL = "PARTIAL"
+    FAILED = "FAILED"
+    CANCELLED = "CANCELLED"
+
+
+class HypothesisStatus(FasEnum):
+    SUPPORTED = "SUPPORTED"
+    REFUTED = "REFUTED"
+    PARTIALLY_SUPPORTED = "PARTIALLY_SUPPORTED"
+    UNRESOLVED = "UNRESOLVED"
+
+
+class EvidenceRequestType(FasEnum):
+    FILE = "FILE"; CODE_LOCATION = "CODE_LOCATION"; SYMBOL = "SYMBOL"; CALLERS = "CALLERS"
+    CALLEES = "CALLEES"; DATAFLOW = "DATAFLOW"; CONTROL_FLOW = "CONTROL_FLOW"
+    DEPENDENCY = "DEPENDENCY"; CONFIGURATION = "CONFIGURATION"; IDENTITY = "IDENTITY"
+    PERMISSION = "PERMISSION"; ENDPOINT = "ENDPOINT"; AGENT = "AGENT"; TOOL = "TOOL"
+    MCP = "MCP"; TRUST_BOUNDARY = "TRUST_BOUNDARY"; RUNTIME_TEST = "RUNTIME_TEST"; GRAPH_PATH = "GRAPH_PATH"
+
+
+class InvestigationToolStatus(FasEnum):
+    SUCCESS = "SUCCESS"; PARTIAL = "PARTIAL"; EMPTY = "EMPTY"; UNSUPPORTED = "UNSUPPORTED"; FAILED = "FAILED"
+
+
+class InvestigationEventType(FasEnum):
+    CREATED = "CREATED"; HYPOTHESIS_CREATED = "HYPOTHESIS_CREATED"; EVIDENCE_REQUESTED = "EVIDENCE_REQUESTED"
+    EVIDENCE_ACQUIRED = "EVIDENCE_ACQUIRED"; GRAPH_QUERIED = "GRAPH_QUERIED"; TOOL_INVOKED = "TOOL_INVOKED"
+    TOOL_RESULT = "TOOL_RESULT"; HYPOTHESIS_UPDATED = "HYPOTHESIS_UPDATED"; ATTACK_PATH_PROPOSED = "ATTACK_PATH_PROPOSED"
+    ATTACK_PATH_VALIDATED = "ATTACK_PATH_VALIDATED"; VERDICT_PROPOSED = "VERDICT_PROPOSED"; STATE_CHANGED = "STATE_CHANGED"
+    CANCELLED = "CANCELLED"; FAILED = "FAILED"
 
 
 class AnalysisStatus(FasEnum):

@@ -418,13 +418,14 @@ The public repository is being established around the formal domain model and ev
 - [x] Initial security-tool adapters
 - [x] Observation-to-evidence normalization
 - [x] Deterministic graph investigation primitives
-- [ ] Exploitability analysis
-- [ ] Attack-path reconstruction
-- [ ] Formal verdict engine
+- [x] Exploitability investigation (evidence-backed proposals)
+- [x] Attack-path reconstruction (bounded and evidence-validated)
+- [ ] Formal verdict engine (Phase 5)
 - [ ] Remediation verification
 - [ ] CLI
 - [ ] API
 - [x] Phase 3 collection security hardening and acceptance contract
+- [x] Phase 4 investigation engine, deterministic primitives, constrained investigator boundary, and evidence-backed verdict proposals
 
 Until these components are implemented and tested, FAS should be considered experimental software.
 
@@ -588,12 +589,7 @@ Phase 3 is complete only when the repository passes the acceptance contract in [
 
 ### Phase 4 — Investigation
 
-- Data-flow tracing
-- Reachability analysis
-- Permission analysis
-- Finding correlation
-- Attack-path construction
-- Exploitability analysis
+Implemented in the current development branch: immutable-snapshot investigation cases, bounded deterministic graph/data-flow primitives, evidence requests, attack-path validation, control/permission/trust-boundary analysis contracts, constrained model provider boundary, explicit missing/contradictory evidence, and evidence-backed verdict proposals. Phase 5 remains responsible for formal verification/remediation verdicts.
 
 ### Phase 5 — Verification
 

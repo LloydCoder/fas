@@ -1,0 +1,37 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://github.com/LloydCoder/fas/schemas/investigation.schema.json",
+  "title":"FAS Phase 4 Investigation Contracts",
+  "$defs":{
+    "InvestigationCase":{"type":"object","properties":{
+      "id":{"type":"string"},"analysis_id":{"type":"string"},"finding_id":{"type":"string"},"snapshot_id":{"type":"string"},
+      "status":{"type":"string"},"objective":{"type":"string"},"hypotheses":{"type":"array"},"required_evidence":{"type":"array"},
+      "acquired_evidence":{"type":"array"},"missing_evidence":{"type":"array"},"contradicting_evidence":{"type":"array"},
+      "graph_scope":{"type":"string"},"attack_paths":{"type":"array"},"constraints":{"type":"object"},"budget":{"type":"object"},
+      "investigator_metadata":{"type":"object"},"created_at":{"type":"string"},"updated_at":{"type":"string"},"schema_version":{"type":"string"}
+    },"required":["id","analysis_id","finding_id","snapshot_id","status","objective","hypotheses","required_evidence","acquired_evidence","missing_evidence","contradicting_evidence","graph_scope","attack_paths","constraints","budget","investigator_metadata","created_at","updated_at","schema_version"]},
+    "InvestigationHypothesis":{"type":"object","properties":{
+      "id":{"type":"string"},"investigation_id":{"type":"string"},"statement":{"type":"string"},"status":{"type":"string"},
+      "supporting_evidence_ids":{"type":"array"},"contradicting_evidence_ids":{"type":"array"},"missing_evidence":{"type":"array"},
+      "derived_from":{"type":"array"},"created_at":{"type":"string"},"schema_version":{"type":"string"}
+    },"required":["id","investigation_id","statement","status","supporting_evidence_ids","contradicting_evidence_ids","missing_evidence","derived_from","created_at","schema_version"]},
+    "EvidenceRequest":{"type":"object","properties":{
+      "id":{"type":"string"},"investigation_id":{"type":"string"},"type":{"type":"string"},"target":{"type":"string"},
+      "purpose":{"type":"string"},"snapshot_id":{"type":"string"},"constraints":{"type":"object"},"status":{"type":"string"},
+      "created_at":{"type":"string"},"schema_version":{"type":"string"}
+    },"required":["id","investigation_id","type","target","purpose","snapshot_id","constraints","status","created_at","schema_version"]},
+    "InvestigationResult":{"type":"object","properties":{
+      "schema_version":{"type":"string"},"investigation_id":{"type":"string"},"finding_id":{"type":"string"},"analysis_id":{"type":"string"},
+      "snapshot_id":{"type":"string"},"status":{"type":"string"},"hypotheses":{"type":"array"},"evidence_ids":{"type":"array"},
+      "missing_evidence":{"type":"array"},"contradictions":{"type":"array"},"attack_paths":{"type":"array"},"controls":{"type":"array"},
+      "identities":{"type":"array"},"permissions":{"type":"array"},"trust_boundaries":{"type":"array"},"exploitability_analysis":{"type":"object"},
+      "verdict_proposal":{"type":["object","null"]},"limitations":{"type":"array"},"audit_reference":{"type":"string"},"created_at":{"type":"string"}
+    },"required":["schema_version","investigation_id","finding_id","analysis_id","snapshot_id","status","hypotheses","evidence_ids","missing_evidence","contradictions","attack_paths","controls","identities","permissions","trust_boundaries","exploitability_analysis","verdict_proposal","limitations","audit_reference","created_at"]},
+    "VerdictProposal":{"type":"object","properties":{
+      "verdict":{"type":"string"},"supporting_evidence_ids":{"type":"array"},"contradicting_evidence_ids":{"type":"array"},"missing_evidence":{"type":"array"},
+      "attack_path_ids":{"type":"array"},"rationale":{"type":"string"},"preconditions":{"type":"array"},"affected_assets":{"type":"array"},
+      "trust_boundaries":{"type":"array"},"identity":{"type":["string","null"]},"permissions":{"type":"array"},"controls":{"type":"array"},
+      "investigation_id":{"type":"string"},"snapshot_id":{"type":"string"},"schema_version":{"type":"string"}
+    },"required":["verdict","supporting_evidence_ids","contradicting_evidence_ids","missing_evidence","attack_path_ids","rationale","preconditions","affected_assets","trust_boundaries","identity","permissions","controls","investigation_id","snapshot_id","schema_version"]}
+  }
+}

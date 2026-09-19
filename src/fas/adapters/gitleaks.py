@@ -8,7 +8,7 @@ class GitleaksAdapter:
     name="gitleaks"
     def parse(self,payload,context,*,raw_artifact_id=None,source_artifact_id=None):
         raw=load_json(payload)
-        if not isinstance(raw,list): raise ValueError("gitleaks JSON report must be an array")
+        if not isinstance(raw,list): raise TypeError("gitleaks JSON report must be an array")
         observations=[]; now=datetime.now(timezone.utc)
         for index,item in enumerate(raw):
             rule_id=str(item.get("RuleID") or "unknown"); path=item.get("File") or item.get("SymlinkFile"); fingerprint=item.get("Fingerprint"); provenance=Provenance(category=ProvenanceCategory.TOOL_OBSERVATION,level=ProvenanceLevel.T2,collector=self.name,method="gitleaks_json_parse",source=f"[{index}]",observed_at=now); location=None

@@ -1,4 +1,3 @@
-from pathlib import Path
 import pytest
 from fas.collectors import PathPolicy,CollectionContext,CollectionPlan,CollectorSpec,plan_hash,manifest,replay_compatible
 from fas.domain.common import new_id

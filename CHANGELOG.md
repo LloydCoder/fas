@@ -16,3 +16,12 @@ The project is currently in early development and has not established a stable r
 
 - Established the public repository foundation.
 - Added the initial architecture, evidence-model, threat-model, and contribution documentation.
+
+## Phase 4 — Investigation
+
+- Added immutable-snapshot investigation cases, hypotheses, evidence requests and lifecycle states.
+- Added bounded deterministic graph, call/data-flow, endpoint, identity, permission, agent/MCP, control and alternate-path primitives.
+- Added evidence-validated attack-path reconstruction and conservative exploitability analysis.
+- Added model-agnostic investigator provider, deterministic fake model, structured output validation and external tool authorization boundary.
+- Added append-only local persistence seam, PostgreSQL schema, JSON Schema contract and parity checking.
+- Added security tests and investigation architecture/threat-model documentation.

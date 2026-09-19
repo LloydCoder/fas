@@ -4,7 +4,7 @@ import os,signal,subprocess
 from dataclasses import dataclass
 from pathlib import Path
 from threading import Event
-from typing import Mapping, Sequence
+from collections.abc import Mapping, Sequence
 
 class CancellationToken:
     def __init__(self): self._event=Event()

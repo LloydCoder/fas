@@ -1,6 +1,7 @@
 """Canonical FAS Phase 1 domain contracts."""
 
 from .analysis import Analysis, Artifact, Observation, Snapshot
+from .audit import AuditEvent, Report, ToolRun
 from .attack_paths import AttackPath, AttackPathStep
 from .common import (
     ActorType, AnalysisId, AnalysisStatus, ArtifactId, ArtifactReference, ArtifactType,
@@ -14,17 +15,26 @@ from .common import (
 from .evidence import Evidence
 from .findings import Finding
 from .graph import GraphEdge, GraphNode
+from .investigation import (
+    ControlAssessment, EvidenceRequest, ExploitabilityAnalysis, InvestigationBudget,
+    InvestigationCase, InvestigationConstraints, InvestigationEvent, InvestigationHypothesis,
+    InvestigationResult, InvestigationToolResult, PermissionAssessment, ToolPolicy,
+    TrustBoundaryAssessment, VerdictProposal,
+)
 from .remediation import Remediation, Verification
 from .verdicts import Verdict
 
 __all__ = [
-    "Analysis", "Snapshot", "Artifact", "Observation", "Evidence", "GraphNode", "GraphEdge",
+    "Analysis", "Snapshot", "Artifact", "Observation", "Evidence", "GraphNode", "GraphEdge", "AuditEvent", "Report", "ToolRun",
     "AnalysisId", "SnapshotId", "ArtifactId", "ObservationId", "EvidenceId", "NodeId", "EdgeId",
-    "FindingId", "AttackPathId", "VerdictId", "RemediationId", "VerificationId",
+    "FindingId", "AttackPathId", "VerdictId", "RemediationId", "VerificationId", "AuditEventId", "ReportId", "ToolRunId",
     "Finding", "AttackPath", "AttackPathStep", "Verdict", "Remediation", "Verification",
     "AnalysisStatus", "ArtifactType", "ProvenanceCategory", "ProvenanceLevel", "EvidenceType", "FasEnum",
     "GraphNodeType", "RelationshipType", "FindingStatus", "Severity", "VerdictType",
     "RemediationStatus", "VerificationTargetType", "VerificationType", "VerificationStatus",
-    "ActorType", "Confidence", "ContentHash", "IntegrityMetadata", "RepositoryReference",
+    "ActorType", "Confidence", "InvestigationCase", "InvestigationHypothesis", "EvidenceRequest",
+    "InvestigationResult", "InvestigationEvent", "InvestigationBudget", "InvestigationConstraints",
+    "InvestigationToolResult", "ControlAssessment", "PermissionAssessment", "TrustBoundaryAssessment",
+    "ExploitabilityAnalysis", "VerdictProposal", "ToolPolicy", "ContentHash", "IntegrityMetadata", "RepositoryReference",
     "ArtifactReference", "SourceLocation", "Provenance", "MissingEvidence", "new_id", "utc_now",
 ]

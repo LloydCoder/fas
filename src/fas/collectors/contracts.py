@@ -2,7 +2,7 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Mapping
+from collections.abc import Mapping
 from .base import CollectionContext, CollectionBatch, Collector
 
 class CollectionStatus(str, Enum):
@@ -41,7 +41,7 @@ class CollectorOutcome:
     collector: str
     status: CollectionStatus
     attempts: int
-    batch: CollectionBatch=CollectionBatch()
+    batch: CollectionBatch=field(default_factory=CollectionBatch)
     error: str|None=None
     duration_ms: int=0
     retry: RetryDisposition=RetryDisposition.DO_NOT_RETRY
