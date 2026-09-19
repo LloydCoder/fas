@@ -51,7 +51,7 @@ class RepositoryDiscoveryCollector:
                 try:
                     if path.is_symlink() or not path.is_file():
                         builder.skipped+=1
-                    continue
+                        continue
                     relative=path.relative_to(context.root).as_posix()
                     size=path.stat().st_size
                     if size>context.max_file_bytes:
@@ -115,10 +115,10 @@ def _parse_dependency_manifest(name,data):
             stripped=line.strip()
             if stripped.startswith("require ("):
                 block=True
-            continue
+                continue
             if block and stripped==")":
                 block=False
-            continue
+                continue
             if block and stripped and not stripped.startswith("//"):
                 deps.append(stripped)
             elif stripped.startswith("require "): deps.append(stripped.removeprefix("require ").strip())
