@@ -405,8 +405,10 @@ class InvestigationEngine:
         if path is None:
             missing_values.add("validated attack path unavailable")
             return ExploitabilityAnalysis(evidence_sufficient=False,missing_evidence=tuple(sorted(missing_values)),contradictions=tuple(sorted(contradiction_values)))
-        if path.snapshot_id != context.case.snapshot_id:
-            contradiction_values.add("attack path is outside investigation snapshot")
+        if path.snapshot_id != context.case.snapshot_id or path.analysis_id != context.case.analysis_id:
+            contradiction_values.add("attack path is outside investigation scope")
+        if path.status.name in {"TRUNCATED", "PARTIAL"}:
+            missing_values.add(f"attack path search is {path.status.name}")
         edges=[]
         for step in path.steps:
             try:
@@ -417,7 +419,17 @@ class InvestigationEngine:
             if edge.snapshot_id != context.case.snapshot_id or not edge.evidence_ids:
                 contradiction_values.add(f"attack path step {step.edge_id} is not evidence-backed")
             edges.append(edge)
-        evidence_records=[context.graph.store.evidence(eid) for eid in sorted(path.supporting_evidence_ids)]
+        evidence_records=[]
+        for evidence_id in sorted(path.supporting_evidence_ids):
+            try:
+                evidence=context.graph.store.evidence(evidence_id)
+            except (KeyError, ValueError):
+                missing_values.add(f"supporting evidence {evidence_id} is unavailable")
+                continue
+            if evidence.snapshot_id != context.case.snapshot_id:
+                contradiction_values.add(f"evidence {evidence_id} crosses investigation snapshot")
+                continue
+            evidence_records.append(evidence)
         attacker_influence=None
         identity=None
         permissions=[]
@@ -432,14 +444,16 @@ class InvestigationEngine:
                     permissions.append(value["permission"])
         if attacker_influence is not True:
             missing_values.add("attacker influence is not deterministically established")
-        reachable=bool(edges) and not contradiction_values
-        data_flow_established=any(edge.relationship_type.value=="FLOWS_TO" for edge in edges)
+        reachable=bool(edges) and not contradiction_values and path.status.name == "COMPLETE"
+        data_flow_established=any(edge.relationship_type == RelationshipType.FLOWS_TO for edge in edges)
         if not data_flow_established:
             missing_values.add("deterministic data-flow relationship is not established")
         alternate=()
         if edges:
             alternate=self.find_alternate_paths(context,path.entry,path.steps[-1].next_node_id,frozenset(edge.id for edge in edges))
         alternate_paths_found=bool(alternate)
+        if alternate and path.status.name != "COMPLETE":
+            missing_values.add("alternate-path search was not complete")
         return ExploitabilityAnalysis(
             attacker_influence=attacker_influence,
             reachable=reachable,
@@ -466,6 +480,6 @@ class InvestigationEngine:
     def complete(self, context:InvestigationContext, analysis:ExploitabilityAnalysis, *, attack_path:AttackPath|None, rationale:str)->InvestigationResult:
         proposal=self.propose_verdict(context,analysis,attack_path=attack_path,rationale=rationale)
         status=(InvestigationStatus.READY_FOR_VERDICT if proposal.verdict != "UNKNOWN" and analysis.evidence_sufficient and attack_path is not None else InvestigationStatus.AWAITING_EVIDENCE)
-        result=InvestigationResult(investigation_id=context.case.id,finding_id=context.case.finding_id,analysis_id=context.case.analysis_id,snapshot_id=context.case.snapshot_id,status=status,hypotheses=context.case.hypotheses,evidence_ids=tuple(sorted(set(context.case.acquired_evidence))),missing_evidence=analysis.missing_evidence,contradictions=tuple(),attack_paths=proposal.attack_path_ids,controls=analysis.controls,identities=(analysis.identity,) if analysis.identity else (),permissions=analysis.permissions,trust_boundaries=analysis.trust_boundaries,exploitability_analysis=analysis,verdict_proposal=proposal,limitations=(),audit_reference=f"investigation:{context.case.id}")
+        result=InvestigationResult(investigation_id=context.case.id,finding_id=context.case.finding_id,analysis_id=context.case.analysis_id,snapshot_id=context.case.snapshot_id,status=status,hypotheses=context.case.hypotheses,evidence_ids=tuple(sorted(set(context.case.acquired_evidence))),missing_evidence=analysis.missing_evidence,contradictions=analysis.contradictions,attack_paths=proposal.attack_path_ids,controls=analysis.controls,identities=(analysis.identity,) if analysis.identity else (),permissions=analysis.permissions,trust_boundaries=analysis.trust_boundaries,exploitability_analysis=analysis,verdict_proposal=proposal,limitations=(),audit_reference=f"investigation:{context.case.id}")
         self.store.results[context.case.id]=result
         return result
