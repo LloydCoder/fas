@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from fas.domain.analysis import Analysis
+from fas.domain.analysis import Analysis, Artifact, Observation
 from fas.domain.attack_paths import AttackPath
 from fas.domain.evidence import Evidence
 from fas.domain.findings import Finding
@@ -16,6 +16,8 @@ SCHEMAS = ROOT / "schemas"
 
 MODELS = {
     "analysis.schema.json": Analysis,
+    "artifact.schema.json": Artifact,
+    "observation.schema.json": Observation,
     "evidence.schema.json": Evidence,
     "finding.schema.json": Finding,
     "attack-path.schema.json": AttackPath,
