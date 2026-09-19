@@ -154,18 +154,15 @@ class SecureExecutor:
                     return ExecutionResult(safe_args, process.returncode, b"", b"", timed_out=True)
                 time.sleep(0.02)
             stdout_file.seek(0)
-            stderr_file.seek(0)
             stdout = stdout_file.read(self.policy.max_output_bytes)
-            stderr_budget = min(
-                self.policy.max_stderr_bytes,
-                max(0, self.policy.max_combined_output_bytes - len(stdout)),
-            )
+            stdout_file.seek(0, os.SEEK_END)
+            stdout_total = stdout_file.tell()
+            stderr_budget = min(self.policy.max_stderr_bytes, max(0, self.policy.max_combined_output_bytes - len(stdout)))
+            stderr_file.seek(0)
             stderr = stderr_file.read(stderr_budget)
-            output_limited = (
-                stdout_file.tell() < stdout_file.seek(0, os.SEEK_END)
-                or stderr_file.tell() < stderr_file.seek(0, os.SEEK_END)
-                or len(stdout) + len(stderr) >= self.policy.max_combined_output_bytes
-            )
+            stderr_file.seek(0, os.SEEK_END)
+            stderr_total = stderr_file.tell()
+            output_limited = (stdout_total > self.policy.max_output_bytes or stderr_total > self.policy.max_stderr_bytes or stdout_total + stderr_total > self.policy.max_combined_output_bytes)
             return ExecutionResult(
                 safe_args,
                 process.returncode,
