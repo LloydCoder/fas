@@ -1,3 +1,7 @@
+from itertools import pairwise
+
+import pytest
+
 from tests.fixtures.graph.conftest import add_evidence, add_node
 
 from fas.domain.common import GraphNodeType, RelationshipType
@@ -48,11 +52,11 @@ def test_insert_lookup_and_direction(engine, context, provenance):
 
 def test_multigraph_and_merge_preserve_evidence(engine, context, provenance):
     evidence_a = add_evidence(engine, context, provenance, claim="collector A")
-    evidence_b = __import__("conftest").add_evidence(engine, context, provenance, claim="collector B")
-    source = __import__("conftest").add_node(
+    evidence_b = add_evidence(engine, context, provenance, claim="collector B")
+    source = add_node(
         engine, context, provenance, node_type=GraphNodeType.SYMBOL, identity="a", evidence=evidence_a
     )
-    target = __import__("conftest").add_node(
+    target = add_node(
         engine, context, provenance, node_type=GraphNodeType.SYMBOL, identity="b", evidence=evidence_a
     )
     engine.add_node(source)
@@ -79,15 +83,15 @@ def test_multigraph_and_merge_preserve_evidence(engine, context, provenance):
 
 
 def test_bounded_traversal_and_deterministic_shortest_path(engine, context, provenance):
-    evidence = __import__("conftest").add_evidence(engine, context, provenance)
+    evidence = add_evidence(engine, context, provenance)
     nodes = []
     for identity in ("a", "b", "c", "d"):
-        node = __import__("conftest").add_node(
+        node = add_node(
             engine, context, provenance, node_type=GraphNodeType.SYMBOL, identity=identity, evidence=evidence
         )
         engine.add_node(node)
         nodes.append(node)
-    for left, right in __import__("itertools").pairwise(nodes):
+    for left, right in pairwise(nodes):
         engine.add_edge(GraphBuilder.make_edge(
             analysis_id=context["analysis"], snapshot_id=context["snapshot"],
             source_node_id=left.id, target_node_id=right.id,
@@ -103,10 +107,10 @@ def test_bounded_traversal_and_deterministic_shortest_path(engine, context, prov
 
 
 def test_path_enumeration_reports_truncation(engine, context, provenance):
-    evidence = __import__("conftest").add_evidence(engine, context, provenance)
+    evidence = add_evidence(engine, context, provenance)
     nodes = []
     for identity in ("s", "a", "b", "t"):
-        node = __import__("conftest").add_node(
+        node = add_node(
             engine, context, provenance, node_type=GraphNodeType.SYMBOL, identity=identity, evidence=evidence
         )
         engine.add_node(node)
@@ -130,10 +134,10 @@ def test_path_enumeration_reports_truncation(engine, context, provenance):
 
 
 def test_scc_cycle_and_components(engine, context, provenance):
-    evidence = __import__("conftest").add_evidence(engine, context, provenance)
+    evidence = add_evidence(engine, context, provenance)
     nodes = []
     for identity in ("a", "b", "isolated"):
-        node = __import__("conftest").add_node(
+        node = add_node(
             engine, context, provenance, node_type=GraphNodeType.SYMBOL, identity=identity, evidence=evidence
         )
         engine.add_node(node)
@@ -151,44 +155,44 @@ def test_scc_cycle_and_components(engine, context, provenance):
 
 
 def test_snapshot_isolation(engine, context, provenance):
-    evidence = __import__("conftest").add_evidence(engine, context, provenance)
-    node = __import__("conftest").add_node(
+    evidence = add_evidence(engine, context, provenance)
+    node = add_node(
         engine, context, provenance, node_type=GraphNodeType.SYMBOL, identity="a", evidence=evidence
     )
     engine.add_node(node)
     other = node.model_copy(update={"snapshot_id": context["other_snapshot"]})
-    with __import__("pytest").raises(SnapshotMismatch):
+    with pytest.raises(SnapshotMismatch):
         engine.add_node(other)
 
 
 def test_sealed_graph_is_read_only(engine, context, provenance):
-    evidence = __import__("conftest").add_evidence(engine, context, provenance)
-    node = __import__("conftest").add_node(
+    evidence = add_evidence(engine, context, provenance)
+    node = add_node(
         engine, context, provenance, node_type=GraphNodeType.SYMBOL, identity="a", evidence=evidence
     )
     engine.add_node(node)
     view = engine.seal()
     assert view.get_node(node.id) == node
-    with __import__("pytest").raises(GraphSealedError):
+    with pytest.raises(GraphSealedError):
         engine.add_node(node.model_copy(update={"id": stable_id("node", "new")}))
 
 
 def test_duplicate_semantic_nodes_are_rejected(engine, context, provenance):
-    evidence = __import__("conftest").add_evidence(engine, context, provenance)
-    node = __import__("conftest").add_node(
+    evidence = add_evidence(engine, context, provenance)
+    node = add_node(
         engine, context, provenance, node_type=GraphNodeType.SYMBOL, identity="a", evidence=evidence
     )
     engine.add_node(node)
-    with __import__("pytest").raises(DuplicateNode):
+    with pytest.raises(DuplicateNode):
         engine.add_node(node.model_copy(update={"id": stable_id("node", "different")}))
 
 
 def test_security_edge_evidence_is_queryable(engine, context, provenance):
-    evidence = __import__("conftest").add_evidence(engine, context, provenance)
-    source = __import__("conftest").add_node(
+    evidence = add_evidence(engine, context, provenance)
+    source = add_node(
         engine, context, provenance, node_type=GraphNodeType.AGENT, identity="agent", evidence=evidence
     )
-    target = __import__("conftest").add_node(
+    target = add_node(
         engine, context, provenance, node_type=GraphNodeType.TOOL, identity="tool", evidence=evidence
     )
     engine.add_nodes((source, target))
