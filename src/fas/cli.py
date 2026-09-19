@@ -61,7 +61,7 @@ def main(argv: list[str]|None=None) -> int:
         paths=tuple(AttackPath.model_validate(x) for x in load(args.original_paths))
         outcome=VerificationEngine().verify(finding=finding,remediation=remediation,original_snapshot=original,candidate_snapshot=candidate,original_graph=before,candidate_graph=after,original_paths=paths)
         dump(outcome.result,args.format)
-        return 0
+        return 0 if outcome.result.result.value not in {"UNKNOWN", "REMEDIATION_FAILED", "REGRESSED"} else 2
     if args.command=="analyze":
         root=Path(args.path).resolve()
         project=service.create_project(args.project or root.name,str(root))
