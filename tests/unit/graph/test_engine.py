@@ -234,3 +234,25 @@ def test_result_size_and_cancellation_limits(context, provenance):
     assert result.status == ResultStatus.TRUNCATED
     cancelled = engine.traverse(nodes[0].id, cancellation_check=lambda: True)
     assert cancelled.status == ResultStatus.TRUNCATED
+
+
+def test_same_snapshot_graph_merge_accumulates_relationship_evidence(context, provenance):
+    engine_a = GraphEngine(analysis_id=context["analysis"], snapshot_id=context["snapshot"])
+    engine_b = GraphEngine(analysis_id=context["analysis"], snapshot_id=context["snapshot"])
+    evidence_a = add_evidence(engine_a, context, provenance, claim="source A")
+    evidence_b = add_evidence(engine_b, context, provenance, claim="source B")
+    source = add_node(engine_a, context, provenance, node_type=GraphNodeType.SYMBOL, identity="source", evidence=evidence_a)
+    target = add_node(engine_a, context, provenance, node_type=GraphNodeType.SYMBOL, identity="target", evidence=evidence_a)
+    engine_a.add_nodes((source, target))
+    source_b = source.model_copy(update={"evidence_ids": (evidence_b.id,)})
+    target_b = target.model_copy(update={"evidence_ids": (evidence_b.id,)})
+    engine_b.add_nodes((source_b, target_b))
+    edge = GraphBuilder.make_edge(
+        analysis_id=context["analysis"], snapshot_id=context["snapshot"],
+        source_node_id=source.id, target_node_id=target.id,
+        relationship_type=RelationshipType.CALLS, provenance=(provenance,),
+        evidence_ids=(evidence_b.id,), observed_at=provenance.observed_at,
+    )
+    engine_b.add_edge(edge)
+    engine_a.merge_graph(engine_b)
+    assert set(engine_a.get_edge_evidence(edge.id)[0:2]) == {evidence_a, evidence_b}
