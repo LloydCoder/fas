@@ -18,7 +18,6 @@ from fas.domain import (
 )
 from fas.domain.common import GraphNodeType, RelationshipType, JSONValue
 from fas.graph import GraphEngine, GraphPath, TraversalDirection
-from fas.graph.errors import NodeNotFound
 
 
 class InvestigationError(RuntimeError):
@@ -148,6 +147,7 @@ class DeterministicInvestigator:
         if fingerprint in self.ctx.seen_calls:
             raise InvestigationBudgetExceeded("repeated investigator tool request")
         self.ctx.seen_calls.add(fingerprint)
+        self.ctx.store.event(self.ctx.case, "TOOL_INVOKED", {"tool": name})
         self.ctx.tool_calls_used += 1
         self.ctx.check()
 
@@ -169,7 +169,9 @@ class DeterministicInvestigator:
 
     def get_evidence(self, evidence_id: str) -> InvestigationToolResult:
         self._call("get_evidence", {"evidence_id": evidence_id})
-        evidence = self.ctx.graph.store.evidence(evidence_id)\n        self._scope(evidence.snapshot_id)\n        self.ctx.store.acquire_evidence(self.ctx.case.id, (evidence.id,))\n        return self._result("get_evidence", "SUCCESS", {"evidence": evidence.model_dump(mode="json")}, [evidence.id])
+        evidence = self.ctx.graph.store.evidence(evidence_id)
+        self._scope(evidence.snapshot_id)
+        self.ctx.store.acquire_evidence(self.ctx.case.id, (evidence.id,))\n        return self._result("get_evidence", "SUCCESS", {"evidence": evidence.model_dump(mode="json")}, [evidence.id])
 
     def query_graph(self, *, node_type: GraphNodeType | None = None, relationship: RelationshipType | None = None) -> InvestigationToolResult:
         args={"node_type": node_type.value if node_type else "", "relationship": relationship.value if relationship else ""}
@@ -331,8 +333,8 @@ class InvestigationEngine:
             id=new_id("investigation"),analysis_id=self.graph.scope.analysis_id,finding_id=finding.id,
             snapshot_id=finding.snapshot_id,status=InvestigationStatus.CREATED,objective=objective,
             graph_scope=f"analysis={self.graph.scope.analysis_id};snapshot={self.graph.scope.snapshot_id}",
-            budget=budget or __import__("fas.domain.investigation",fromlist=["InvestigationBudget"]).InvestigationBudget(),
-            constraints=constraints or __import__("fas.domain.investigation",fromlist=["InvestigationConstraints"]).InvestigationConstraints(),
+            budget=budget or InvestigationBudget(),
+            constraints=constraints or InvestigationConstraints(),
         )
         self.store.create(case)
         return case
