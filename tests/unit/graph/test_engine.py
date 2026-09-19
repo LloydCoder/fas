@@ -94,7 +94,7 @@ def test_bounded_traversal_and_deterministic_shortest_path(engine, context, prov
         ))
     traversal = engine.traverse(nodes[0].id, max_depth=2)
     assert traversal.node_ids == tuple(sorted(node.id for node in nodes[:3]))
-    assert traversal.status == ResultStatus.COMPLETE
+    assert traversal.status == ResultStatus.PARTIAL
     path = engine.shortest_path(nodes[0].id, nodes[3].id)
     assert len(path.paths) == 1
     assert [node.label for node in path.paths[0].nodes] == ["a", "b", "c", "d"]
