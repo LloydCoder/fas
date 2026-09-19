@@ -405,7 +405,7 @@ class InvestigationEngine:
         if path is None:
             missing_values.add("validated attack path unavailable")
             return ExploitabilityAnalysis(evidence_sufficient=False,missing_evidence=tuple(sorted(missing_values)),contradictions=tuple(sorted(contradiction_values)))
-        if path.snapshot_id != context.case.snapshot_id or path.analysis_id != context.case.analysis_id:
+        if path.snapshot_id != context.case.snapshot_id:
             contradiction_values.add("attack path is outside investigation scope")
         if path.status.name in {"TRUNCATED", "PARTIAL"}:
             missing_values.add(f"attack path search is {path.status.name}")
