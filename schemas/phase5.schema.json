@@ -153,7 +153,8 @@
         "credential_changed": {},
         "dataflow_changed": {},
         "control_changed": {},
-        "dependency_changed": {}
+        "dependency_changed": {},
+        "mcp_capability_changed": {}
       },
       "required": [
         "id",
