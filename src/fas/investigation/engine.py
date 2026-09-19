@@ -7,13 +7,13 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from hashlib import sha256
 from time import monotonic
-from typing import Callable, Iterable
+from collections.abc import Callable, Iterable
 
 from fas.domain import (
-    Evidence, Finding, GraphNode, InvestigationCase, InvestigationEvent, InvestigationHypothesis,
+    Finding, GraphNode, InvestigationCase, InvestigationEvent, InvestigationHypothesis,
     InvestigationResult, InvestigationStatus, InvestigationToolResult, EvidenceRequest,
-    EvidenceRequestType, ExploitabilityAnalysis, VerdictProposal,
-    ControlAssessment, PermissionAssessment, TrustBoundaryAssessment, ToolPolicy, AttackPath,
+    ExploitabilityAnalysis, VerdictProposal,
+    TrustBoundaryAssessment, ToolPolicy, AttackPath,
     AttackPathStep, new_id, utc_now,
 )
 from fas.domain.common import GraphNodeType, RelationshipType, JSONValue
