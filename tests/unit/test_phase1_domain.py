@@ -283,7 +283,7 @@ def test_unknown_fields_are_rejected(context):
 def test_round_trip_is_semantically_stable(context):
     i, p = context
     e = Evidence(
-        id=i["evidence"], type=EvidenceType.CODE, claim="x", observed_value={"a": [1, True]},
+        id=i["evidence"], analysis_id=i["analysis"], snapshot_id=i["snapshot"], type=EvidenceType.CODE, claim="x", observed_value={"a": [1, True]},
         provenance=(p,), observed_at=NOW,
     )
     restored = Evidence.model_validate_json(e.model_dump_json())
