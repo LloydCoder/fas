@@ -47,7 +47,7 @@ def test_identifier_validation_and_generation():
     assert value.startswith("evidence_")
     assert len(value.split("_", 1)[1]) == 26
     with pytest.raises(ValidationError):
-        Evidence(id="bad", analysis_id=i["analysis"], snapshot_id=i["snapshot"], type=EvidenceType.CODE, claim="x", provenance=(), observed_at=NOW)
+        Evidence(id="bad", type=EvidenceType.CODE, claim="x", provenance=(), observed_at=NOW)
 
 
 def test_hash_and_source_location_invariants(context):
