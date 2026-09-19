@@ -413,7 +413,7 @@ class InvestigationEngine:
         for step in path.steps:
             try:
                 edge=context.graph.get_edge(step.edge_id)
-            except Exception as exc:
+            except (KeyError, ValueError, TypeError) as exc:
                 contradiction_values.add(f"attack path step {step.edge_id} is unavailable: {type(exc).__name__}")
                 continue
             if edge.snapshot_id != context.case.snapshot_id or not edge.evidence_ids:
