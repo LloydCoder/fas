@@ -1,7 +1,6 @@
 """Durable bounded job execution with idempotency and cancellation."""
 from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor, Future
-import json
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from threading import Event, Lock
