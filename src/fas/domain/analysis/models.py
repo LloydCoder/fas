@@ -7,7 +7,7 @@ from datetime import datetime
 from pydantic import Field, field_validator, model_validator
 
 from fas.domain.common import (
-    AnalysisId, AnalysisStatus, ArtifactId, ArtifactReference, ArtifactType, ContentHash,
+    AnalysisId, AnalysisStatus, ArtifactId, ArtifactType, ContentHash,
     DomainModel, ObservationId, Provenance, RepositoryReference, SnapshotId, SourceLocation,
     utc_now,
 )
