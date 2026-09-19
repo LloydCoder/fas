@@ -557,8 +557,8 @@ FAS is not intended to:
 - Evidence schema
 - Snapshot model
 - Provenance model
-- Persistence abstraction
-- Initial security fixtures
+- Canonical domain contracts
+- Provenance, integrity, and hostile-input tests
 
 ### Phase 2 — Evidence Graph
 
