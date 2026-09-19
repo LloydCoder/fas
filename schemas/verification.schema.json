@@ -4,45 +4,40 @@
   "title": "FAS Verification",
   "x-fas-canonical-model": "Verification",
   "x-fas-schema-version": "1.0",
-  "$ref": "#/$defs/Verification",
-  "$defs": {
-    "Verification": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "schema_version": {},
-        "id": {},
-        "remediation_id": {},
-        "finding_id": {},
-        "original_snapshot_id": {},
-        "candidate_snapshot_id": {},
-        "verification_plan_id": {},
-        "status": {},
-        "checks": {},
-        "graph_diff_id": {},
-        "attack_path_comparison_ids": {},
-        "regressions": {},
-        "residual_paths": {},
-        "alternate_paths": {},
-        "supporting_evidence": {},
-        "contradicting_evidence": {},
-        "evidence_ids": {},
-        "target_type": {},
-        "verification_type": {},
-        "before_snapshot_id": {},
-        "after_snapshot_id": {},
-        "verified_at": {},
-        "missing_evidence": {},
-        "result": {},
-        "limitations": {},
-        "created_at": {},
-        "completed_at": {}
-      },
-      "required": [
-        "id",
-        "original_snapshot_id",
-        "candidate_snapshot_id"
-      ]
-    }
-  }
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {},
+    "id": {},
+    "remediation_id": {},
+    "finding_id": {},
+    "original_snapshot_id": {},
+    "candidate_snapshot_id": {},
+    "verification_plan_id": {},
+    "status": {},
+    "checks": {},
+    "graph_diff_id": {},
+    "attack_path_comparison_ids": {},
+    "regressions": {},
+    "residual_paths": {},
+    "alternate_paths": {},
+    "supporting_evidence": {},
+    "contradicting_evidence": {},
+    "evidence_ids": {},
+    "target_type": {},
+    "verification_type": {},
+    "before_snapshot_id": {},
+    "after_snapshot_id": {},
+    "verified_at": {},
+    "missing_evidence": {},
+    "result": {},
+    "limitations": {},
+    "created_at": {},
+    "completed_at": {}
+  },
+  "required": [
+    "id",
+    "original_snapshot_id",
+    "candidate_snapshot_id"
+  ]
 }
