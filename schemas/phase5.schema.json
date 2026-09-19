@@ -1,0 +1,447 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/LloydCoder/fas/blob/main/schemas/phase5.schema.json",
+  "title": "FAS Phase 5 Verification Contracts",
+  "type": "object",
+  "additionalProperties": false,
+  "$defs": {
+    "Remediation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {},
+        "finding_id": {},
+        "analysis_id": {},
+        "original_snapshot_id": {},
+        "target_snapshot_id": {},
+        "type": {},
+        "description": {},
+        "root_cause": {},
+        "affected_components": {},
+        "expected_security_property": {},
+        "proposed_changes": {},
+        "actual_changes": {},
+        "status": {},
+        "created_at": {},
+        "updated_at": {},
+        "provenance": {}
+      },
+      "required": [
+        "id",
+        "finding_id",
+        "analysis_id",
+        "original_snapshot_id",
+        "type",
+        "description",
+        "root_cause",
+        "expected_security_property"
+      ]
+    },
+    "Verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {},
+        "remediation_id": {},
+        "finding_id": {},
+        "original_snapshot_id": {},
+        "candidate_snapshot_id": {},
+        "verification_plan_id": {},
+        "status": {},
+        "checks": {},
+        "graph_diff_id": {},
+        "attack_path_comparison_ids": {},
+        "regressions": {},
+        "residual_paths": {},
+        "alternate_paths": {},
+        "supporting_evidence": {},
+        "contradicting_evidence": {},
+        "missing_evidence": {},
+        "result": {},
+        "limitations": {},
+        "created_at": {},
+        "completed_at": {}
+      },
+      "required": [
+        "id",
+        "remediation_id",
+        "finding_id",
+        "original_snapshot_id",
+        "candidate_snapshot_id",
+        "verification_plan_id"
+      ]
+    },
+    "VerificationPlan": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {},
+        "finding_id": {},
+        "remediation_id": {},
+        "original_snapshot_id": {},
+        "candidate_snapshot_id": {},
+        "security_property": {},
+        "required_checks": {},
+        "scope_components": {},
+        "created_at": {},
+        "plan_fingerprint": {}
+      },
+      "required": [
+        "id",
+        "finding_id",
+        "remediation_id",
+        "original_snapshot_id",
+        "candidate_snapshot_id",
+        "security_property",
+        "required_checks",
+        "plan_fingerprint"
+      ]
+    },
+    "VerificationRun": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {},
+        "verification_id": {},
+        "plan_id": {},
+        "started_at": {},
+        "completed_at": {},
+        "tool_versions": {},
+        "adapter_versions": {},
+        "configuration_fingerprint": {},
+        "checks_executed": {},
+        "paths_evaluated": {},
+        "alternate_paths_discovered": {},
+        "duration_ms": {}
+      },
+      "required": [
+        "id",
+        "verification_id",
+        "plan_id",
+        "started_at"
+      ]
+    },
+    "GraphDiff": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {},
+        "analysis_id": {},
+        "original_snapshot_id": {},
+        "candidate_snapshot_id": {},
+        "added_node_ids": {},
+        "removed_node_ids": {},
+        "modified_node_ids": {},
+        "added_edge_ids": {},
+        "removed_edge_ids": {},
+        "modified_edge_ids": {},
+        "unchanged_node_count": {},
+        "unchanged_edge_count": {},
+        "permission_added": {},
+        "permission_removed": {},
+        "permission_widened": {},
+        "permission_narrowed": {},
+        "identity_changed": {},
+        "trust_boundary_changed": {},
+        "endpoint_changed": {},
+        "tool_capability_changed": {},
+        "agent_capability_changed": {},
+        "credential_changed": {},
+        "dataflow_changed": {},
+        "control_changed": {},
+        "dependency_changed": {}
+      },
+      "required": [
+        "id",
+        "analysis_id",
+        "original_snapshot_id",
+        "candidate_snapshot_id"
+      ]
+    },
+    "AttackPathComparison": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {},
+        "original_path_id": {},
+        "candidate_path_ids": {},
+        "status": {},
+        "equivalent_security_impact": {},
+        "source_signature": {},
+        "sink_signature": {},
+        "evidence_ids": {},
+        "rationale": {}
+      },
+      "required": [
+        "id",
+        "original_path_id",
+        "status",
+        "rationale"
+      ]
+    },
+    "ResidualPath": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {},
+        "verification_id": {},
+        "path_id": {},
+        "security_property": {},
+        "evidence_ids": {},
+        "exploitable": {},
+        "equivalent_impact": {},
+        "description": {}
+      },
+      "required": [
+        "id",
+        "verification_id",
+        "path_id",
+        "security_property",
+        "description"
+      ]
+    },
+    "VerificationEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {},
+        "verification_id": {},
+        "claim": {},
+        "evidence_ids": {},
+        "artifact_ids": {},
+        "graph_diff_id": {},
+        "attack_path_comparison_id": {},
+        "runtime_result_id": {},
+        "provenance": {},
+        "created_at": {}
+      },
+      "required": [
+        "id",
+        "verification_id",
+        "claim"
+      ]
+    },
+    "SecurityRegression": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {},
+        "verification_id": {},
+        "baseline_id": {},
+        "status": {},
+        "security_property": {},
+        "evidence_ids": {},
+        "attack_path_ids": {},
+        "description": {}
+      },
+      "required": [
+        "id",
+        "verification_id",
+        "status",
+        "security_property",
+        "description"
+      ]
+    },
+    "RegressionTest": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {},
+        "finding_id": {},
+        "verification_id": {},
+        "security_property": {},
+        "test_definition": {},
+        "fixture": {},
+        "expected_result": {},
+        "version": {},
+        "provenance": {},
+        "created_at": {}
+      },
+      "required": [
+        "id",
+        "finding_id",
+        "verification_id",
+        "security_property",
+        "test_definition",
+        "expected_result",
+        "version"
+      ]
+    },
+    "SecurityBaseline": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {},
+        "finding_id": {},
+        "verification_id": {},
+        "security_property": {},
+        "snapshot_id": {},
+        "attack_path_ids": {},
+        "evidence_ids": {},
+        "control_signatures": {},
+        "permission_signatures": {},
+        "identity_signatures": {},
+        "agent_capability_signatures": {},
+        "mcp_capability_signatures": {},
+        "regression_test_ids": {},
+        "created_at": {}
+      },
+      "required": [
+        "id",
+        "finding_id",
+        "verification_id",
+        "security_property",
+        "snapshot_id"
+      ]
+    },
+    "SecurityTestDefinition": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "test_id": {},
+        "version": {},
+        "snapshot_id": {},
+        "security_property": {},
+        "target": {},
+        "expected_result": {},
+        "input_digest": {},
+        "timeout_seconds": {},
+        "network_policy": {},
+        "filesystem_policy": {},
+        "secret_policy": {}
+      },
+      "required": [
+        "test_id",
+        "version",
+        "snapshot_id",
+        "security_property",
+        "target",
+        "expected_result"
+      ]
+    },
+    "SecurityTestResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "test_id": {},
+        "test_version": {},
+        "snapshot_id": {},
+        "executor": {},
+        "executor_version": {},
+        "expected_result": {},
+        "actual_result": {},
+        "passed": {},
+        "exit_code": {},
+        "input_digest": {},
+        "artifact_ids": {},
+        "evidence_ids": {},
+        "started_at": {},
+        "completed_at": {},
+        "output_digest": {},
+        "environment": {}
+      },
+      "required": [
+        "test_id",
+        "test_version",
+        "snapshot_id",
+        "executor",
+        "executor_version",
+        "expected_result",
+        "actual_result",
+        "passed",
+        "started_at",
+        "completed_at"
+      ]
+    },
+    "VerificationCheckResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "check": {},
+        "status": {},
+        "evidence_ids": {},
+        "notes": {},
+        "blocking": {}
+      },
+      "required": [
+        "check",
+        "status"
+      ]
+    },
+    "VerificationResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "verification_id": {},
+        "finding_id": {},
+        "analysis_id": {},
+        "original_snapshot_id": {},
+        "candidate_snapshot_id": {},
+        "result": {},
+        "security_property": {},
+        "property_outcome": {},
+        "original_path_status": {},
+        "graph_diff_id": {},
+        "attack_path_comparison_ids": {},
+        "residual_path_ids": {},
+        "alternate_path_ids": {},
+        "regression_ids": {},
+        "verification_evidence_ids": {},
+        "supporting_evidence_ids": {},
+        "contradicting_evidence_ids": {},
+        "missing_evidence": {},
+        "limitations": {},
+        "checks": {},
+        "completeness_required": {},
+        "completeness_completed": {},
+        "created_at": {},
+        "completed_at": {}
+      },
+      "required": [
+        "verification_id",
+        "finding_id",
+        "analysis_id",
+        "original_snapshot_id",
+        "candidate_snapshot_id",
+        "result",
+        "security_property",
+        "property_outcome",
+        "original_path_status",
+        "completeness_required",
+        "completeness_completed"
+      ]
+    },
+    "VerificationReport": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "verification_id": {},
+        "finding_id": {},
+        "security_property": {},
+        "original_snapshot_id": {},
+        "candidate_snapshot_id": {},
+        "original_attack_paths": {},
+        "candidate_attack_paths": {},
+        "removed_paths": {},
+        "remaining_paths": {},
+        "alternate_paths": {},
+        "graph_diff_id": {},
+        "attack_path_comparison_ids": {},
+        "residual_path_ids": {},
+        "regressions": {},
+        "tests": {},
+        "evidence": {},
+        "limitations": {},
+        "result": {}
+      },
+      "required": [
+        "verification_id",
+        "finding_id",
+        "security_property",
+        "original_snapshot_id",
+        "candidate_snapshot_id",
+        "result"
+      ]
+    }
+  }
+}
