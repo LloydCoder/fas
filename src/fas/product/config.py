@@ -2,6 +2,7 @@
 from __future__ import annotations
 import json, os
 from dataclasses import dataclass, fields
+from typing import get_type_hints
 from pathlib import Path
 
 @dataclass(frozen=True, slots=True)
@@ -27,6 +28,7 @@ class Settings:
     @classmethod
     def from_sources(cls, *, path: Path | None = None, cli: dict[str, object] | None = None) -> "Settings":
         values: dict[str, object] = {}
+        types = get_type_hints(cls)
         if path and path.exists():
             raw = json.loads(path.read_text(encoding="utf-8"))
             if not isinstance(raw, dict):
@@ -36,7 +38,7 @@ class Settings:
         for f in fields(cls):
             env = os.getenv(prefix + f.name.upper())
             if env is not None:
-                values[f.name] = _coerce(env, f.type)
+                values[f.name] = _coerce(env, types[f.name])
         values.update(cli or {})
         return cls(**values)
 
