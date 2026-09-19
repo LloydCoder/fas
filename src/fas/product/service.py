@@ -40,32 +40,53 @@ class ProductService:
         if not root.is_dir():
             raise ValueError("analysis source must be a directory")
         digest=hashlib.sha256()
-        files=[]
-        for path in sorted(p for p in root.rglob("*") if p.is_file() and ".git" not in p.parts):
+        manifest=[]
+        omitted=[]
+        file_count=0
+        byte_count=0
+        max_files=10000
+        for path in sorted(root.rglob("*")):
+            if path.is_dir() or ".git" in path.parts or ".fas" in path.parts:
+                continue
+            rel=path.relative_to(root).as_posix()
             if path.is_symlink():
+                omitted.append({"path":rel,"reason":"SYMLINK"})
                 continue
             try:
                 resolved=path.resolve(strict=True)
                 resolved.relative_to(root)
-                rel=resolved.relative_to(root).as_posix()
                 data=resolved.read_bytes()
-            except (OSError, ValueError):
+            except (OSError,ValueError):
+                omitted.append({"path":rel,"reason":"UNREADABLE"})
                 continue
-            if len(files)>=10000:
-                break
+            if file_count>=max_files:
+                omitted.append({"path":rel,"reason":"FILE_LIMIT"})
+                continue
             if len(data)>self.settings.max_artifact_bytes:
+                omitted.append({"path":rel,"reason":"FILE_SIZE_LIMIT","size_bytes":len(data)})
                 continue
-            digest.update(rel.encode())
+            file_hash=hashlib.sha256(data).hexdigest()
+            digest.update(rel.encode("utf-8"))
             digest.update(b"\0")
-            digest.update(hashlib.sha256(data).digest())
-            files.append(rel)
+            digest.update(file_hash.encode("ascii"))
+            manifest.append({"path":rel,"sha256":file_hash,"size_bytes":len(data)})
+            file_count+=1
+            byte_count+=len(data)
+        completeness="COMPLETE" if not omitted else "PARTIAL"
+        manifest_payload={"files":manifest,"omitted":omitted,"file_count":file_count,"byte_count":byte_count,
+                          "max_files":max_files,"max_file_bytes":self.settings.max_artifact_bytes,
+                          "completeness":completeness}
+        manifest_hash=hashlib.sha256(json.dumps(manifest_payload,sort_keys=True,separators=(",",":")).encode()).hexdigest()
         now=datetime.now(timezone.utc)
         snap=Snapshot(id=new_id("snapshot"),repository=RepositoryReference(repository=str(root),revision=_git_revision(root)),
                       captured_at=now,content_hash=ContentHash(digest=digest.hexdigest()),
                       source_reference=str(root),environment_identity=f"python:{__import__('sys').version_info.major}.{__import__('sys').version_info.minor}",
-                      configuration_identity="local-defaults",immutable=True)
+                      configuration_identity="local-defaults",immutable=True,
+                      metadata={"manifest_sha256":manifest_hash,"file_count":str(file_count),"byte_count":str(byte_count),
+                                "completeness":completeness,"omitted_count":str(len(omitted))})
         self.store.put("snapshots",snap.id,analysis.id,snap.model_dump(mode="json"),now.isoformat())
-        self._audit(analysis.id,snap.id,"SNAPSHOT_CREATED",snap.id,{"source":str(root),"content_hash":snap.content_hash.value if snap.content_hash else None})
+        self._audit(analysis.id,snap.id,"SNAPSHOT_CREATED",snap.id,{"source":str(root),"content_hash":snap.content_hash.value if snap.content_hash else None,
+                                                                    "manifest_sha256":manifest_hash,"completeness":completeness})
         return snap
 
     def analyze_sync(self, project_id: str, root: Path, cancel=None) -> dict[str,object]:
