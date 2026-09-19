@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/LloydCoder/fas/blob/main/schemas/analysis-result.schema.json",
+  "title": "FAS Analysis Result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["analysis_id", "verdict"],
+  "properties": {
+    "analysis_id": { "type": "string", "minLength": 1 },
+    "finding_id": { "type": "string" },
+    "verdict": {
+      "type": "string",
+      "enum": [
+        "EXPLOITABLE",
+        "NOT_EXPLOITABLE",
+        "CONDITIONALLY_EXPLOITABLE",
+        "REMEDIATED",
+        "REMEDIATION_FAILED",
+        "REGRESSED",
+        "UNKNOWN"
+      ]
+    },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+    "rationale": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "attacker_control": { "type": "boolean" },
+        "reachable": { "type": "boolean" },
+        "control_present": { "type": "boolean" },
+        "trust_boundary_crossed": { "type": "boolean" }
+      }
+    },
+    "supporting_evidence": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true
+    },
+    "contradicting_evidence": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true
+    },
+    "missing_evidence": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true
+    }
+  }
+}
