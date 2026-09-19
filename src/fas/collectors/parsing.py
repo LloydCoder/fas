@@ -12,7 +12,8 @@ class ParseLimits:
 class ParseLimitError(ValueError): pass
 
 def safe_json_loads(payload:str|bytes,limits:ParseLimits|None=None):
-    limits=limits or ParseLimits()\n    data=payload.encode() if isinstance(payload,str) else payload
+    limits=limits or ParseLimits()
+    data=payload.encode() if isinstance(payload,str) else payload
     if len(data)>limits.max_bytes: raise ParseLimitError("JSON payload exceeds max_bytes")
     try: value=json.loads(data)
     except (UnicodeDecodeError,json.JSONDecodeError) as exc: raise ValueError(f"invalid JSON: {exc}") from exc

@@ -1,6 +1,5 @@
 """CI/CD and container metadata discovery without executing workflows."""
 from __future__ import annotations
-from pathlib import Path
 from .base import _BatchBuilder
 from .discovery import _stable_id,_provenance
 from fas.domain.analysis import Artifact,Observation

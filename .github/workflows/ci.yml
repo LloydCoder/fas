@@ -12,6 +12,7 @@ jobs:
   test:
     name: Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -36,7 +37,7 @@ jobs:
       - name: Test
         run: pytest
 
-      - name: Phase 4 schema parity
+      - name: Schema parity
         run: python scripts/check_schema_parity.py
 
       - name: Package build

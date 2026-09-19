@@ -404,33 +404,33 @@ The structure follows domain boundaries rather than individual vendors.
 
 ## Development status
 
-FAS is currently in **early development**.
+FAS is in **early development** with Phases 1–5 implemented as explicit security-analysis
+contracts and deterministic engines. Production-scale API, worker orchestration, and distribution
+remain Phase 6 work.
 
-The public repository is being established around the formal domain model and evidence architecture before claiming production readiness.
+### Implemented
 
-### Current priorities
+- [x] Phase 1 canonical domain contracts and immutable snapshots
+- [x] Phase 2 provenance-aware evidence graph and bounded path analysis
+- [x] Phase 3 hostile-input-safe security collection and adapters
+- [x] Phase 4 evidence-grounded investigation and constrained investigator boundary
+- [x] Phase 5 remediation verification, semantic graph diff, attack-path revalidation, residual/alternate-path search, regression baselines, and deterministic security-test contracts
+- [x] Structured `fas verify` CLI for explicit snapshot/graph verification
+- [x] JSON Schema parity checks for investigation, audit, and Phase 5 contracts
 
-- [x] Canonical domain schemas
-- [x] Immutable analysis snapshots
-- [x] Evidence store and provenance
-- [x] Graph node/edge model
-- [x] Repository, code, and dependency discovery
-- [x] Initial security-tool adapters
-- [x] Observation-to-evidence normalization
-- [x] Deterministic graph investigation primitives
-- [x] Exploitability investigation (evidence-backed proposals)
-- [x] Attack-path reconstruction (bounded and evidence-validated)
-- [ ] Formal verdict engine (Phase 5)
-- [ ] Remediation verification
-- [ ] CLI
-- [ ] API
-- [x] Phase 3 collection security hardening and acceptance contract
-- [x] Phase 4 investigation engine, deterministic primitives, constrained investigator boundary, and evidence-backed verdict proposals
+### Experimental / bounded
 
-Until these components are implemented and tested, FAS should be considered experimental software.
+- Phase 5 runtime verification currently provides a deterministic fixture executor only; arbitrary
+  candidate-code execution is intentionally not part of the core engine.
+- Verification is scoped to the configured finding, security property, evidence graph, paths, and
+  checks. It does not prove that an entire application is secure.
+- PostgreSQL and distributed worker integration remain architectural seams rather than a hidden
+  Phase 5 dependency.
 
----
+### Next
 
+Phase 6 — Productization: production API/CLI expansion, worker execution, reporting surfaces,
+sandboxed runtime infrastructure, and scale/reliability hardening.
 ## Relationship to existing security tools
 
 FAS is designed to complement established security tooling.
@@ -554,61 +554,30 @@ FAS is not intended to:
 ## Roadmap
 
 ### Phase 1 — Foundations
-
-- Domain contracts
-- Evidence schema
-- Snapshot model
-- Provenance model
-- Canonical domain contracts
-- Provenance, integrity, and hostile-input tests
+Domain contracts, evidence/provenance model, immutable snapshots, schemas, and foundational security tests.
 
 ### Phase 2 — Evidence Graph
-
-- Canonical graph node/edge scope and identity
-- In-memory indexed graph store abstraction
-- Provenance-aware relationships and evidence lookup
-- Deterministic traversal, shortest paths and bounded path enumeration
-- Strongly/weakly connected components and cycle analysis
-- Snapshot-isolated subgraph and trust-boundary queries
-- Deterministic JSON export/import and cross-snapshot graph diff
-- Graph sealing, validation, partial and truncation semantics
+Indexed provenance-aware graph storage, bounded traversal/path analysis, snapshot isolation,
+validation, serialization, and graph comparison primitives.
 
 ### Phase 3 — Security Collection
-
-- Scoped repository, code, and dependency discovery
-- Deterministic artifact hashing and immutable collection records
-- Observation normalization into provenance-preserving evidence
-- SARIF 2.1.x, Semgrep JSON, Trivy JSON, and Gitleaks JSON adapters
-- Secret-safe tool-output handling
-- Explicit partial-collection semantics and bounded discovery
-- Collector/adapter boundary that cannot create findings or verdicts
-
-### Phase 3 acceptance
-
-Phase 3 is complete only when the repository passes the acceptance contract in [docs/architecture/phase-3-acceptance.md](docs/architecture/phase-3-acceptance.md). The implementation includes bounded collection orchestration, raw tool artifacts and ToolRun replay metadata, secure external execution, hostile-input parser limits, agent/MCP and CI/CD configuration discovery, filesystem safety controls, deterministic replay manifests, and security/fuzz/property coverage.
+Repository discovery, tool adapters, SARIF/Semgrep/Trivy/Gitleaks normalization, raw artifacts,
+secure execution, hostile-input hardening, replay metadata, and collection acceptance tests.
 
 ### Phase 4 — Investigation
-
-Implemented in the current development branch: immutable-snapshot investigation cases, bounded deterministic graph/data-flow primitives, evidence requests, attack-path validation, control/permission/trust-boundary analysis contracts, constrained model provider boundary, explicit missing/contradictory evidence, and evidence-backed verdict proposals. Phase 5 remains responsible for formal verification/remediation verdicts.
+Immutable investigation cases, hypotheses, evidence requests, deterministic graph/data-flow
+primitives, attack-path reconstruction, exploitability analysis, and constrained LLM advisory boundary.
 
 ### Phase 5 — Verification
-
-- Formal verdict engine
-- Runtime/security-test hooks
-- Remediation comparison
-- Graph diff
-- Regression detection
+Snapshot-to-snapshot remediation verification, semantic graph diff, original/residual/alternate
+attack-path analysis, permission/identity/agent/MCP differentials, security-property outcomes,
+append-only verification evidence, regression baselines, deterministic security-test contracts,
+and bounded machine-readable reports.
 
 ### Phase 6 — Productization
+Production API/CLI expansion, workers, reporting surfaces, sandboxed runtime execution,
+performance/reliability hardening, and deployment-scale concerns.
 
-- API
-- CLI
-- Reports
-- Worker execution
-- Sandboxed analysis
-- Performance and reliability hardening
-
----
 
 ## Documentation
 

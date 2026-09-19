@@ -171,7 +171,8 @@ class DeterministicInvestigator:
         self._call("get_evidence", {"evidence_id": evidence_id})
         evidence = self.ctx.graph.store.evidence(evidence_id)
         self._scope(evidence.snapshot_id)
-        self.ctx.store.acquire_evidence(self.ctx.case.id, (evidence.id,))\n        return self._result("get_evidence", "SUCCESS", {"evidence": evidence.model_dump(mode="json")}, [evidence.id])
+        self.ctx.store.acquire_evidence(self.ctx.case.id, (evidence.id,))
+        return self._result("get_evidence", "SUCCESS", {"evidence": evidence.model_dump(mode="json")}, [evidence.id])
 
     def query_graph(self, *, node_type: GraphNodeType | None = None, relationship: RelationshipType | None = None) -> InvestigationToolResult:
         args={"node_type": node_type.value if node_type else "", "relationship": relationship.value if relationship else ""}
@@ -385,7 +386,12 @@ class InvestigationEngine:
         if path is None:
             missing_values.add("validated attack path unavailable")
             return ExploitabilityAnalysis(evidence_sufficient=False,missing_evidence=tuple(sorted(missing_values)),contradictions=tuple(sorted(contradiction_values)))
-        for step in path.steps:\n            edge = context.graph.get_edge(step.edge_id)\n            if edge.snapshot_id != context.case.snapshot_id or not edge.evidence_ids:\n                contradiction_values.add(f"attack path step {step.edge_id} is not evidence-backed")\n        evidence_records=[context.graph.store.evidence(eid) for eid in sorted(path.supporting_evidence_ids)]\n        attacker_influence=None; identity=None
+        for step in path.steps:
+            edge = context.graph.get_edge(step.edge_id)
+            if edge.snapshot_id != context.case.snapshot_id or not edge.evidence_ids:
+                contradiction_values.add(f"attack path step {step.edge_id} is not evidence-backed")
+        evidence_records=[context.graph.store.evidence(eid) for eid in sorted(path.supporting_evidence_ids)]
+        attacker_influence=None; identity=None
         for evidence in evidence_records:
             value=evidence.observed_value
             if isinstance(value,dict):

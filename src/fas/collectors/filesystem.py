@@ -33,8 +33,11 @@ class ResourceLimitError(RuntimeError): pass
 
 def safe_read_bytes(path:Path,root:Path,max_bytes:int)->bytes:
     """Read a regular file without following a final symlink when the platform exposes O_NOFOLLOW."""
-    resolved=Path(path).resolve()
+    raw=Path(path)
     root=Path(root).resolve()
+    if raw.is_symlink() or any(part.is_symlink() for part in [raw.parent, *raw.parent.parents] if part.exists()):
+        raise ValueError("symlink paths are forbidden")
+    resolved=raw.resolve()
     try: resolved.relative_to(root)
     except ValueError as exc: raise ValueError("path escapes collection root") from exc
     flags=os.O_RDONLY|getattr(os,"O_CLOEXEC",0)|getattr(os,"O_NOFOLLOW",0)

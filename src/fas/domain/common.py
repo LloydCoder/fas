@@ -60,6 +60,15 @@ ControlId = Annotated[FasId, StringConstraints(pattern=r"^control_[0-9A-HJKMNP-T
 AuditEventId = Annotated[FasId, StringConstraints(pattern=r"^audit_event_[0-9A-HJKMNP-TV-Z]{26}$")]
 ReportId = Annotated[FasId, StringConstraints(pattern=r"^report_[0-9A-HJKMNP-TV-Z]{26}$")]
 ToolRunId = Annotated[FasId, StringConstraints(pattern=r"^tool_run_[0-9A-HJKMNP-TV-Z]{26}$")]
+VerificationPlanId = Annotated[FasId, StringConstraints(pattern=r"^verification_plan_[0-9A-HJKMNP-TV-Z]{26}$")]
+VerificationRunId = Annotated[FasId, StringConstraints(pattern=r"^verification_run_[0-9A-HJKMNP-TV-Z]{26}$")]
+GraphDiffId = Annotated[FasId, StringConstraints(pattern=r"^graph_diff_[0-9A-HJKMNP-TV-Z]{26}$")]
+AttackPathComparisonId = Annotated[FasId, StringConstraints(pattern=r"^attack_path_comparison_[0-9A-HJKMNP-TV-Z]{26}$")]
+ResidualPathId = Annotated[FasId, StringConstraints(pattern=r"^residual_path_[0-9A-HJKMNP-TV-Z]{26}$")]
+SecurityRegressionId = Annotated[FasId, StringConstraints(pattern=r"^security_regression_[0-9A-HJKMNP-TV-Z]{26}$")]
+VerificationEvidenceId = Annotated[FasId, StringConstraints(pattern=r"^verification_evidence_[0-9A-HJKMNP-TV-Z]{26}$")]
+RegressionTestId = Annotated[FasId, StringConstraints(pattern=r"^regression_test_[0-9A-HJKMNP-TV-Z]{26}$")]
+SecurityBaselineId = Annotated[FasId, StringConstraints(pattern=r"^security_baseline_[0-9A-HJKMNP-TV-Z]{26}$")]
 
 
 class DomainModel(BaseModel):
@@ -277,10 +286,14 @@ class VerdictType(FasEnum):
 
 class RemediationStatus(FasEnum):
     PROPOSED = "PROPOSED"
-    IN_PROGRESS = "IN_PROGRESS"
+    PLANNED = "PLANNED"
     APPLIED = "APPLIED"
+    READY_FOR_VERIFICATION = "READY_FOR_VERIFICATION"
+    VERIFYING = "VERIFYING"
     VERIFIED = "VERIFIED"
     FAILED = "FAILED"
+    PARTIAL = "PARTIAL"
+    CANCELLED = "CANCELLED"
 
 
 class VerificationTargetType(FasEnum):
@@ -302,8 +315,18 @@ class VerificationStatus(FasEnum):
     PENDING = "PENDING"
     RUNNING = "RUNNING"
     PASSED = "PASSED"
-    FAILED = "FAILED"
     INCONCLUSIVE = "INCONCLUSIVE"
+    CREATED = "CREATED"
+    PLANNING = "PLANNING"
+    COLLECTING = "COLLECTING"
+    COMPARING = "COMPARING"
+    REANALYZING = "REANALYZING"
+    TESTING = "TESTING"
+    VERIFYING = "VERIFYING"
+    COMPLETED = "COMPLETED"
+    PARTIAL = "PARTIAL"
+    FAILED = "FAILED"
+    CANCELLED = "CANCELLED"
 
 
 class ActorType(FasEnum):

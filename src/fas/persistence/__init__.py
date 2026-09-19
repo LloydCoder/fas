@@ -7,6 +7,7 @@ provides the persistence-facing import surface.
 
 from fas.graph.store import GraphStore, InMemoryGraphStore, MutationEvent
 
-__all__ = ["GraphStore", "InMemoryGraphStore", "MutationEvent", "InvestigationRepository", "JsonlInvestigationRepository"]
+__all__ = ["GraphStore", "InMemoryGraphStore", "MutationEvent", "InvestigationRepository", "JsonlInvestigationRepository", "VerificationRepository", "JsonlVerificationRepository"]
 
 from .investigation import InvestigationRepository, JsonlInvestigationRepository
+from .verification import VerificationRepository, JsonlVerificationRepository

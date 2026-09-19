@@ -28,7 +28,7 @@ class CollectionOrchestrator:
                     status=CollectionStatus.INVALID_INPUT; error=str(exc); retry=RetryDisposition.DO_NOT_RETRY; break
                 except PermissionError as exc:
                     status=CollectionStatus.TOOL_ERROR; error=str(exc); retry=RetryDisposition.DO_NOT_RETRY; break
-                except (RuntimeError, OSError, TimeoutError) as exc:
+                except (RuntimeError, OSError) as exc:
                     status=CollectionStatus.FAILED; error=f"{type(exc).__name__}: {exc}"; retry=RetryDisposition.RETRY if attempts<spec.max_attempts else RetryDisposition.DO_NOT_RETRY
                 if retry==RetryDisposition.DO_NOT_RETRY: break
             duration=int((monotonic()-started)*1000)
