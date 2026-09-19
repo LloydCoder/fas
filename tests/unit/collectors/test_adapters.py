@@ -16,7 +16,7 @@ def test_trivy_adapter(tmp_path):
 
 def test_gitleaks_adapter_does_not_store_secret(tmp_path):
     observations=GitleaksAdapter().parse([{"RuleID":"aws","Description":"AWS key","File":"app.py","StartLine":4,"EndLine":4,"Secret":"SUPER-SECRET","Match":"api_key=SUPER-SECRET","Fingerprint":"fp"}],_context(tmp_path))
-    assert "SUPER-SECRET" not in json.dumps(observations[0].model_dump())
+    assert "SUPER-SECRET" not in json.dumps(observations[0].model_dump(mode="json"))
     assert observations[0].metadata["secret_material_omitted"]=="true"
 
 def test_sarif_adapter(tmp_path):
