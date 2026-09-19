@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Iterable, Protocol
+from typing import Protocol
 
 from fas.domain.analysis import Artifact, Observation
 from fas.domain.evidence import Evidence
 from fas.domain.graph import GraphEdge, GraphNode
-from fas.domain.common import EvidenceId, NodeId, RelationshipType
+from fas.domain.common import EvidenceId, NodeId
 
 from .contracts import GraphScope
 from .errors import DuplicateEdge, DuplicateNode, EdgeNotFound, NodeNotFound, SnapshotMismatch
@@ -70,6 +70,20 @@ class InMemoryGraphStore:
     def register_evidence(self, evidence: Evidence) -> None:
         if evidence.id in self._evidence and self._evidence[evidence.id] != evidence:
             raise DuplicateNode(f"evidence {evidence.id} already exists with different content")
+        for artifact_id in evidence.related_artifact_ids:
+            artifact = self._artifacts.get(artifact_id)
+            if artifact is None:
+                raise SnapshotMismatch(f"unknown artifact {artifact_id}")
+            if artifact.snapshot_id != evidence.snapshot_id:
+                raise SnapshotMismatch(f"artifact {artifact_id} is outside evidence scope")
+        for observation_id in evidence.related_observation_ids:
+            observation = self._observations.get(observation_id)
+            if observation is None:
+                raise SnapshotMismatch(f"unknown observation {observation_id}")
+        for provenance in evidence.provenance:
+            for parent_id in provenance.parent_evidence_ids:
+                if parent_id not in self._evidence:
+                    raise SnapshotMismatch(f"unknown parent evidence {parent_id}")
         self._evidence[evidence.id] = evidence
 
     def register_artifact(self, artifact: Artifact) -> None:
@@ -89,6 +103,7 @@ class InMemoryGraphStore:
         if key in self._node_identity:
             raise DuplicateNode(f"semantic node already exists for {key}")
         self._validate_node_evidence(node)
+        self._validate_provenance(node.provenance, node.snapshot_id)
         self._nodes[node.id] = node
         self._node_identity[key] = node.id
         self._outgoing.setdefault(node.id, set())
@@ -110,6 +125,7 @@ class InMemoryGraphStore:
         if key in self._edge_semantics:
             raise DuplicateEdge(f"semantic edge already exists for {key}")
         self._validate_edge_evidence(edge)
+        self._validate_provenance(edge.provenance, edge.snapshot_id)
         self._edges[edge.id] = edge
         self._edge_semantics[key] = edge.id
         self._outgoing[edge.source_node_id].add(edge.id)
@@ -171,6 +187,15 @@ class InMemoryGraphStore:
                 raise SnapshotMismatch(f"unknown evidence {evidence_id}")
             if evidence.analysis_id != node.analysis_id or evidence.snapshot_id != node.snapshot_id:
                 raise SnapshotMismatch(f"evidence {evidence_id} is outside node scope")
+
+    def _validate_provenance(self, provenance_records, snapshot_id: str) -> None:
+        for provenance in provenance_records:
+            for parent_id in provenance.parent_evidence_ids:
+                parent = self._evidence.get(parent_id)
+                if parent is None:
+                    raise SnapshotMismatch(f"unknown parent evidence {parent_id}")
+                if parent.snapshot_id != snapshot_id:
+                    raise SnapshotMismatch(f"parent evidence {parent_id} is outside scope")
 
     def _validate_edge_evidence(self, edge: GraphEdge) -> None:
         for evidence_id in edge.evidence_ids:
