@@ -95,7 +95,7 @@ class ApiServer:
                     return self._send(404,{"error":{"code":"NOT_FOUND","message":"resource not found"}})
                 except (KeyError,TypeError,ValueError):
                     return self._send(400,{"error":{"code":"INVALID_REQUEST","message":"invalid request"}})
-                except (OSError, RuntimeError, ValueError) as exc:
+                except (OSError, RuntimeError) as exc:
                     return self._send(500,{"error":{"code":"INTERNAL_ERROR","message":type(exc).__name__}})
             def log_message(self,fmt,*args): return
         ThreadingHTTPServer((host,port),Handler).serve_forever()
