@@ -57,6 +57,9 @@ EvidenceRequestId = Annotated[FasId, StringConstraints(pattern=r"^evidence_reque
 InvestigationEventId = Annotated[FasId, StringConstraints(pattern=r"^investigation_event_[0-9A-HJKMNP-TV-Z]{26}$")]
 InvestigatorToolCallId = Annotated[FasId, StringConstraints(pattern=r"^tool_call_[0-9A-HJKMNP-TV-Z]{26}$")]
 ControlId = Annotated[FasId, StringConstraints(pattern=r"^control_[0-9A-HJKMNP-TV-Z]{26}$")]
+AuditEventId = Annotated[FasId, StringConstraints(pattern=r"^audit_event_[0-9A-HJKMNP-TV-Z]{26}$")]
+ReportId = Annotated[FasId, StringConstraints(pattern=r"^report_[0-9A-HJKMNP-TV-Z]{26}$")]
+ToolRunId = Annotated[FasId, StringConstraints(pattern=r"^tool_run_[0-9A-HJKMNP-TV-Z]{26}$")]
 
 
 class DomainModel(BaseModel):
