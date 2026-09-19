@@ -204,7 +204,9 @@ class GraphEngine:
             categories = {item.category.value for item in edge.provenance}
             if not categories.intersection(query.provenance_categories):
                 return False
-        if edge.confidence is not None:
+        if query.min_confidence is not None or query.max_confidence is not None:
+            if edge.confidence is None:
+                return False
             value = edge.confidence.value
             if query.min_confidence is not None and value < query.min_confidence:
                 return False
