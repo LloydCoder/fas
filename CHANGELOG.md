@@ -1,3 +1,12 @@
+## Phase 6 V2 enforcement — 2026-09-19
+
+- Hardened subprocess execution with canonical executable resolution, sanitized environment, bounded output, timeout/cancellation handling and non-root policy.
+- Removed production dependence on target-repository fixture verdict oracles.
+- Added deterministic completeness propagation, canonical snapshot manifest metadata and explicit report completeness.
+- Strengthened content-addressed storage and tamper-evident audit-chain verification.
+- Corrected discovery boundaries and deterministic tool-run identity scoping.
+- Added Phase 6 adversarial regression coverage and expanded CI security/reproducibility gates.
+
 ## Phase 6 — Productization — 2026-09-19
 
 - Added installable product boundary with shared CLI/API application service.
@@ -22,7 +31,7 @@
 
 All notable changes to FAS will be documented here.
 
-The project is currently in early development and has not established a stable release series.
+The project is in alpha; the 0.6.0 Phase 6 product boundary remains bounded and does not claim universal vulnerability coverage or arbitrary runtime sandboxing.
 
 ## Unreleased
 
