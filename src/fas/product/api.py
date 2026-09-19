@@ -21,6 +21,8 @@ class ApiServer:
     def __init__(self, service: ProductService):
         self.service=service
     def serve(self, host: str, port: int) -> None:
+        if host not in {"127.0.0.1","localhost","::1"} and not self.service.settings.auth_required:
+            raise ValueError("refusing non-local API binding without FAS_AUTH_REQUIRED=true")
         service=self.service
         class Handler(BaseHTTPRequestHandler):
             server_version="FAS/0.1"
