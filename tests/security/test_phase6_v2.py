@@ -29,7 +29,7 @@ def test_content_addressed_storage_rejects_corruption(tmp_path: Path) -> None:
     item = store.put(b"immutable", media_type="text/plain", snapshot_id="snapshot_x", source="test")
     target = Path(item["storage_reference"])
     target.write_bytes(b"tampered")
-    with pytest.raises(IOError):
+    with pytest.raises(OSError):
         store.get(item["content_hash"])
 
 
@@ -65,7 +65,7 @@ def test_tool_run_identity_is_stable_and_tool_scoped() -> None:
     context = CollectionContext(
         analysis_id="analysis_01J00000000000000000000000",
         snapshot_id="snapshot_01J00000000000000000000000",
-        root=Path(".").resolve(),
+        root=Path.cwd(),
         repository="repo",
         revision="abc",
     )
