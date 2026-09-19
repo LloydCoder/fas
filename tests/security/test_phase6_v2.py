@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 from pathlib import Path
+import sys
 
 import pytest
 
@@ -81,18 +82,18 @@ def test_api_auth_required_fails_closed() -> None:
     from fas.product.api import ApiServer
     from fas.product.config import Settings
     from fas.product.service import ProductService
-    service = ProductService(Settings(auth_required=True, api_token=None, database_url="sqlite:///:memory:"))
+    service = ProductService(Settings(auth_required=True, api_token=None, database_url="sqlite:///" + str(Path.cwd() / "fas-auth-test.db")))
     with pytest.raises(ValueError):
         ApiServer(service).serve("127.0.0.1", 0)
 
 
 def test_executor_rejects_non_allowlisted_environment(tmp_path: Path) -> None:
     policy = ExecutionPolicy(
-        allowed_executables=frozenset({"fas-test-missing"}),
+        allowed_executables=frozenset({sys.executable}),
         allowed_environment=frozenset({"SAFE_VAR"}),
     )
     with pytest.raises(PermissionError):
-        SecureExecutor(policy).run(("fas-test-missing",), cwd=tmp_path, env={"HOME": "/tmp"})
+        SecureExecutor(policy).run((sys.executable, "-c", "print('ok')"), cwd=tmp_path, env={"HOME": "/tmp"})
 
 
 def test_snapshot_manifest_excludes_product_state(tmp_path: Path) -> None:
