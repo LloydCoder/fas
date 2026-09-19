@@ -98,6 +98,7 @@ class Remediation(DomainModel):
     analysis_id: AnalysisId | None = None
     original_snapshot_id: SnapshotId = Field(validation_alias=AliasChoices("original_snapshot_id", "before_snapshot_id"))
     target_snapshot_id: SnapshotId | None = Field(default=None, validation_alias=AliasChoices("target_snapshot_id", "patched_snapshot_id"))
+    patched_snapshot_id: SnapshotId | None = Field(default=None, validation_alias=AliasChoices("patched_snapshot_id", "target_snapshot_id"))
     type: RemediationType = RemediationType.CODE_CHANGE
     description: str = Field(default="Legacy remediation contract", min_length=1, max_length=16384)
     root_cause: str = Field(default="unspecified", min_length=1, max_length=8192)
