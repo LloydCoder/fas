@@ -12,7 +12,7 @@ from typing import Callable, Iterable
 from fas.domain import (
     Evidence, Finding, GraphNode, InvestigationCase, InvestigationEvent, InvestigationHypothesis,
     InvestigationResult, InvestigationStatus, InvestigationToolResult, EvidenceRequest,
-    EvidenceRequestType, HypothesisStatus, ExploitabilityAnalysis, VerdictProposal,
+    EvidenceRequestType, ExploitabilityAnalysis, VerdictProposal,
     ControlAssessment, PermissionAssessment, TrustBoundaryAssessment, ToolPolicy, AttackPath,
     AttackPathStep, new_id, utc_now,
 )
@@ -85,10 +85,7 @@ class InvestigationStore:
         self.event(case, "EVIDENCE_REQUESTED", {"request_id": item.id})
 
     def add_tool_result(self, result: InvestigationToolResult) -> None:
-        case = self.cases[result.tool_call_id.split(":")[0]] if ":" in result.tool_call_id else None
         self.tool_results.append(result)
-        if case:
-            self.event(case, "TOOL_RESULT", {"tool": result.tool})
 
     def event(self, case: InvestigationCase, event_type: str, payload: dict[str, str]) -> None:
         self.events.append(InvestigationEvent(
