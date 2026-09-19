@@ -252,6 +252,17 @@ class GraphEngine:
     def get_edge_provenance(self, edge_id: str):
         return self.get_edge(edge_id).provenance
 
+    def get_evidence_provenance(self, evidence_id: EvidenceId):
+        return self.store.evidence(evidence_id).provenance
+
+    def get_evidence_artifacts(self, evidence_id: EvidenceId):
+        evidence = self.store.evidence(evidence_id)
+        return tuple(sorted((self.store.artifacts(item) for item in evidence.related_artifact_ids), key=lambda item: item.id))
+
+    def get_evidence_observations(self, evidence_id: EvidenceId):
+        evidence = self.store.evidence(evidence_id)
+        return tuple(sorted((self.store.observations(item) for item in evidence.related_observation_ids), key=lambda item: item.id))
+
     def get_node_provenance(self, node_id: NodeId):
         return self.get_node(node_id).provenance
 
@@ -260,6 +271,8 @@ class GraphEngine:
             return self.get_node_provenance(subject_id)  # type: ignore[arg-type]
         if subject_type == "edge":
             return self.get_edge_provenance(subject_id)
+        if subject_type == "evidence":
+            return self.get_evidence_provenance(subject_id)  # type: ignore[arg-type]
         raise ValueError("subject_type must be node or edge")
 
     def evidence_subgraph(self, evidence_ids: Iterable[EvidenceId]) -> GraphQueryResult:
@@ -525,7 +538,7 @@ class GraphEngine:
         walk(source.id, [source.id], [])
         return PathResult(
             paths=tuple(paths),
-            status=ResultStatus.TRUNCATED if truncated else (ResultStatus.COMPLETE if paths else ResultStatus.EMPTY),
+            status=ResultStatus.TRUNCATED if truncated else (ResultStatus.COMPLETE if self.complete else ResultStatus.PARTIAL) if paths else (ResultStatus.PARTIAL if not self.complete else ResultStatus.EMPTY),
             reason="max_paths reached" if truncated else None,
         )
 
@@ -827,6 +840,15 @@ class GraphView:
 
     def get_node_evidence(self, *args, **kwargs):
         return self._engine.get_node_evidence(*args, **kwargs)
+
+    def get_evidence_provenance(self, *args, **kwargs):
+        return self._engine.get_evidence_provenance(*args, **kwargs)
+
+    def get_evidence_artifacts(self, *args, **kwargs):
+        return self._engine.get_evidence_artifacts(*args, **kwargs)
+
+    def get_evidence_observations(self, *args, **kwargs):
+        return self._engine.get_evidence_observations(*args, **kwargs)
 
     def get_edge_provenance(self, *args, **kwargs):
         return self._engine.get_edge_provenance(*args, **kwargs)
