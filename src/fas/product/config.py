@@ -1,6 +1,7 @@
 """Single-source runtime configuration with explicit precedence and secret-safe diagnostics."""
 from __future__ import annotations
-import json, os
+import json
+import os
 from dataclasses import dataclass, fields
 from typing import get_type_hints
 from pathlib import Path
