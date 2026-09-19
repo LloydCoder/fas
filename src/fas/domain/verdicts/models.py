@@ -26,7 +26,7 @@ class Verdict(DomainModel):
     prior_verdict_id: VerdictId | None = None
     verifier: str | None = Field(default=None, min_length=1, max_length=1024)
     created_at: datetime
-    metadata: dict[str, str] = {}
+    metadata: dict[str, str] = Field(default_factory=dict)
 
     @field_validator("created_at")
     @classmethod
