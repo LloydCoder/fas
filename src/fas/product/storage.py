@@ -7,7 +7,6 @@ from __future__ import annotations
 import hashlib, json, sqlite3
 from pathlib import Path
 from typing import Any
-from fas.domain import Analysis, Artifact, Finding, Project, Report, Snapshot
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS projects(id TEXT PRIMARY KEY, payload TEXT NOT NULL, created_at TEXT NOT NULL);
