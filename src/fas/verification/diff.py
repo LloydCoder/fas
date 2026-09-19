@@ -153,6 +153,7 @@ class SemanticGraphDiffEngine:
             endpoint_changed=changed_types(GraphNodeType.ENDPOINT),
             tool_capability_changed=changed_types(GraphNodeType.TOOL),
             agent_capability_changed=changed_types(GraphNodeType.AGENT),
+            mcp_capability_changed=tuple(sorted(set(changed_types(GraphNodeType.MCP_SERVER)) | set(changed_types(GraphNodeType.MCP_TOOL)))),
             credential_changed=changed_types(GraphNodeType.CREDENTIAL),
             dataflow_changed=tuple(sorted({
                 *(_edge_key(original,e)[2]+":"+_edge_key(original,e)[0]+"->"+_edge_key(original,e)[1]
