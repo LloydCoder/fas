@@ -9,7 +9,7 @@ from datetime import datetime
 from enum import StrEnum
 from typing import Literal
 
-from pydantic import Field, model_validator
+from pydantic import AliasChoices, Field, model_validator
 
 from fas.domain.common import (
     AnalysisId, AttackPathComparisonId, AttackPathId, DomainModel, EvidenceId, FindingId,
@@ -94,21 +94,22 @@ class RegressionStatus(StrEnum):
 
 class Remediation(DomainModel):
     id: RemediationId
-    finding_id: FindingId
-    analysis_id: AnalysisId
-    original_snapshot_id: SnapshotId
-    target_snapshot_id: SnapshotId | None = None
-    type: RemediationType
-    description: str = Field(min_length=1, max_length=16384)
-    root_cause: str = Field(min_length=1, max_length=8192)
+    finding_id: FindingId | None = Field(default=None, validation_alias=AliasChoices("finding_id", "target_finding_id"))
+    analysis_id: AnalysisId | None = None
+    original_snapshot_id: SnapshotId = Field(validation_alias=AliasChoices("original_snapshot_id", "before_snapshot_id"))
+    target_snapshot_id: SnapshotId | None = Field(default=None, validation_alias=AliasChoices("target_snapshot_id", "patched_snapshot_id"))
+    type: RemediationType = RemediationType.CODE_CHANGE
+    description: str = Field(default="Legacy remediation contract", min_length=1, max_length=16384)
+    root_cause: str = Field(default="unspecified", min_length=1, max_length=8192)
     affected_components: tuple[str, ...] = ()
-    expected_security_property: str = Field(min_length=1, max_length=8192)
+    expected_security_property: str = Field(default="unspecified security property", min_length=1, max_length=8192)
     proposed_changes: tuple[str, ...] = ()
     actual_changes: tuple[str, ...] = ()
     status: RemediationStatus = RemediationStatus.PROPOSED
     created_at: datetime = Field(default_factory=utc_now)
     updated_at: datetime = Field(default_factory=utc_now)
     provenance: tuple[Provenance, ...] = ()
+    expected_broken_path_ids: tuple[AttackPathId, ...] = ()
 
     @model_validator(mode="after")
     def valid_scope(self) -> "Remediation":
@@ -121,11 +122,11 @@ class Remediation(DomainModel):
 
 class Verification(DomainModel):
     id: VerificationId
-    remediation_id: RemediationId
-    finding_id: FindingId
-    original_snapshot_id: SnapshotId
-    candidate_snapshot_id: SnapshotId
-    verification_plan_id: VerificationPlanId
+    remediation_id: RemediationId | None = Field(default=None, validation_alias=AliasChoices("remediation_id", "target_id"))
+    finding_id: FindingId | None = None
+    original_snapshot_id: SnapshotId = Field(validation_alias=AliasChoices("original_snapshot_id", "before_snapshot_id"))
+    candidate_snapshot_id: SnapshotId = Field(validation_alias=AliasChoices("candidate_snapshot_id", "after_snapshot_id"))
+    verification_plan_id: VerificationPlanId | None = None
     status: VerificationStatus = VerificationStatus.CREATED
     checks: tuple["VerificationCheckResult", ...] = ()
     graph_diff_id: GraphDiffId | None = None
@@ -135,6 +136,12 @@ class Verification(DomainModel):
     alternate_paths: tuple[AttackPathId, ...] = ()
     supporting_evidence: tuple[VerificationEvidenceId, ...] = ()
     contradicting_evidence: tuple[VerificationEvidenceId, ...] = ()
+    evidence_ids: tuple[EvidenceId, ...] = Field(default=(), validation_alias=AliasChoices("evidence_ids", "supporting_evidence_ids"))
+    target_type: str | None = None
+    verification_type: str | None = None
+    before_snapshot_id: SnapshotId | None = None
+    after_snapshot_id: SnapshotId | None = None
+    verified_at: datetime | None = None
     missing_evidence: tuple[str, ...] = ()
     result: VerdictType | None = None
     limitations: tuple[str, ...] = ()
