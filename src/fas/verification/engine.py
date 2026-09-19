@@ -179,7 +179,34 @@ class VerificationEngine:
         if errors:
             for check in plan.required_checks:
                 checks.append(VerificationCheckResult(check=check,status=CheckStatus.BLOCKED,notes="; ".join(errors),blocking=True))
-            raise ValueError("; ".join(errors))
+            graph_diff=GraphDiff(
+                id=new_id("graph_diff"),analysis_id=original_graph.scope.analysis_id,
+                original_snapshot_id=original_snapshot.id,candidate_snapshot_id=candidate_snapshot.id,
+            )
+            evidence=VerificationEvidence(
+                id=new_id("verification_evidence"),verification_id=verification_id,
+                claim="Verification could not establish snapshot/graph integrity.",
+                graph_diff_id=graph_diff.id,
+            )
+            result=VerificationResult(
+                verification_id=verification_id,finding_id=finding.id,analysis_id=original_graph.scope.analysis_id,
+                original_snapshot_id=original_snapshot.id,candidate_snapshot_id=candidate_snapshot.id,
+                result=VerdictType.UNKNOWN,security_property=remediation.expected_security_property,
+                property_outcome=SecurityPropertyOutcome.UNKNOWN,
+                original_path_status=AttackPathComparisonStatus.UNKNOWN,graph_diff_id=graph_diff.id,
+                verification_evidence_ids=(evidence.id,),missing_evidence=tuple(sorted(set(errors))),
+                limitations=("Verification stopped before comparison because required integrity conditions were not established.",),
+                checks=tuple(checks),completeness_required=len(plan.required_checks),completeness_completed=0,
+                completed_at=datetime.now(timezone.utc),
+            )
+            run=VerificationRun(id=new_id("verification_run"),verification_id=verification_id,plan_id=plan.id,
+                started_at=result.created_at,completed_at=result.completed_at,checks_executed=tuple(checks))
+            report=VerificationReport(
+                verification_id=verification_id,finding_id=finding.id,security_property=remediation.expected_security_property,
+                original_snapshot_id=original_snapshot.id,candidate_snapshot_id=candidate_snapshot.id,
+                graph_diff_id=graph_diff.id,evidence=(evidence.id,),limitations=result.limitations,result=VerdictType.UNKNOWN)
+            return VerificationOutcome(result=result,report=report,plan=plan,run=run,graph_diff=graph_diff,
+                comparisons=(),residual_paths=(),regressions=(),tests=())
 
         graph_diff=self.diff_engine.compare(original_graph,candidate_graph)
         checks.append(VerificationCheckResult(
