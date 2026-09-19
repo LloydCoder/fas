@@ -13,6 +13,12 @@ CREATE TABLE IF NOT EXISTS projects(id TEXT PRIMARY KEY, payload TEXT NOT NULL, 
 CREATE TABLE IF NOT EXISTS analyses(id TEXT PRIMARY KEY, project_id TEXT NOT NULL, payload TEXT NOT NULL, created_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS snapshots(id TEXT PRIMARY KEY, analysis_id TEXT NOT NULL, payload TEXT NOT NULL, created_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS artifacts(id TEXT PRIMARY KEY, snapshot_id TEXT NOT NULL, payload TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS observations(id TEXT PRIMARY KEY, snapshot_id TEXT NOT NULL, payload TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS evidence(id TEXT PRIMARY KEY, snapshot_id TEXT NOT NULL, payload TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS graph_nodes(id TEXT PRIMARY KEY, snapshot_id TEXT NOT NULL, payload TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS graph_edges(id TEXT PRIMARY KEY, snapshot_id TEXT NOT NULL, payload TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS remediations(id TEXT PRIMARY KEY, analysis_id TEXT NOT NULL, payload TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS verifications(id TEXT PRIMARY KEY, analysis_id TEXT NOT NULL, payload TEXT NOT NULL, created_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS findings(id TEXT PRIMARY KEY, snapshot_id TEXT NOT NULL, payload TEXT NOT NULL, created_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS reports(id TEXT PRIMARY KEY, analysis_id TEXT NOT NULL, payload TEXT NOT NULL, created_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS audit_events(id TEXT PRIMARY KEY, analysis_id TEXT NOT NULL, payload TEXT NOT NULL, created_at TEXT NOT NULL);
@@ -20,6 +26,12 @@ CREATE TABLE IF NOT EXISTS jobs(id TEXT PRIMARY KEY, operation_key TEXT NOT NULL
 CREATE INDEX IF NOT EXISTS idx_analyses_project ON analyses(project_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_snapshots_analysis ON snapshots(analysis_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_artifacts_snapshot ON artifacts(snapshot_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_observations_snapshot ON observations(snapshot_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_evidence_snapshot ON evidence(snapshot_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_graph_nodes_snapshot ON graph_nodes(snapshot_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_graph_edges_snapshot ON graph_edges(snapshot_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_remediations_analysis ON remediations(analysis_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_verifications_analysis ON verifications(analysis_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_findings_snapshot ON findings(snapshot_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_reports_analysis ON reports(analysis_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_jobs_status ON jobs(status, updated_at);
@@ -47,7 +59,7 @@ class SQLiteStore:
             con.executescript(SCHEMA)
 
     def put(self, table: str, identifier: str, foreign_key: str, payload: dict[str, Any], created_at: str) -> None:
-        allowed = {"projects","analyses","snapshots","artifacts","findings","reports","audit_events"}
+        allowed = {"projects","analyses","snapshots","artifacts","observations","evidence","graph_nodes","graph_edges","remediations","verifications","findings","reports","audit_events"}
         if table not in allowed:
             raise ValueError("unsupported table")
         key_col = "id"
@@ -56,11 +68,11 @@ class SQLiteStore:
             if table == "projects":
                 con.execute("INSERT INTO projects(id,payload,created_at) VALUES(?,?,?)", (identifier, serialized, created_at))
             else:
-                fk_col = {"analyses":"project_id","snapshots":"analysis_id","artifacts":"snapshot_id","findings":"snapshot_id","reports":"analysis_id","audit_events":"analysis_id"}[table]
+                fk_col = {"analyses":"project_id","snapshots":"analysis_id","artifacts":"snapshot_id","observations":"snapshot_id","evidence":"snapshot_id","graph_nodes":"snapshot_id","graph_edges":"snapshot_id","remediations":"analysis_id","verifications":"analysis_id","findings":"snapshot_id","reports":"analysis_id","audit_events":"analysis_id"}[table]
                 con.execute(f"INSERT INTO {table}({key_col},{fk_col},payload,created_at) VALUES(?,?,?,?)", (identifier, foreign_key, serialized, created_at))
 
     def get(self, table: str, identifier: str) -> dict[str, Any]:
-        if table not in {"projects","analyses","snapshots","artifacts","findings","reports","audit_events","jobs"}:
+        if table not in {"projects","analyses","snapshots","artifacts","observations","evidence","graph_nodes","graph_edges","remediations","verifications","findings","reports","audit_events","jobs"}:
             raise ValueError("unsupported table")
         with self._connect() as con:
             row = con.execute(f"SELECT payload FROM {table} WHERE id=?", (identifier,)).fetchone()
@@ -69,7 +81,7 @@ class SQLiteStore:
         return json.loads(row["payload"])
 
     def list(self, table: str, foreign_col: str, foreign_value: str, limit: int = 100, offset: int = 0) -> list[dict[str, Any]]:
-        if table not in {"analyses","snapshots","artifacts","findings","reports","audit_events"}:
+        if table not in {"analyses","snapshots","artifacts","observations","evidence","graph_nodes","graph_edges","remediations","verifications","findings","reports","audit_events"}:
             raise ValueError("unsupported table")
         with self._connect() as con:
             rows = con.execute(f"SELECT payload FROM {table} WHERE {foreign_col}=? ORDER BY created_at ASC, id ASC LIMIT ? OFFSET ?",
