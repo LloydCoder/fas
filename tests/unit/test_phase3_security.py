@@ -1,6 +1,7 @@
 from pathlib import Path
 import pytest
-from fas.collectors import PathPolicy,CollectionContext,CollectionPlan,CollectorSpec,plan_hash,manifest,replay_compatible,new_id
+from fas.collectors import PathPolicy,CollectionContext,CollectionPlan,CollectorSpec,plan_hash,manifest,replay_compatible
+from fas.domain.common import new_id
 def test_path_policy_blocks_traversal(tmp_path):
     policy=PathPolicy(tmp_path)
     with pytest.raises(ValueError): policy.validate_relative("../secret")
