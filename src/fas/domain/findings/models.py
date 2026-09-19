@@ -27,6 +27,12 @@ class Finding(DomainModel):
     updated_at: datetime
     metadata: dict[str, str] = Field(default_factory=dict)
 
+    @model_validator(mode="after")
+    def requires_supporting_evidence(self) -> "Finding":
+        if not self.supporting_evidence_ids:
+            raise ValueError("finding requires supporting evidence")
+        return self
+
     @field_validator("created_at", "updated_at")
     @classmethod
     def timezone_required(cls, value: datetime) -> datetime:
