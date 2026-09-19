@@ -200,3 +200,19 @@ def test_security_edge_evidence_is_queryable(engine, context, provenance):
     engine.add_edge(edge)
     assert engine.get_edge_evidence(edge.id)[0].id == evidence.id
     assert engine.get_edge_provenance(edge.id)[0] == provenance
+
+
+def test_recursive_self_loop_is_representable(engine, context, provenance):
+    from tests.fixtures.graph.conftest import add_evidence, add_node
+
+    evidence = add_evidence(engine, context, provenance, claim="recursive call")
+    node = add_node(engine, context, provenance, node_type=GraphNodeType.SYMBOL, identity="recursive", evidence=evidence)
+    engine.add_node(node)
+    edge = GraphBuilder.make_edge(
+        analysis_id=context["analysis"], snapshot_id=context["snapshot"],
+        source_node_id=node.id, target_node_id=node.id,
+        relationship_type=RelationshipType.CALLS, provenance=(provenance,),
+        evidence_ids=(evidence.id,),
+    )
+    engine.add_edge(edge)
+    assert engine.get_edge(edge.id).source_node_id == engine.get_edge(edge.id).target_node_id
