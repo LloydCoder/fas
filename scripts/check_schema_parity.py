@@ -2,6 +2,7 @@
 import json
 from pathlib import Path
 
+from fas.domain import Project
 from fas.domain.audit import AuditEvent, Report, ToolRun
 from fas.domain.investigation import EvidenceRequest, InvestigationCase, InvestigationHypothesis, InvestigationResult, VerdictProposal
 from fas.domain.verification import (
@@ -14,6 +15,7 @@ from fas.domain.verification import (
 def check_schema(path, models):
     schema=json.loads(Path(path).read_text(encoding="utf-8"))
     failures=[]
+    failures += check_schema("schemas/project.schema.json", {"Project":Project})
     for name, model in models.items():
         expected=model.model_json_schema()
         actual=schema.get("$defs",{}).get(name)
