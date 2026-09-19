@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS verifications(id TEXT PRIMARY KEY, analysis_id TEXT N
 CREATE TABLE IF NOT EXISTS findings(id TEXT PRIMARY KEY, snapshot_id TEXT NOT NULL, payload TEXT NOT NULL, created_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS reports(id TEXT PRIMARY KEY, analysis_id TEXT NOT NULL, payload TEXT NOT NULL, created_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS audit_events(id TEXT PRIMARY KEY, analysis_id TEXT NOT NULL, payload TEXT NOT NULL, created_at TEXT NOT NULL);
-CREATE TABLE IF NOT EXISTS jobs(id TEXT PRIMARY KEY, operation_key TEXT NOT NULL UNIQUE, kind TEXT NOT NULL, status TEXT NOT NULL, payload TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, error TEXT);
+CREATE TABLE IF NOT EXISTS jobs(id TEXT PRIMARY KEY, operation_key TEXT NOT NULL UNIQUE, kind TEXT NOT NULL, status TEXT NOT NULL, payload TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, error TEXT, worker_id TEXT, lease_until TEXT, heartbeat_at TEXT, retry_count INTEGER NOT NULL DEFAULT 0);
 CREATE INDEX IF NOT EXISTS idx_analyses_project ON analyses(project_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_snapshots_analysis ON snapshots(analysis_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_artifacts_snapshot ON artifacts(snapshot_id, created_at);
@@ -59,6 +59,15 @@ class SQLiteStore:
     def _init(self) -> None:
         with self._connect() as con:
             con.executescript(SCHEMA)
+            columns = {row["name"] for row in con.execute("PRAGMA table_info(jobs)").fetchall()}
+            for name, definition in (
+                ("worker_id", "TEXT"),
+                ("lease_until", "TEXT"),
+                ("heartbeat_at", "TEXT"),
+                ("retry_count", "INTEGER NOT NULL DEFAULT 0"),
+            ):
+                if name not in columns:
+                    con.execute(f"ALTER TABLE jobs ADD COLUMN {name} {definition}")
 
     def put(self, table: str, identifier: str, foreign_key: str, payload: dict[str, Any], created_at: str) -> None:
         allowed = {"projects","analyses","snapshots","artifacts","observations","evidence","graph_nodes","graph_edges","remediations","verifications","findings","reports","audit_events"}
@@ -121,14 +130,28 @@ class LocalObjectStore:
         directory.mkdir(parents=True,exist_ok=True)
         target=directory/digest
         if not target.exists():
-            tmp=target.with_suffix(".tmp")
-            tmp.write_bytes(data)
-            tmp.replace(target)
+            import os
+            import tempfile
+            with tempfile.NamedTemporaryFile(dir=directory, prefix=f".{digest}.", suffix=".tmp", delete=False) as handle:
+                handle.write(data)
+                handle.flush()
+                os.fsync(handle.fileno())
+                tmp = Path(handle.name)
+            if hashlib.sha256(tmp.read_bytes()).hexdigest() != digest:
+                tmp.unlink(missing_ok=True)
+                raise IOError("content-addressed object integrity check failed before commit")
+            try:
+                tmp.replace(target)
+            finally:
+                tmp.unlink(missing_ok=True)
         return {"artifact_id":f"sha256:{digest}","content_hash":f"sha256:{digest}","media_type":media_type,"size":len(data),"snapshot_id":snapshot_id,"source":source,"storage_reference":str(target)}
 
     def get(self, content_hash: str) -> bytes:
         digest=content_hash.removeprefix("sha256:")
         if len(digest)!=64 or any(c not in "0123456789abcdef" for c in digest.lower()):
             raise ValueError("invalid sha256 content hash")
-        target=self.root/digest[:2]/digest
-        return target.read_bytes()
+        target = self.root / digest[:2] / digest
+        data = target.read_bytes()
+        if hashlib.sha256(data).hexdigest() != digest:
+            raise IOError("content-addressed object integrity check failed")
+        return data
