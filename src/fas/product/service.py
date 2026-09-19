@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib, json, subprocess
 from datetime import datetime, timezone
 from pathlib import Path
-from fas.domain import Analysis, AnalysisStatus, ContentHash, Project, RepositoryReference, Snapshot, new_id
+from fas.domain import Analysis, AnalysisStatus, AuditEvent, ContentHash, Project, RepositoryReference, Snapshot, new_id
 from fas.collectors import CollectionContext, CollectionPlan, CollectionOrchestrator, CodeDiscoveryCollector, DependencyDiscoveryCollector
 from .config import Settings
 from .storage import SQLiteStore, LocalObjectStore
@@ -58,6 +58,7 @@ class ProductService:
                       source_reference=str(root),environment_identity=f"python:{__import__('sys').version_info.major}.{__import__('sys').version_info.minor}",
                       configuration_identity="local-defaults",immutable=True)
         self.store.put("snapshots",snap.id,analysis.id,snap.model_dump(mode="json"),now.isoformat())
+        self._audit(analysis.id,snap.id,"SNAPSHOT_CREATED",snap.id,{"source":str(root),"content_hash":snap.content_hash.value if snap.content_hash else None})
         return snap
 
     def analyze_sync(self, project_id: str, root: Path, cancel=None) -> dict[str,object]:
@@ -94,6 +95,11 @@ class ProductService:
             analysis=analysis.model_copy(update={"metadata":{**analysis.metadata,"fixture":data.get("name","unknown"),"expected_verdict":data.get("expected_verdict","UNKNOWN")}})
         self._replace_analysis(analysis,project_id)
         return {"analysis":analysis.model_dump(mode="json"),"snapshot":snap.model_dump(mode="json"),"findings":[]}
+
+    def _audit(self, analysis_id: str, snapshot_id: str, event_type: str, subject_id: str, payload: dict[str,object]) -> None:
+        event=AuditEvent(id=new_id("audit_event"),analysis_id=analysis_id,snapshot_id=snapshot_id,
+                         event_type=event_type,actor="fas",subject_id=subject_id,payload=payload)
+        self.store.append_audit(event.model_dump(mode="json"))
 
     def _replace_analysis(self, analysis: Analysis, project_id: str) -> None:
         with self.store._connect() as con:
