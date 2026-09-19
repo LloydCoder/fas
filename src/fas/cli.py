@@ -1,6 +1,7 @@
 """First-class FAS CLI. API and CLI share the ProductService and never fabricate security conclusions."""
 from __future__ import annotations
-import argparse, json
+import argparse
+import json
 from pathlib import Path
 from fas import __version__
 from fas.product import ProductService, load_settings
