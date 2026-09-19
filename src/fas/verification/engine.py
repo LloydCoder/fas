@@ -173,7 +173,7 @@ class VerificationEngine:
         errors=self._validate_inputs(original_snapshot,candidate_snapshot,original_graph,candidate_graph)
         plan=self.plan(finding,remediation,original_snapshot,candidate_snapshot)
         if security_tests:
-            plan=plan.model_copy(update={"required_checks": tuple((*plan.required_checks, VerificationCheck.VERIFY_SECURITY_TEST))})
+            plan=plan.model_copy(update={"required_checks": (*plan.required_checks, VerificationCheck.VERIFY_SECURITY_TEST)})
         verification_id=new_id("verification")
         checks=[]
         missing=list(errors)
@@ -363,7 +363,7 @@ class VerificationEngine:
             or permission_blocking
             or any(not t.passed for t in tests)
         )
-        candidate_evidence=tuple(sorted(set(e for p in candidate_paths for e in p.supporting_evidence_ids)))
+        candidate_evidence=tuple(sorted({e for p in candidate_paths for e in p.supporting_evidence_ids}))
         supporting.update(candidate_evidence)
 
         if missing:
