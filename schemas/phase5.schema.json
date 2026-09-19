@@ -26,7 +26,8 @@
         "created_at": {},
         "updated_at": {},
         "provenance": {},
-        "expected_broken_path_ids": {}
+        "expected_broken_path_ids": {},
+        "patched_snapshot_id": {}
       },
       "required": [
         "id",
