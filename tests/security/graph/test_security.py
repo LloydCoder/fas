@@ -2,9 +2,10 @@ import json
 
 import pytest
 
-from fas.domain.common import GraphNodeType, RelationshipType
+from fas.domain.common import EvidenceType, GraphNodeType, RelationshipType, new_id
+from fas.domain.evidence import Evidence
 from fas.graph import GraphBuilder, GraphEngine, ResultStatus
-from fas.graph.errors import GraphInvariantViolation, SnapshotMismatch
+from fas.graph.errors import SnapshotMismatch
 
 
 def test_cross_snapshot_edge_injection_is_rejected(engine, context, provenance):
@@ -87,22 +88,25 @@ def test_secret_values_are_not_introduced_by_graph_serialization(engine, context
 
 
 def test_deterministic_query_order_is_independent_of_insertion_order(context, provenance):
-    from tests.fixtures.graph.conftest import add_evidence, add_node
+    evidence = Evidence(
+        id=new_id("evidence"),
+        analysis_id=context["analysis"],
+        snapshot_id=context["snapshot"],
+        type=EvidenceType.CODE,
+        claim="fixture",
+        provenance=(provenance,),
+        observed_at=__import__("datetime").datetime(2026, 9, 19, 12, tzinfo=__import__("datetime").timezone.utc),
+    )
 
     def build(order):
-        engine = GraphEngine(
-            analysis_id=context["analysis"], snapshot_id=context["snapshot"]
-        )
-        evidence = __import__("fas.domain.evidence").domain.evidence.Evidence(
-            id=__import__("fas.domain.common").domain.common.new_id("evidence"),
-            analysis_id=context["analysis"], snapshot_id=context["snapshot"],
-            type=__import__("fas.domain.common").domain.common.EvidenceType.CODE,
-            claim="fixture", provenance=(provenance,),
-            observed_at=__import__("tests.fixtures.graph.conftest").fixtures.graph.conftest.NOW,
-        )
+        engine = GraphEngine(analysis_id=context["analysis"], snapshot_id=context["snapshot"])
         engine.add_evidence(evidence)
         nodes = [
-            add_node(engine, context, provenance, node_type=GraphNodeType.SYMBOL, identity=name, evidence=evidence)
+            GraphBuilder.make_node(
+                analysis_id=context["analysis"], snapshot_id=context["snapshot"],
+                node_type=GraphNodeType.SYMBOL, canonical_identity=name, label=name,
+                provenance=(provenance,), evidence_ids=(evidence.id,),
+            )
             for name in ("a", "b", "c")
         ]
         for index in order:
@@ -115,4 +119,5 @@ def test_deterministic_query_order_is_independent_of_insertion_order(context, pr
                 evidence_ids=(evidence.id,),
             ))
         return engine.to_json()
+
     assert build((0, 1, 2)) == build((2, 0, 1))
