@@ -72,7 +72,7 @@ class SecureExecutor:
         self.policy = policy
 
     def _resolve_executable(self, value: str) -> str:
-        if not value or value in {".", ".."} or "\\x00" in value:
+        if not value or value in {".", ".."} or "\x00" in value:
             raise ValueError("invalid executable")
         candidate = Path(value)
         if candidate.is_absolute():
@@ -121,7 +121,7 @@ class SecureExecutor:
         args = tuple(str(x) for x in argv)
         if not args or len(args) > self.policy.max_args:
             raise ValueError("invalid argv")
-        if any("\\x00" in x for x in args):
+        if any("\x00" in x for x in args):
             raise ValueError("NUL in argv")
         root = Path(cwd).resolve()
         if not root.is_dir():
