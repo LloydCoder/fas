@@ -6,15 +6,11 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import FrozenSet
 
-from pydantic import Field, model_validator
-
 from fas.domain.common import (
     AnalysisId,
-    ArtifactId,
     EvidenceId,
     GraphNodeType,
     NodeId,
-    Provenance,
     RelationshipType,
     SnapshotId,
 )
