@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS verifications(id TEXT PRIMARY KEY, analysis_id TEXT N
 CREATE TABLE IF NOT EXISTS findings(id TEXT PRIMARY KEY, snapshot_id TEXT NOT NULL, payload TEXT NOT NULL, created_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS reports(id TEXT PRIMARY KEY, analysis_id TEXT NOT NULL, payload TEXT NOT NULL, created_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS audit_events(id TEXT PRIMARY KEY, analysis_id TEXT NOT NULL, payload TEXT NOT NULL, created_at TEXT NOT NULL);
-CREATE TABLE IF NOT EXISTS jobs(id TEXT PRIMARY KEY, operation_key TEXT NOT NULL UNIQUE, kind TEXT NOT NULL, status TEXT NOT NULL, payload TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, error TEXT);
+CREATE TABLE IF NOT EXISTS jobs(id TEXT PRIMARY KEY, operation_key TEXT NOT NULL UNIQUE, kind TEXT NOT NULL, status TEXT NOT NULL, payload TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, error TEXT, worker_id TEXT, lease_until TEXT, heartbeat_at TEXT, retry_count INTEGER NOT NULL DEFAULT 0);
 CREATE INDEX IF NOT EXISTS idx_analyses_project ON analyses(project_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_snapshots_analysis ON snapshots(analysis_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_artifacts_snapshot ON artifacts(snapshot_id, created_at);
@@ -59,6 +59,15 @@ class SQLiteStore:
     def _init(self) -> None:
         with self._connect() as con:
             con.executescript(SCHEMA)
+            columns = {row["name"] for row in con.execute("PRAGMA table_info(jobs)").fetchall()}
+            for name, definition in (
+                ("worker_id", "TEXT"),
+                ("lease_until", "TEXT"),
+                ("heartbeat_at", "TEXT"),
+                ("retry_count", "INTEGER NOT NULL DEFAULT 0"),
+            ):
+                if name not in columns:
+                    con.execute(f"ALTER TABLE jobs ADD COLUMN {name} {definition}")
 
     def put(self, table: str, identifier: str, foreign_key: str, payload: dict[str, Any], created_at: str) -> None:
         allowed = {"projects","analyses","snapshots","artifacts","observations","evidence","graph_nodes","graph_edges","remediations","verifications","findings","reports","audit_events"}
@@ -91,7 +100,41 @@ class SQLiteStore:
         return [json.loads(r["payload"]) for r in rows]
 
     def append_audit(self, payload: dict[str, Any]) -> None:
-        self.put("audit_events", payload["id"], payload["analysis_id"], payload, payload["created_at"])
+        with self._connect() as con:
+            rows=con.execute("SELECT payload FROM audit_events WHERE analysis_id=? ORDER BY created_at ASC, id ASC",(payload["analysis_id"],)).fetchall()
+            previous=None
+            if rows:
+                previous=json.loads(rows[-1]["payload"]).get("_audit_event_hash")
+            canonical=json.dumps(payload,sort_keys=True,separators=(",",":"),ensure_ascii=False)
+            payload_hash=hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+            chain_material=f"{previous or 'GENESIS'}|{payload_hash}".encode()
+            event_hash=hashlib.sha256(chain_material).hexdigest()
+            chained=dict(payload)
+            chained["_audit_previous_hash"]=previous
+            chained["_audit_payload_hash"]=payload_hash
+            chained["_audit_event_hash"]=event_hash
+            con.execute(
+                "INSERT INTO audit_events(id,analysis_id,payload,created_at) VALUES(?,?,?,?)",
+                (payload["id"],payload["analysis_id"],json.dumps(chained,sort_keys=True,separators=(",",":")),payload["created_at"]),
+            )
+
+    def verify_audit_chain(self, analysis_id: str) -> dict[str, Any]:
+        with self._connect() as con:
+            rows=con.execute("SELECT id,payload FROM audit_events WHERE analysis_id=? ORDER BY created_at ASC,id ASC",(analysis_id,)).fetchall()
+        previous=None
+        errors=[]
+        for row in rows:
+            item=json.loads(row["payload"])
+            stored_payload_hash=item.get("_audit_payload_hash")
+            stored_event_hash=item.get("_audit_event_hash")
+            declared_previous=item.get("_audit_previous_hash")
+            unsigned={k:v for k,v in item.items() if not k.startswith("_audit_")}
+            payload_hash=hashlib.sha256(json.dumps(unsigned,sort_keys=True,separators=(",",":"),ensure_ascii=False).encode("utf-8")).hexdigest()
+            expected=hashlib.sha256(f"{previous or 'GENESIS'}|{payload_hash}".encode()).hexdigest()
+            if declared_previous!=previous or stored_payload_hash!=payload_hash or stored_event_hash!=expected:
+                errors.append(row["id"])
+            previous=stored_event_hash
+        return {"valid":not errors,"events":len(rows),"invalid_event_ids":tuple(errors)}
 
     def job_upsert(self, job_id: str, operation_key: str, kind: str, status: str, payload: dict[str, Any], created_at: str, updated_at: str, error: str | None = None) -> None:
         with self._connect() as con:
@@ -100,6 +143,19 @@ class SQLiteStore:
                            ON CONFLICT(operation_key) DO UPDATE SET status=excluded.status,payload=excluded.payload,updated_at=excluded.updated_at,error=excluded.error""",
                         (job_id,operation_key,kind,status,json.dumps(payload,sort_keys=True),created_at,updated_at,error))
 
+    def job_claim(self, job_id: str, operation_key: str, kind: str, payload: dict[str, Any], created_at: str, worker_id: str, lease_until: str) -> dict[str, Any]:
+        with self._connect() as con:
+            con.execute(
+                """INSERT OR IGNORE INTO jobs(
+                    id,operation_key,kind,status,payload,created_at,updated_at,error,worker_id,lease_until,heartbeat_at,retry_count
+                ) VALUES(?,?,?,?,?,?,?,?,?,?,?,0)""",
+                (job_id,operation_key,kind,"QUEUED",json.dumps(payload,sort_keys=True),created_at,created_at,None,worker_id,lease_until,created_at),
+            )
+            row = con.execute("SELECT * FROM jobs WHERE operation_key=?", (operation_key,)).fetchone()
+        if row is None:
+            raise RuntimeError("job claim failed")
+        return dict(row)
+
     def job_by_key(self, operation_key: str) -> dict[str, Any] | None:
         with self._connect() as con:
             row=con.execute("SELECT * FROM jobs WHERE operation_key=?", (operation_key,)).fetchone()
@@ -107,7 +163,7 @@ class SQLiteStore:
 
     def recover_running_jobs(self) -> int:
         with self._connect() as con:
-            cur=con.execute("UPDATE jobs SET status='FAILED', error='worker restarted while job was running', updated_at=datetime('now') WHERE status='RUNNING'")
+            cur=con.execute("UPDATE jobs SET status='FAILED', error='worker restarted while job was running', updated_at=datetime('now'), lease_until=NULL WHERE status='RUNNING'")
             return cur.rowcount
 
 class LocalObjectStore:
@@ -121,14 +177,28 @@ class LocalObjectStore:
         directory.mkdir(parents=True,exist_ok=True)
         target=directory/digest
         if not target.exists():
-            tmp=target.with_suffix(".tmp")
-            tmp.write_bytes(data)
-            tmp.replace(target)
+            import os
+            import tempfile
+            with tempfile.NamedTemporaryFile(dir=directory, prefix=f".{digest}.", suffix=".tmp", delete=False) as handle:
+                handle.write(data)
+                handle.flush()
+                os.fsync(handle.fileno())
+                tmp = Path(handle.name)
+            if hashlib.sha256(tmp.read_bytes()).hexdigest() != digest:
+                tmp.unlink(missing_ok=True)
+                raise OSError("content-addressed object integrity check failed before commit")
+            try:
+                tmp.replace(target)
+            finally:
+                tmp.unlink(missing_ok=True)
         return {"artifact_id":f"sha256:{digest}","content_hash":f"sha256:{digest}","media_type":media_type,"size":len(data),"snapshot_id":snapshot_id,"source":source,"storage_reference":str(target)}
 
     def get(self, content_hash: str) -> bytes:
         digest=content_hash.removeprefix("sha256:")
         if len(digest)!=64 or any(c not in "0123456789abcdef" for c in digest.lower()):
             raise ValueError("invalid sha256 content hash")
-        target=self.root/digest[:2]/digest
-        return target.read_bytes()
+        target = self.root / digest[:2] / digest
+        data = target.read_bytes()
+        if hashlib.sha256(data).hexdigest() != digest:
+            raise OSError("content-addressed object integrity check failed")
+        return data

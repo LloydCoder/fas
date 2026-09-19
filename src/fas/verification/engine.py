@@ -247,6 +247,7 @@ class VerificationEngine:
         supporting=set(finding.supporting_evidence_ids)
         candidate_paths=[]
         original_path_status=AttackPathComparisonStatus.UNKNOWN
+        path_statuses=[]
 
         if not original_paths:
             missing.append("original attack path unavailable")
@@ -265,13 +266,13 @@ class VerificationEngine:
                     exact.append(cp)
             if exact:
                 status=AttackPathComparisonStatus.ORIGINAL_PATH_PERSISTENT
-                original_path_status=AttackPathComparisonStatus.ORIGINAL_PATH_PERSISTENT
+                path_statuses.append(AttackPathComparisonStatus.ORIGINAL_PATH_PERSISTENT)
             elif candidate_attacks:
                 status=AttackPathComparisonStatus.ALTERNATE_PATH_FOUND
-                original_path_status=AttackPathComparisonStatus.ALTERNATE_PATH_FOUND
+                path_statuses.append(AttackPathComparisonStatus.ALTERNATE_PATH_FOUND)
             else:
                 status=AttackPathComparisonStatus.ORIGINAL_PATH_BROKEN
-                original_path_status=AttackPathComparisonStatus.ORIGINAL_PATH_BROKEN
+                path_statuses.append(AttackPathComparisonStatus.ORIGINAL_PATH_BROKEN)
             if status != AttackPathComparisonStatus.ORIGINAL_PATH_BROKEN:
                 for cp in candidate_attacks:
                     if cp.supporting_evidence_ids:
@@ -301,11 +302,20 @@ class VerificationEngine:
             elif status == AttackPathComparisonStatus.ORIGINAL_PATH_PERSISTENT:
                 for p in candidate_attacks:
                     residuals.append(ResidualPath(
-                        id=new_id("residual_path"),verification_id=new_id("verification"),path_id=p.id,
+                        id=new_id("residual_path"),verification_id=verification_id,path_id=p.id,
                         security_property=remediation.expected_security_property,
                         evidence_ids=p.supporting_evidence_ids,exploitable=True,equivalent_impact=True,
                         description="Original semantic attack path remains reachable.",
                     ))
+
+        if not path_statuses:
+            original_path_status=AttackPathComparisonStatus.UNKNOWN
+        elif AttackPathComparisonStatus.ORIGINAL_PATH_PERSISTENT in path_statuses:
+            original_path_status=AttackPathComparisonStatus.ORIGINAL_PATH_PERSISTENT
+        elif AttackPathComparisonStatus.ALTERNATE_PATH_FOUND in path_statuses:
+            original_path_status=AttackPathComparisonStatus.ALTERNATE_PATH_FOUND
+        else:
+            original_path_status=AttackPathComparisonStatus.ORIGINAL_PATH_BROKEN
 
         checks.append(VerificationCheckResult(
             check=VerificationCheck.VERIFY_ATTACK_PATH,
@@ -328,11 +338,12 @@ class VerificationEngine:
                 blocking=original_path_status != AttackPathComparisonStatus.ORIGINAL_PATH_BROKEN,
             ))
         if VerificationCheck.VERIFY_IDENTITY in plan.required_checks:
-            checks.append(VerificationCheckResult(
-                check=VerificationCheck.VERIFY_IDENTITY,
-                status=CheckStatus.PASSED,
-                notes="identity scope is unchanged or narrowed in the compared graph",
-            ))
+            original_identities={n.canonical_identity for n in original_graph.nodes() if n.type.value=="IDENTITY"}
+            candidate_identities={n.canonical_identity for n in candidate_graph.nodes() if n.type.value=="IDENTITY"}
+            identity_ok=bool(original_identities) and candidate_identities.issuperset(original_identities)
+            checks.append(VerificationCheckResult(check=VerificationCheck.VERIFY_IDENTITY,status=CheckStatus.PASSED if identity_ok else CheckStatus.BLOCKED,notes="identity scope is preserved" if identity_ok else "identity evidence is unavailable or changed",blocking=not identity_ok))
+            if not identity_ok:
+                missing.append("identity comparison could not be deterministically established")
 
         permission_blocking=bool(graph_diff.permission_widened)
         if VerificationCheck.VERIFY_PERMISSION in plan.required_checks:

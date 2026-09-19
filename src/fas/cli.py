@@ -31,10 +31,7 @@ def build_parser() -> argparse.ArgumentParser:
     subcommands.append(verify)
     a=sub.add_parser("analyze"); subcommands.append(a); a.add_argument("path"); a.add_argument("--project",default=None)
     for name,help_text in (
-        ("status","show analysis status"),("findings","show findings"),("evidence","show evidence references"),
-        ("graph","show persisted graph information"),("attack-paths","show persisted attack paths"),
-        ("investigate","start an investigation"),("remediate","create a remediation"),
-        ("verify-remediation","verify a remediation"),("verification","show verification"),
+        ("status","show analysis status"),("findings","show findings"),
         ("report","generate or show report")):
         q=sub.add_parser(name,help=help_text); subcommands.append(q); q.add_argument("id")
     doctor=sub.add_parser("doctor"); tools=sub.add_parser("tools"); api=sub.add_parser("api")
@@ -64,23 +61,24 @@ def main(argv: list[str]|None=None) -> int:
         paths=tuple(AttackPath.model_validate(x) for x in load(args.original_paths))
         outcome=VerificationEngine().verify(finding=finding,remediation=remediation,original_snapshot=original,candidate_snapshot=candidate,original_graph=before,candidate_graph=after,original_paths=paths)
         dump(outcome.result,args.format)
-        return 0
+        return 0 if outcome.result.result.value not in {"UNKNOWN", "REMEDIATION_FAILED", "REGRESSED"} else 2
     if args.command=="analyze":
         root=Path(args.path).resolve()
         project=service.create_project(args.project or root.name,str(root))
         result=service.analyze_sync(project.id,root)
-        dump(result,args.format); return 0
+        dump(result,args.format)
+        status=result["analysis"].get("status")
+        return 2 if status in {"PARTIAL","FAILED","CANCELLED"} else 0
+
     if args.command=="status":
         dump(service.get_analysis(args.id).model_dump(mode="json"),args.format); return 0
     if args.command=="findings":
         dump({"items":service.findings(args.id)},args.format); return 0
     if args.command=="report":
         report=service.report(args.id)
-        dump(report,args.format); return 0
-    if args.command in {"evidence","graph","attack-paths","investigate","remediate","verify-remediation","verification"}:
-        dump({"status":"UNSUPPORTED","code":"CAPABILITY_NOT_AVAILABLE","resource_id":args.id,
-              "message":"The current repository does not expose a persisted product backend for this operation; FAS will not fabricate one."},args.format)
-        return 3
+        dump(report,args.format)
+        summary=report.get("content",{}).get("executive_summary",{})
+        return 2 if summary.get("completeness") in {"PARTIAL","TRUNCATED","UNKNOWN"} else 0
     return 2
 
 if __name__=="__main__":

@@ -6,11 +6,12 @@ import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 from fas.domain import Analysis, AnalysisStatus, AuditEvent, ContentHash, Project, RepositoryReference, Snapshot, new_id
-from fas.collectors import CollectionContext, CollectionPlan, CollectionOrchestrator, CodeDiscoveryCollector, DependencyDiscoveryCollector
+from fas.collectors import CollectionContext, CollectionPlan, CollectionOrchestrator, CodeDiscoveryCollector, DependencyDiscoveryCollector, ConfigurationCollector, CICDCollector, AgentConfigurationCollector, CollectionPipeline
 from .config import Settings
 from .storage import SQLiteStore, LocalObjectStore
 from .reports import ReportService
 from .jobs import JobManager
+from fas.graph import GraphEngine
 
 class ProductService:
     def __init__(self, settings: Settings):
@@ -40,32 +41,56 @@ class ProductService:
         if not root.is_dir():
             raise ValueError("analysis source must be a directory")
         digest=hashlib.sha256()
-        files=[]
-        for path in sorted(p for p in root.rglob("*") if p.is_file() and ".git" not in p.parts):
+        manifest=[]
+        omitted=[]
+        file_count=0
+        byte_count=0
+        max_files=10000
+        for path in sorted(root.rglob("*")):
+            if path.is_dir() or ".git" in path.parts or ".fas" in path.parts:
+                continue
+            rel=path.relative_to(root).as_posix()
             if path.is_symlink():
+                omitted.append({"path":rel,"reason":"SYMLINK"})
                 continue
             try:
                 resolved=path.resolve(strict=True)
                 resolved.relative_to(root)
-                rel=resolved.relative_to(root).as_posix()
                 data=resolved.read_bytes()
-            except (OSError, ValueError):
+            except (OSError,ValueError):
+                omitted.append({"path":rel,"reason":"UNREADABLE"})
                 continue
-            if len(files)>=10000:
-                break
+            if file_count>=max_files:
+                omitted.append({"path":rel,"reason":"FILE_LIMIT"})
+                continue
             if len(data)>self.settings.max_artifact_bytes:
+                omitted.append({"path":rel,"reason":"FILE_SIZE_LIMIT","size_bytes":len(data)})
                 continue
-            digest.update(rel.encode())
+            file_hash=hashlib.sha256(data).hexdigest()
+            digest.update(rel.encode("utf-8"))
             digest.update(b"\0")
-            digest.update(hashlib.sha256(data).digest())
-            files.append(rel)
+            digest.update(file_hash.encode("ascii"))
+            manifest.append({"path":rel,"sha256":file_hash,"size_bytes":len(data)})
+            file_count+=1
+            byte_count+=len(data)
+        completeness="COMPLETE" if not omitted else "PARTIAL"
+        manifest_payload={"files":manifest,"omitted":omitted,"file_count":file_count,"byte_count":byte_count,
+                          "max_files":max_files,"max_file_bytes":self.settings.max_artifact_bytes,
+                          "completeness":completeness}
+        manifest_bytes=json.dumps(manifest_payload,sort_keys=True,separators=(",",":"),ensure_ascii=False).encode("utf-8")
+        manifest_hash=hashlib.sha256(manifest_bytes).hexdigest()
         now=datetime.now(timezone.utc)
         snap=Snapshot(id=new_id("snapshot"),repository=RepositoryReference(repository=str(root),revision=_git_revision(root)),
                       captured_at=now,content_hash=ContentHash(digest=digest.hexdigest()),
                       source_reference=str(root),environment_identity=f"python:{__import__('sys').version_info.major}.{__import__('sys').version_info.minor}",
-                      configuration_identity="local-defaults",immutable=True)
+                      configuration_identity="local-defaults",immutable=True,
+                      metadata={"manifest_sha256":manifest_hash,"file_count":str(file_count),"byte_count":str(byte_count),
+                                "completeness":completeness,"omitted_count":str(len(omitted))})
+        manifest_ref=self.objects.put(manifest_bytes,media_type="application/vnd.fas.snapshot-manifest+json",snapshot_id=snap.id,source=str(root))
+        snap=snap.model_copy(update={"metadata":{**snap.metadata,"manifest_object":manifest_ref["storage_reference"]}})
         self.store.put("snapshots",snap.id,analysis.id,snap.model_dump(mode="json"),now.isoformat())
-        self._audit(analysis.id,snap.id,"SNAPSHOT_CREATED",snap.id,{"source":str(root),"content_hash":snap.content_hash.value if snap.content_hash else None})
+        self._audit(analysis.id,snap.id,"SNAPSHOT_CREATED",snap.id,{"source":str(root),"content_hash":snap.content_hash.value if snap.content_hash else None,
+                                                                    "manifest_sha256":manifest_hash,"completeness":completeness})
         return snap
 
     def analyze_sync(self, project_id: str, root: Path, cancel=None) -> dict[str,object]:
@@ -77,29 +102,43 @@ class ProductService:
         self._replace_analysis(analysis,project_id)
         context=CollectionContext(analysis_id=analysis.id,snapshot_id=snap.id,root=root,repository=str(root),
                                   revision=snap.repository.revision,max_files=10000,max_file_bytes=self.settings.max_artifact_bytes)
-        plan=CollectionPlan(context=context,collectors=(CodeDiscoveryCollector(),DependencyDiscoveryCollector()))
-        collection=CollectionOrchestrator().run(plan,cancel=cancel)
+        collectors = [CodeDiscoveryCollector(), DependencyDiscoveryCollector(), ConfigurationCollector(), CICDCollector(), AgentConfigurationCollector()]
+        plan = CollectionPlan(context=context, collectors=tuple(collectors))
+        collection = CollectionOrchestrator().run(plan, cancel=cancel)
         for artifact in collection.batch.artifacts:
             self.store.put("artifacts",artifact.id,snap.id,artifact.model_dump(mode="json"),artifact.provenance[0].observed_at.isoformat())
         for observation in collection.batch.observations:
             self.store.put("observations",observation.id,snap.id,observation.model_dump(mode="json"),observation.observed_at.isoformat())
+        graph = GraphEngine(analysis_id=analysis.id, snapshot_id=snap.id)
+        pipeline = CollectionPipeline(graph)
+        normalized = pipeline.ingest(collection.batch, context)
+        for evidence in normalized.evidence:
+            self.store.put("evidence",evidence.id,snap.id,evidence.model_dump(mode="json"),evidence.observed_at.isoformat())
+        graph_view = pipeline.build_graph(complete=normalized.complete)
+        for node in graph_view.nodes():
+            self.store.put("graph_nodes",node.id,snap.id,node.model_dump(mode="json"),datetime.now(timezone.utc).isoformat())
+        for edge in graph_view.edges():
+            self.store.put("graph_edges",edge.id,snap.id,edge.model_dump(mode="json"),edge.observed_at.isoformat())
         analysis=analysis.model_copy(update={"status":AnalysisStatus.NORMALIZING,
             "metadata":{**analysis.metadata,"collection_status":collection.summary.status.value,
                         "artifact_count":str(collection.summary.artifacts),
-                        "observation_count":str(collection.summary.observations)}})
+                        "observation_count":str(collection.summary.observations),
+                        "evidence_count":str(len(normalized.evidence)),
+                        "graph_complete":str(graph_view.complete).lower()}})
         self._replace_analysis(analysis,project_id)
         if cancel is not None and getattr(cancel,"is_set",lambda:False)():
             cancelled=analysis.model_copy(update={"snapshot_ids":(snap.id,),"status":AnalysisStatus.CANCELLED,
                 "completed_at":datetime.now(timezone.utc),"failure_reason":"analysis cancelled"})
             self._replace_analysis(cancelled,project_id)
             return {"analysis":cancelled.model_dump(mode="json"),"snapshot":snap.model_dump(mode="json"),"findings":[]}
-        analysis=analysis.model_copy(update={"snapshot_ids":(snap.id,),"status":AnalysisStatus.PARTIAL,
+        terminal_status = AnalysisStatus.PARTIAL
+        analysis=analysis.model_copy(update={"snapshot_ids":(snap.id,),"status":terminal_status,
             "completed_at":datetime.now(timezone.utc),
-            "metadata":{**analysis.metadata,"limitations":"Core product pipeline records an immutable source snapshot and collection metadata; deterministic verdicts require normalized security evidence; no evidence is fabricated."}})
-        fixture=root/".fas-fixture.json"
-        if fixture.exists():
-            data=json.loads(fixture.read_text(encoding="utf-8"))
-            analysis=analysis.model_copy(update={"metadata":{**analysis.metadata,"fixture":data.get("name","unknown"),"expected_verdict":data.get("expected_verdict","UNKNOWN")}})
+            "metadata":{**analysis.metadata,
+                        "limitations":"Product collection, evidence normalization and graph sealing are deterministic and bounded; finding investigation, verdict and remediation verification require an explicit persisted security finding and are not fabricated.",
+                        "analysis_completeness":"PARTIAL"}})
+        # Benchmark/test oracle files are never read by production analysis.
+        # A target repository must not be able to manufacture an expected verdict.
         self._replace_analysis(analysis,project_id)
         return {"analysis":analysis.model_dump(mode="json"),"snapshot":snap.model_dump(mode="json"),"findings":[]}
 

@@ -35,16 +35,20 @@ provenance, immutable history, and safe execution.
 
 ## CI requirements
 
-Run:
+Run the local validation baseline:
 
 ```bash
 python -m pip install -e ".[dev]"
 ruff check .
-pytest
+pytest --cov=fas --cov-report=term-missing
+pytest tests/security
+python -m pip check
 python scripts/check_schema_parity.py
 python -m build
 ```
 
+CI additionally exercises Python 3.11–3.14, clean wheel installation, CLI/API smoke,
+reproducibility checks, product integration, and graph/collection benchmarks.
 Do not weaken assertions, remove security tests, skip workflows, or reduce permissions merely to
 obtain a green build.
 
