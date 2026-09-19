@@ -47,8 +47,10 @@ jobs:
         run: python -m pip check
 
       - name: Secret scan
-        run: |
-          if command -v gitleaks >/dev/null 2>&1; then gitleaks detect --no-banner --redact; else echo "gitleaks unavailable in CI image"; fi
+        uses: gitleaks/gitleaks-action@ff9f8c6f2b4f3a1f4e8d2d5a0e8b1c7b2c6d5e4a
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 
 
       - name: Schema parity
