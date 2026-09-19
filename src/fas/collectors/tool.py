@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 from datetime import datetime,timezone
 from pathlib import Path
-from .base import CollectionBatch,CollectionContext
+from .base import CollectionBatch
 from .executor import SecureExecutor
 from .raw import ToolRun,environment_fingerprint,stable_run_id,raw_artifact_from_bytes
 from fas.domain.analysis import Artifact
