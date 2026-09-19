@@ -36,7 +36,7 @@ __all__ = [
     "AnalysisId", "SnapshotId", "ArtifactId", "ObservationId", "EvidenceId", "NodeId", "EdgeId",
     "FindingId", "AttackPathId", "VerdictId", "RemediationId", "VerificationId", "AuditEventId", "ReportId", "ToolRunId",
     "Finding", "AttackPath", "AttackPathStep", "Verdict", "Remediation", "Verification",
-    "AnalysisStatus", "ArtifactType", "ProvenanceCategory", "ProvenanceLevel", "EvidenceType", "FasEnum",
+    "AnalysisStatus", "ArtifactType", "InvestigationStatus", "HypothesisStatus", "EvidenceRequestType", "InvestigationEventType", "InvestigationToolStatus", "ProvenanceCategory", "ProvenanceLevel", "EvidenceType", "FasEnum",
     "GraphNodeType", "RelationshipType", "FindingStatus", "Severity", "VerdictType",
     "RemediationStatus", "VerificationTargetType", "VerificationType", "VerificationStatus", "RemediationType", "SecurityPropertyOutcome", "VerificationCheck", "CheckStatus", "AttackPathComparisonStatus", "DiffKind", "RegressionStatus",
     "ActorType", "Confidence", "VerificationPlan", "VerificationRun", "GraphDiff", "AttackPathComparison", "ResidualPath", "VerificationEvidence", "SecurityRegression", "RegressionTest", "SecurityBaseline", "SecurityTestDefinition", "SecurityTestResult", "VerificationResult", "VerificationReport", "VerificationCheckResult", "InvestigationCase", "InvestigationHypothesis", "EvidenceRequest",
