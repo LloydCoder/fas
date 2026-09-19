@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections import deque
 from hashlib import sha256
 import json
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 
 from fas.domain.analysis import Artifact, Observation
 from fas.domain.common import EvidenceId, GraphNodeType, NodeId, RelationshipType
@@ -353,6 +353,7 @@ class GraphEngine:
         excluded_node_types: frozenset[GraphNodeType] | None = None,
         max_nodes: int | None = None,
         max_edges: int | None = None,
+        cancellation_check: Callable[[], bool] | None = None,
     ) -> TraversalResult:
         start = self.get_node(start_node_id)
         depth_limit = self.limits.max_traversal_depth if max_depth is None else min(max_depth, self.limits.max_traversal_depth)
@@ -365,6 +366,12 @@ class GraphEngine:
         truncated = False
 
         while queue:
+            if cancellation_check is not None and cancellation_check():
+                return TraversalResult(
+                    node_ids=tuple(sorted(seen)), edge_ids=tuple(sorted(visited_edges)),
+                    depths=tuple(sorted(depths.items())), status=ResultStatus.TRUNCATED,
+                    reason="query cancelled",
+                )
             current, depth = queue.popleft()
             if depth >= depth_limit:
                 continue
@@ -424,10 +431,13 @@ class GraphEngine:
         allowed_relationship_types = kwargs.get("allowed_relationship_types")
         direction = kwargs.get("direction", TraversalDirection.OUTBOUND)
         max_depth = min(kwargs.get("max_depth", self.limits.max_path_depth), self.limits.max_path_depth)
+        cancellation_check = kwargs.get("cancellation_check")
         queue = deque([source.id])
         distance = {source.id: 0}
         predecessor: dict[NodeId, tuple[NodeId, str] | None] = {source.id: None}
         while queue:
+            if cancellation_check is not None and cancellation_check():
+                return PathResult(status=ResultStatus.TRUNCATED, reason="query cancelled")
             current = queue.popleft()
             if current == target.id:
                 break
@@ -470,10 +480,13 @@ class GraphEngine:
         allowed = kwargs.get("allowed_relationship_types")
         direction = kwargs.get("direction", TraversalDirection.OUTBOUND)
         max_depth = min(kwargs.get("max_depth", self.limits.max_path_depth), self.limits.max_path_depth)
+        cancellation_check = kwargs.get("cancellation_check")
         distance = {source.id: 0}
         predecessors: dict[NodeId, list[tuple[NodeId, str]]] = {source.id: []}
         queue = deque([source.id])
         while queue:
+            if cancellation_check is not None and cancellation_check():
+                return PathResult(status=ResultStatus.TRUNCATED, reason="query cancelled")
             current = queue.popleft()
             if distance[current] >= max_depth:
                 continue
@@ -531,6 +544,7 @@ class GraphEngine:
             return PathResult(status=ResultStatus.EMPTY, reason="cross-snapshot paths are forbidden")
         max_depth = min(kwargs.get("max_depth", self.limits.max_path_depth), self.limits.max_path_depth)
         max_paths = min(kwargs.get("max_paths", self.limits.max_paths), self.limits.max_paths)
+        cancellation_check = kwargs.get("cancellation_check")
         allowed = kwargs.get("allowed_relationship_types")
         direction = kwargs.get("direction", TraversalDirection.OUTBOUND)
         paths: list[GraphPath] = []
@@ -538,6 +552,9 @@ class GraphEngine:
 
         def walk(current: NodeId, nodes: list[NodeId], edges: list[str]) -> None:
             nonlocal truncated
+            if cancellation_check is not None and cancellation_check():
+                truncated = True
+                return
             if len(paths) >= max_paths:
                 truncated = True
                 return
