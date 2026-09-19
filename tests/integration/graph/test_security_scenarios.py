@@ -40,7 +40,7 @@ def test_residual_fixture_retains_alternate_structure():
     original, patched = scenario_residual_path()
     agent = next(node for node in original.nodes() if node.type == GraphNodeType.AGENT)
     resource = next(node for node in original.nodes() if node.canonical_identity.endswith(":production"))
-    assert patched.has_path(agent.id, resource.id) is False
+    assert patched.has_path(agent.id, resource.id) is True
 
     patched_agent = next(node for node in patched.nodes() if node.type == GraphNodeType.AGENT)
     patched_resource = next(node for node in patched.nodes() if node.canonical_identity.endswith(":production"))
