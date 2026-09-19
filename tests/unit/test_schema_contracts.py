@@ -7,6 +7,7 @@ from fas.domain.analysis import Analysis
 from fas.domain.attack_paths import AttackPath
 from fas.domain.evidence import Evidence
 from fas.domain.findings import Finding
+from fas.domain.graph import GraphEdge, GraphNode
 from fas.domain.remediation import Remediation, Verification
 from fas.domain.verdicts import Verdict
 
@@ -41,3 +42,8 @@ def test_verdict_schema_cannot_silently_drop_verdicts():
         "EXPLOITABLE", "NOT_EXPLOITABLE", "CONDITIONALLY_EXPLOITABLE",
         "REMEDIATED", "REMEDIATION_FAILED", "REGRESSED", "UNKNOWN",
     }
+
+
+def test_graph_domain_contracts_have_scope_and_identity():
+    assert {"analysis_id", "snapshot_id", "canonical_identity"}.issubset(GraphNode.model_fields)
+    assert {"analysis_id", "snapshot_id", "source_node_id", "target_node_id"}.issubset(GraphEdge.model_fields)
