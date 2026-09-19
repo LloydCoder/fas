@@ -70,8 +70,7 @@ def build_graph(analysis_id,snap,alternate=False,permission_widened=False,comple
         pev=evidence(analysis_id,snap,"production permission")
         p=node(analysis_id,snap,GraphNodeType.PERMISSION,"prod-write","prod-write",pev,
                principal="agent",action=permission_action or "write",resource="production",security_property="agent must not deploy production")
-g.add_evidence(pev)
-g.add_node(p)
+        g.add_evidence(pev); g.add_node(p)
     return g, (src,ep,sink)
 
 
@@ -107,16 +106,13 @@ def original_attack_path(analysis_id,snap,graph,nodes):
 
 
 def test_command_injection_remediated_when_sink_is_removed():
-analysis=new_id("analysis")
-before=snapshot(analysis,"a"*1)
-after=snapshot(analysis,"b"*1)
+    analysis=new_id("analysis"); before=snapshot(analysis,"a"*1); after=snapshot(analysis,"b"*1)
     bg,nodes=build_graph(analysis,before)
     cg,cnodes=build_graph(analysis,after)
     # remove the dangerous sink and incoming edge from the candidate.
     cg.remove_edge(cg.get_edges_between(cnodes[1].id,cnodes[2].id)[0].id)
     cg.remove_node(cnodes[2].id)
-# candidate node IDs differ
-source/endpoint semantic matching is used.
+    # candidate node IDs differ; source/endpoint semantic matching is used.
     ev=bg.get_node_evidence(nodes[0].id)[0]
     f=finding(analysis,before,ev)
     r=remediation(analysis,f,before)
@@ -128,14 +124,11 @@ source/endpoint semantic matching is used.
 
 
 def test_scanner_disappearance_does_not_hide_alternate_sink_path():
-analysis=new_id("analysis")
-before=snapshot(analysis,"a")
-after=snapshot(analysis,"b")
+    analysis=new_id("analysis"); before=snapshot(analysis,"a"); after=snapshot(analysis,"b")
     bg,nodes=build_graph(analysis,before)
     cg,_=build_graph(analysis,after,alternate=True)
     ev=bg.get_node_evidence(nodes[0].id)[0]
-f=finding(analysis,before,ev)
-r=remediation(analysis,f,before)
+    f=finding(analysis,before,ev); r=remediation(analysis,f,before)
     path=original_attack_path(analysis,before,bg,nodes)
     out=VerificationEngine().verify(finding=f,remediation=r,original_snapshot=before,candidate_snapshot=after,
         original_graph=bg,candidate_graph=cg,original_paths=(path,))
@@ -144,14 +137,9 @@ r=remediation(analysis,f,before)
 
 
 def test_incomplete_candidate_graph_returns_unknown():
-analysis=new_id("analysis")
-before=snapshot(analysis,"a")
-after=snapshot(analysis,"b")
-bg,nodes=build_graph(analysis,before)
-cg,_=build_graph(analysis,after,complete=False)
-ev=bg.get_node_evidence(nodes[0].id)[0]
-f=finding(analysis,before,ev)
-r=remediation(analysis,f,before)
+    analysis=new_id("analysis"); before=snapshot(analysis,"a"); after=snapshot(analysis,"b")
+    bg,nodes=build_graph(analysis,before); cg,_=build_graph(analysis,after,complete=False)
+    ev=bg.get_node_evidence(nodes[0].id)[0]; f=finding(analysis,before,ev); r=remediation(analysis,f,before)
     path=original_attack_path(analysis,before,bg,nodes)
     out=VerificationEngine().verify(finding=f,remediation=r,original_snapshot=before,candidate_snapshot=after,
         original_graph=bg,candidate_graph=cg,original_paths=(path,))
@@ -159,27 +147,18 @@ r=remediation(analysis,f,before)
 
 
 def test_permission_widening_is_semantic_regression_signal():
-analysis=new_id("analysis")
-before=snapshot(analysis,"a")
-after=snapshot(analysis,"b")
-bg,nodes=build_graph(analysis,before,permission_action="read")
-cg,_=build_graph(analysis,after,permission_action="write")
+    analysis=new_id("analysis"); before=snapshot(analysis,"a"); after=snapshot(analysis,"b")
+    bg,nodes=build_graph(analysis,before,permission_action="read"); cg,_=build_graph(analysis,after,permission_action="write")
     diff=VerificationEngine().diff_engine.compare(bg,cg)
     assert diff.permission_added
     assert diff.permission_widened
 
 
 def test_security_test_failure_blocks_remediation():
-analysis=new_id("analysis")
-before=snapshot(analysis,"a")
-after=snapshot(analysis,"b")
+    analysis=new_id("analysis"); before=snapshot(analysis,"a"); after=snapshot(analysis,"b")
     bg,nodes=build_graph(analysis,before)
-cg,cnodes=build_graph(analysis,after)
-cg.remove_edge(cg.get_edges_between(cnodes[1].id,cnodes[2].id)[0].id)
-cg.remove_node(cnodes[2].id)
-ev=bg.get_node_evidence(nodes[0].id)[0]
-f=finding(analysis,before,ev)
-r=remediation(analysis,f,before)
+    cg,cnodes=build_graph(analysis,after); cg.remove_edge(cg.get_edges_between(cnodes[1].id,cnodes[2].id)[0].id); cg.remove_node(cnodes[2].id)
+    ev=bg.get_node_evidence(nodes[0].id)[0]; f=finding(analysis,before,ev); r=remediation(analysis,f,before)
     path=original_attack_path(analysis,before,bg,nodes)
     definition=SecurityTestDefinition(test_id="command-injection-regression",version="1",snapshot_id=after.id,
         security_property=r.expected_security_property,target="fixture",expected_result="blocked")
@@ -189,16 +168,10 @@ r=remediation(analysis,f,before)
     assert out.result.result.value=="REMEDIATION_FAILED"
 
 def test_successful_verification_establishes_regression_baseline():
-analysis=new_id("analysis")
-before=snapshot(analysis,"a")
-after=snapshot(analysis,"b")
+    analysis=new_id("analysis"); before=snapshot(analysis,"a"); after=snapshot(analysis,"b")
     bg,nodes=build_graph(analysis,before)
-cg,cnodes=build_graph(analysis,after)
-cg.remove_edge(cg.get_edges_between(cnodes[1].id,cnodes[2].id)[0].id)
-cg.remove_node(cnodes[2].id)
-ev=bg.get_node_evidence(nodes[0].id)[0]
-f=finding(analysis,before,ev)
-r=remediation(analysis,f,before)
+    cg,cnodes=build_graph(analysis,after); cg.remove_edge(cg.get_edges_between(cnodes[1].id,cnodes[2].id)[0].id); cg.remove_node(cnodes[2].id)
+    ev=bg.get_node_evidence(nodes[0].id)[0]; f=finding(analysis,before,ev); r=remediation(analysis,f,before)
     path=original_attack_path(analysis,before,bg,nodes)
     out=VerificationEngine().verify(finding=f,remediation=r,original_snapshot=before,candidate_snapshot=after,
         original_graph=bg,candidate_graph=cg,original_paths=(path,))
@@ -206,11 +179,8 @@ r=remediation(analysis,f,before)
     assert out.baseline is not None
 
 def test_agent_and_mcp_capability_differentials_are_security_relevant():
-analysis=new_id("analysis")
-before=snapshot(analysis,"a")
-after=snapshot(analysis,"b")
-bg,_=build_graph(analysis,before)
-cg,_=build_graph(analysis,after)
+    analysis=new_id("analysis"); before=snapshot(analysis,"a"); after=snapshot(analysis,"b")
+    bg,_=build_graph(analysis,before); cg,_=build_graph(analysis,after)
     ev=evidence(analysis,before,"agent capability")
     bg.add_evidence(ev)
     agent=node(analysis,before,GraphNodeType.AGENT,"agent:worker","worker",ev,capability="deploy",principal="agent")
@@ -221,8 +191,7 @@ cg,_=build_graph(analysis,after)
     cg.add_node(cg_agent)
     m1=node(analysis,before,GraphNodeType.MCP_TOOL,"mcp:deploy","deploy",ev,authorization="allow",capability="production-write")
     m2=node(analysis,after,GraphNodeType.MCP_TOOL,"mcp:deploy","deploy",cg_ev,authorization="deny",capability="production-write")
-bg.add_node(m1)
-cg.add_node(m2)
+    bg.add_node(m1); cg.add_node(m2)
     diff=VerificationEngine().diff_engine.compare(bg,cg)
     assert diff.agent_capability_changed
     assert diff.mcp_capability_changed
@@ -230,8 +199,7 @@ cg.add_node(m2)
 
 def test_regression_engine_detects_reappearance_against_baseline():
     from fas.verification.regression import RegressionEngine
-analysis=new_id("analysis")
-before=snapshot(analysis,"a")
+    analysis=new_id("analysis"); before=snapshot(analysis,"a")
     graph,_=build_graph(analysis,before)
     ev=graph.get_node_evidence(next(n.id for n in graph.nodes() if n.type==GraphNodeType.REQUEST))[0]
     f=finding(analysis,before,ev)
