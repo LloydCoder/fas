@@ -1,7 +1,6 @@
 """Deterministic discovery of agent/tool/MCP configuration metadata."""
 from __future__ import annotations
 import json
-from pathlib import Path
 from .base import _BatchBuilder
 from .discovery import _stable_id,_provenance
 from fas.domain.analysis import Artifact,Observation
