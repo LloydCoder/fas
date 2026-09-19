@@ -189,7 +189,7 @@ class GraphEngine:
         if query.evidence_ids and not query.evidence_ids.intersection(node.evidence_ids):
             return False
         if query.provenance_categories:
-            categories = {item.category.value for item in node.provenance}
+            categories = {item.category for item in node.provenance}
             if not categories.intersection(query.provenance_categories):
                 return False
         return True
@@ -201,7 +201,7 @@ class GraphEngine:
         if query.evidence_ids and not query.evidence_ids.intersection(edge.evidence_ids):
             return False
         if query.provenance_categories:
-            categories = {item.category.value for item in edge.provenance}
+            categories = {item.category for item in edge.provenance}
             if not categories.intersection(query.provenance_categories):
                 return False
         if query.min_confidence is not None or query.max_confidence is not None:
