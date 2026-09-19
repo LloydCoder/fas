@@ -195,12 +195,14 @@ class DeterministicInvestigator:
 
     def inspect_symbol(self, node_id: str) -> InvestigationToolResult:
         node=self._node("inspect_symbol",node_id)
-        if node.type != GraphNodeType.SYMBOL: return self._result("inspect_symbol","EMPTY",{},missing=["symbol node not found"])
+        if node.type != GraphNodeType.SYMBOL:
+            return self._result("inspect_symbol","EMPTY",{},missing=["symbol node not found"])
         return self._result("inspect_symbol","SUCCESS",{"node":node.model_dump(mode="json")},node.evidence_ids)
 
     def inspect_file(self, node_id: str) -> InvestigationToolResult:
         node=self._node("inspect_file",node_id)
-        if node.type != GraphNodeType.FILE: return self._result("inspect_file","EMPTY",{},missing=["file node not found"])
+        if node.type != GraphNodeType.FILE:
+            return self._result("inspect_file","EMPTY",{},missing=["file node not found"])
         return self._result("inspect_file","SUCCESS",{"node":node.model_dump(mode="json")},node.evidence_ids)
 
     def inspect_code_location(self, node_id: str) -> InvestigationToolResult:
@@ -208,27 +210,40 @@ class DeterministicInvestigator:
 
     def _inspect_typed(self, tool: str, node_id: str, expected: GraphNodeType) -> InvestigationToolResult:
         node=self._node(tool,node_id)
-        if node.type != expected: return self._result(tool,"EMPTY",{},missing=[f"{expected.value} node not found"])
+        if node.type != expected:
+            return self._result(tool,"EMPTY",{},missing=[f"{expected.value} node not found"])
         return self._result(tool,"SUCCESS",{"node":node.model_dump(mode="json")},node.evidence_ids)
 
     def trace_callers(self,node_id:str)->InvestigationToolResult:
-        self._call("trace_callers",{"node_id":node_id}); result=self.ctx.graph.traverse(node_id,direction=TraversalDirection.INBOUND,max_depth=self.ctx.case.budget.max_depth,max_nodes=self.ctx.case.budget.max_graph_nodes,max_edges=self.ctx.case.budget.max_graph_edges,allowed_relationship_types=frozenset({RelationshipType.CALLS}))
-        self.ctx.graph_nodes_used+=len(result.node_ids); self.ctx.graph_edges_used+=len(result.edge_ids); self.ctx.check()
+        self._call("trace_callers",{"node_id":node_id})
+        result=self.ctx.graph.traverse(node_id,direction=TraversalDirection.INBOUND,max_depth=self.ctx.case.budget.max_depth,max_nodes=self.ctx.case.budget.max_graph_nodes,max_edges=self.ctx.case.budget.max_graph_edges,allowed_relationship_types=frozenset({RelationshipType.CALLS}))
+        self.ctx.graph_nodes_used+=len(result.node_ids)
+        self.ctx.graph_edges_used+=len(result.edge_ids)
+        self.ctx.check()
         return self._result("trace_callers", "SUCCESS" if result.node_ids else "EMPTY", {"node_ids":result.node_ids,"depths":result.depths})
 
     def trace_callees(self,node_id:str)->InvestigationToolResult:
-        self._call("trace_callees",{"node_id":node_id}); result=self.ctx.graph.traverse(node_id,direction=TraversalDirection.OUTBOUND,max_depth=self.ctx.case.budget.max_depth,max_nodes=self.ctx.case.budget.max_graph_nodes,max_edges=self.ctx.case.budget.max_graph_edges,allowed_relationship_types=frozenset({RelationshipType.CALLS}))
-        self.ctx.graph_nodes_used+=len(result.node_ids); self.ctx.graph_edges_used+=len(result.edge_ids); self.ctx.check()
+        self._call("trace_callees",{"node_id":node_id})
+        result=self.ctx.graph.traverse(node_id,direction=TraversalDirection.OUTBOUND,max_depth=self.ctx.case.budget.max_depth,max_nodes=self.ctx.case.budget.max_graph_nodes,max_edges=self.ctx.case.budget.max_graph_edges,allowed_relationship_types=frozenset({RelationshipType.CALLS}))
+        self.ctx.graph_nodes_used+=len(result.node_ids)
+        self.ctx.graph_edges_used+=len(result.edge_ids)
+        self.ctx.check()
         return self._result("trace_callees", "SUCCESS" if result.node_ids else "EMPTY", {"node_ids":result.node_ids,"depths":result.depths})
 
     def trace_dataflow(self,node_id:str)->InvestigationToolResult:
-        self._call("trace_dataflow",{"node_id":node_id}); result=self.ctx.graph.traverse(node_id,max_depth=self.ctx.case.budget.max_depth,max_nodes=self.ctx.case.budget.max_graph_nodes,max_edges=self.ctx.case.budget.max_graph_edges,allowed_relationship_types=frozenset({RelationshipType.FLOWS_TO,RelationshipType.READS,RelationshipType.WRITES}))
-        self.ctx.graph_nodes_used+=len(result.node_ids); self.ctx.graph_edges_used+=len(result.edge_ids); self.ctx.check()
+        self._call("trace_dataflow",{"node_id":node_id})
+        result=self.ctx.graph.traverse(node_id,max_depth=self.ctx.case.budget.max_depth,max_nodes=self.ctx.case.budget.max_graph_nodes,max_edges=self.ctx.case.budget.max_graph_edges,allowed_relationship_types=frozenset({RelationshipType.FLOWS_TO,RelationshipType.READS,RelationshipType.WRITES}))
+        self.ctx.graph_nodes_used+=len(result.node_ids)
+        self.ctx.graph_edges_used+=len(result.edge_ids)
+        self.ctx.check()
         return self._result("trace_dataflow", "SUCCESS" if result.node_ids else "EMPTY", {"node_ids":result.node_ids,"depths":result.depths})
 
     def trace_control_flow(self,node_id:str)->InvestigationToolResult:
-        self._call("trace_control_flow",{"node_id":node_id}); result=self.ctx.graph.traverse(node_id,max_depth=self.ctx.case.budget.max_depth,max_nodes=self.ctx.case.budget.max_graph_nodes,max_edges=self.ctx.case.budget.max_graph_edges)
-        self.ctx.graph_nodes_used+=len(result.node_ids); self.ctx.graph_edges_used+=len(result.edge_ids); self.ctx.check()
+        self._call("trace_control_flow",{"node_id":node_id})
+        result=self.ctx.graph.traverse(node_id,max_depth=self.ctx.case.budget.max_depth,max_nodes=self.ctx.case.budget.max_graph_nodes,max_edges=self.ctx.case.budget.max_graph_edges)
+        self.ctx.graph_nodes_used+=len(result.node_ids)
+        self.ctx.graph_edges_used+=len(result.edge_ids)
+        self.ctx.check()
         return self._result("trace_control_flow", "SUCCESS" if result.node_ids else "EMPTY", {"node_ids":result.node_ids,"depths":result.depths})
 
     def find_paths_between(self,source_id:str,target_id:str)->InvestigationToolResult:
@@ -242,8 +257,11 @@ class DeterministicInvestigator:
         return self.find_paths_between(source_id,target_id)
 
     def find_reachable_nodes(self,source_id:str)->InvestigationToolResult:
-        self._call("find_reachable_nodes",{"source_id":source_id}); result=self.ctx.graph.reachable_nodes(source_id,max_depth=self.ctx.case.budget.max_depth,max_nodes=self.ctx.case.budget.max_graph_nodes,max_edges=self.ctx.case.budget.max_graph_edges)
-        self.ctx.graph_nodes_used += len(result.node_ids); self.ctx.graph_edges_used += len(result.edge_ids); self.ctx.check()
+        self._call("find_reachable_nodes",{"source_id":source_id})
+        result=self.ctx.graph.reachable_nodes(source_id,max_depth=self.ctx.case.budget.max_depth,max_nodes=self.ctx.case.budget.max_graph_nodes,max_edges=self.ctx.case.budget.max_graph_edges)
+        self.ctx.graph_nodes_used += len(result.node_ids)
+        self.ctx.graph_edges_used += len(result.edge_ids)
+        self.ctx.check()
         return self._result("find_reachable_nodes","SUCCESS",{"node_ids":result.node_ids,"status":result.status.value})
 
     def inspect_identity(self,node_id:str)->InvestigationToolResult:
@@ -333,7 +351,8 @@ class InvestigationEngine:
         case=InvestigationCase(
             id=new_id("investigation"),analysis_id=self.graph.scope.analysis_id,finding_id=finding.id,
             snapshot_id=finding.snapshot_id,status=InvestigationStatus.CREATED,objective=objective,
-            graph_scope=f"analysis={self.graph.scope.analysis_id};snapshot={self.graph.scope.snapshot_id}",
+            graph_scope=f"analysis={self.graph.scope.analysis_id}
+            snapshot={self.graph.scope.snapshot_id}",
             budget=budget or InvestigationBudget(),
             constraints=constraints or InvestigationConstraints(),
         )
@@ -382,7 +401,8 @@ class InvestigationEngine:
         return tuple(path for path in paths.paths if not primary_edge_ids.intersection(edge.id for edge in path.edges))
 
     def analyze_exploitability(self, context:InvestigationContext, path:AttackPath|None, *, missing:Iterable[str]=(), contradictions:Iterable[str]=())->ExploitabilityAnalysis:
-        missing_values=set(missing); contradiction_values=set(contradictions)
+        missing_values=set(missing)
+        contradiction_values=set(contradictions)
         if path is None:
             missing_values.add("validated attack path unavailable")
             return ExploitabilityAnalysis(evidence_sufficient=False,missing_evidence=tuple(sorted(missing_values)),contradictions=tuple(sorted(contradiction_values)))
@@ -391,12 +411,15 @@ class InvestigationEngine:
             if edge.snapshot_id != context.case.snapshot_id or not edge.evidence_ids:
                 contradiction_values.add(f"attack path step {step.edge_id} is not evidence-backed")
         evidence_records=[context.graph.store.evidence(eid) for eid in sorted(path.supporting_evidence_ids)]
-        attacker_influence=None; identity=None
+        attacker_influence=None
+        identity=None
         for evidence in evidence_records:
             value=evidence.observed_value
             if isinstance(value,dict):
-                if value.get("attacker_controlled") is True: attacker_influence=True
-                if isinstance(value.get("identity"),str): identity=value["identity"]
+                if value.get("attacker_controlled") is True:
+                    attacker_influence=True
+                if isinstance(value.get("identity"),str):
+                    identity=value["identity"]
         if attacker_influence is not True:
             missing_values.add("attacker influence is not deterministically established")
         if contradiction_values:
