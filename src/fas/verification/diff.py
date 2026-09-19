@@ -134,13 +134,13 @@ class SemanticGraphDiffEngine:
             tool_capability_changed=changed_types(GraphNodeType.TOOL),
             agent_capability_changed=changed_types(GraphNodeType.AGENT),
             credential_changed=changed_types(GraphNodeType.CREDENTIAL),
-            dataflow_changed=tuple(sorted(set(
-                _edge_key(original,e)[2]+":"+_edge_key(original,e)[0]+"->"+_edge_key(original,e)[1]
-                for e in original.edges() if e.relationship_type == RelationshipType.FLOWS_TO
-            ) ^ set(
-                _edge_key(candidate,e)[2]+":"+_edge_key(candidate,e)[0]+"->"+_edge_key(candidate,e)[1]
-                for e in candidate.edges() if e.relationship_type == RelationshipType.FLOWS_TO
-            ))),
+            dataflow_changed=tuple(sorted({
+                *(_edge_key(original,e)[2]+":"+_edge_key(original,e)[0]+"->"+_edge_key(original,e)[1]
+                  for e in original.edges() if e.relationship_type == RelationshipType.FLOWS_TO),
+            } ^ {
+                *(_edge_key(candidate,e)[2]+":"+_edge_key(candidate,e)[0]+"->"+_edge_key(candidate,e)[1]
+                  for e in candidate.edges() if e.relationship_type == RelationshipType.FLOWS_TO),
+            })),
             control_changed=changed_types(GraphNodeType.CONTROL),
             dependency_changed=changed_types(GraphNodeType.DEPENDENCY),
         )
