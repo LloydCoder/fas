@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib, json, os, subprocess
 from datetime import datetime, timezone
 from pathlib import Path
-from fas.domain import Analysis, AnalysisStatus, Artifact, ArtifactType, Project, RepositoryReference, Snapshot, new_id
+from fas.domain import Analysis, AnalysisStatus, ContentHash, Project, RepositoryReference, Snapshot, new_id
 from .config import Settings
 from .storage import SQLiteStore, LocalObjectStore
 from .reports import ReportService
@@ -46,7 +46,7 @@ class ProductService:
             files.append(rel)
         now=datetime.now(timezone.utc)
         snap=Snapshot(id=new_id("snapshot"),repository=RepositoryReference(repository=str(root),revision=_git_revision(root)),
-                      captured_at=now,content_hash=__import__("fas.domain").domain.ContentHash(digest=digest.hexdigest()),
+                      captured_at=now,content_hash=ContentHash(digest=digest.hexdigest()),
                       source_reference=str(root),environment_identity=f"python:{__import__('sys').version_info.major}.{__import__('sys').version_info.minor}",
                       configuration_identity="local-defaults",immutable=True)
         self.store.put("snapshots",snap.id,analysis.id,snap.model_dump(mode="json"),now.isoformat())
