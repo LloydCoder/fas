@@ -47,11 +47,13 @@ class JobManager:
                 self.store.job_upsert(job_id,operation_key,kind,"FAILED",payload,now,finished,f"{type(exc).__name__}: {exc}")
                 raise
         future=self.pool.submit(run)
-        with self._lock: self._handles[job_id]=JobHandle(job_id,future,cancel)
+        with self._lock:
+            self._handles[job_id]=JobHandle(job_id,future,cancel)
         return {"id":job_id,"operation_key":operation_key,"kind":kind,"status":"QUEUED","payload":payload}
 
     def cancel(self, job_id: str) -> bool:
-        with self._lock: handle=self._handles.get(job_id)
+        with self._lock:
+            handle=self._handles.get(job_id)
         return bool(handle and handle.cancel_event.set() is None)
 
 def jsonable(row: dict[str,object]) -> dict[str,object]:
