@@ -26,3 +26,5 @@ Detailed architecture decision records belong in [../decisions/](../decisions/).
 ## Phase 2 Evidence Graph
 
 See [evidence-graph.md](evidence-graph.md) for the graph store, deterministic traversal, snapshot isolation, provenance, graph sealing, partial-graph semantics, and graph diff architecture.
+
+- [Security Collection](security-collection.md) — Phase 3 repository discovery, dependency discovery, tool adapters, normalization, and collection completeness.
