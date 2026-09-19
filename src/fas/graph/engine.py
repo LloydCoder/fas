@@ -108,6 +108,14 @@ class GraphEngine:
         self._ensure_scope(node.analysis_id, node.snapshot_id)
         return self.store.merge_node(node)
 
+    def add_nodes(self, nodes: Iterable[GraphNode]) -> None:
+        for node in nodes:
+            self.add_node(node)
+
+    def add_edges(self, edges: Iterable[GraphEdge]) -> None:
+        for edge in edges:
+            self.add_edge(edge)
+
     def add_edge(self, edge: GraphEdge) -> None:
         self._ensure_mutable()
         self._ensure_scope(edge.analysis_id, edge.snapshot_id)
@@ -248,6 +256,13 @@ class GraphEngine:
 
     def get_node_provenance(self, node_id: NodeId):
         return self.get_node(node_id).provenance
+
+    def get_provenance(self, subject_id: str, *, subject_type: str) -> tuple:
+        if subject_type == "node":
+            return self.get_node_provenance(subject_id)  # type: ignore[arg-type]
+        if subject_type == "edge":
+            return self.get_edge_provenance(subject_id)
+        raise ValueError("subject_type must be node or edge")
 
     def evidence_subgraph(self, evidence_ids: Iterable[EvidenceId]) -> GraphQueryResult:
         ids = frozenset(evidence_ids)
@@ -456,7 +471,7 @@ class GraphEngine:
                 paths.append(self._build_path(tuple(reversed(nodes)), tuple(reversed(edges))))
                 return
             for previous, edge_id in sorted(predecessors[node], key=lambda item: (item[0], item[1])):
-                backtrack(previous, [previous, *nodes], [edge_id, *edges])
+                backtrack(previous, [*nodes, previous], [*edges, edge_id])
                 if truncated:
                     return
 
@@ -466,6 +481,16 @@ class GraphEngine:
             status=ResultStatus.TRUNCATED if truncated else ResultStatus.COMPLETE,
             reason="max_paths reached" if truncated else None,
         )
+
+    def enumerate_paths(self, source_node_id: NodeId, target_node_id: NodeId, **kwargs) -> PathResult:
+        return self.bounded_paths(source_node_id, target_node_id, **kwargs)
+
+    def paths_between(self, source_node_id: NodeId, target_node_id: NodeId, **kwargs) -> PathResult:
+        return self.bounded_paths(source_node_id, target_node_id, **kwargs)
+
+    def reachable_targets(self, source_node_id: NodeId, target_node_ids: Iterable[NodeId], **kwargs) -> tuple[NodeId, ...]:
+        reachable = set(self.reachable_nodes(source_node_id, **kwargs).node_ids)
+        return tuple(sorted(set(target_node_ids) & reachable))
 
     def bounded_paths(self, source_node_id: NodeId, target_node_id: NodeId, **kwargs) -> PathResult:
         source = self.get_node(source_node_id)
@@ -754,6 +779,15 @@ class GraphView:
     def get_edges_between(self, *args, **kwargs):
         return self._engine.get_edges_between(*args, **kwargs)
 
+    def get_provenance(self, *args, **kwargs):
+        return self._engine.get_provenance(*args, **kwargs)
+
+    def paths_between(self, *args, **kwargs):
+        return self._engine.paths_between(*args, **kwargs)
+
+    def enumerate_paths(self, *args, **kwargs):
+        return self._engine.enumerate_paths(*args, **kwargs)
+
     def neighborhood(self, *args, **kwargs):
         return self._engine.neighborhood(*args, **kwargs)
 
@@ -777,6 +811,9 @@ class GraphView:
 
     def bounded_paths(self, *args, **kwargs):
         return self._engine.bounded_paths(*args, **kwargs)
+
+    def reachable_targets(self, *args, **kwargs):
+        return self._engine.reachable_targets(*args, **kwargs)
 
     def strongly_connected_components(self):
         return self._engine.strongly_connected_components()
