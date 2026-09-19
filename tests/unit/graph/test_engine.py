@@ -4,6 +4,7 @@ from fas.graph import (
     GraphEngine,
     GraphLimits,
     ResultStatus,
+    stable_id,
     TraversalDirection,
 )
 from fas.graph.errors import (
@@ -62,7 +63,7 @@ def test_multigraph_and_merge_preserve_evidence(engine, context, provenance):
         relationship_type=RelationshipType.CALLS, provenance=(provenance,),
         evidence_ids=(evidence_a.id,), security_relevant=True,
     )
-    second = first.model_copy(update={"id": __import__("fas.graph").graph.stable_id("edge", "alternate"), "evidence_ids": (evidence_b.id,)})
+    second = first.model_copy(update={"id": stable_id("edge", "alternate"), "evidence_ids": (evidence_b.id,)})
     engine.add_edge(first)
     merged = engine.merge_edge_evidence(second)
     assert set(merged.evidence_ids) == {evidence_a.id, evidence_b.id}
@@ -169,7 +170,7 @@ def test_sealed_graph_is_read_only(engine, context, provenance):
     view = engine.seal()
     assert view.get_node(node.id) == node
     with __import__("pytest").raises(GraphSealedError):
-        engine.add_node(node.model_copy(update={"id": __import__("fas.graph").graph.stable_id("node", "new")}))
+        engine.add_node(node.model_copy(update={"id": stable_id("node", "new")}))
 
 
 def test_duplicate_semantic_nodes_are_rejected(engine, context, provenance):
@@ -179,7 +180,7 @@ def test_duplicate_semantic_nodes_are_rejected(engine, context, provenance):
     )
     engine.add_node(node)
     with __import__("pytest").raises(DuplicateNode):
-        engine.add_node(node.model_copy(update={"id": __import__("fas.graph").graph.stable_id("node", "different")}))
+        engine.add_node(node.model_copy(update={"id": stable_id("node", "different")}))
 
 
 def test_security_edge_evidence_is_queryable(engine, context, provenance):
