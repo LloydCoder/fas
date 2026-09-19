@@ -12,12 +12,16 @@ class ReportService:
         analysis=self.store.get("analyses",analysis_id)
         findings=self.store.list("findings","snapshot_id",snapshot_id)
         investigations=[]
+        metadata=analysis.get("metadata",{})
+        status=analysis.get("status","UNKNOWN")
+        completeness=metadata.get("analysis_completeness","UNKNOWN")
         report={
             "schema_version":"1.0","analysis_id":analysis_id,"snapshot_id":snapshot_id,
             "executive_summary":{"scope":analysis.get("project"),"finding_count":len(findings),
-                                "status":analysis.get("status")},
+                                "status":status,"completeness":completeness,
+                                "clean_claim_permitted": status == "VERIFIED" and completeness == "COMPLETE"},
             "findings":findings,"investigations":investigations,
-            "limitations":analysis.get("metadata",{}).get("limitations",""),
+            "limitations":metadata.get("limitations",""),
             "provenance":{"producer":"fas.report","generated_at":datetime.now(timezone.utc).isoformat()},
         }
         result=Report(id=new_id("report"),analysis_id=analysis_id,snapshot_id=snapshot_id,
