@@ -84,3 +84,39 @@ def test_api_auth_required_fails_closed() -> None:
     service = ProductService(Settings(auth_required=True, api_token=None, database_url="sqlite:///:memory:"))
     with pytest.raises(ValueError):
         ApiServer(service).serve("127.0.0.1", 0)
+
+
+def test_executor_rejects_non_allowlisted_environment(tmp_path: Path) -> None:
+    policy = ExecutionPolicy(
+        allowed_executables=frozenset({"fas-test-missing"}),
+        allowed_environment=frozenset({"SAFE_VAR"}),
+    )
+    with pytest.raises(PermissionError):
+        SecureExecutor(policy).run(("fas-test-missing",), cwd=tmp_path, env={"HOME": "/tmp"})
+
+
+def test_snapshot_manifest_excludes_product_state(tmp_path: Path) -> None:
+    from fas.product.config import Settings
+    from fas.product.service import ProductService
+    root = tmp_path / "repo"
+    root.mkdir()
+    (root / "app.py").write_text("print('ok')", encoding="utf-8")
+    (root / ".fas").mkdir()
+    (root / ".fas" / "state").write_text("mutable", encoding="utf-8")
+    service = ProductService(Settings(database_url=f"sqlite:///{tmp_path / 'fas.db'}", object_store_path=str(tmp_path / "objects")))
+    project = service.create_project("fixture", str(root))
+    analysis = service.create_analysis(project.id, str(root))
+    snapshot = service.snapshot(analysis, root)
+    assert snapshot.metadata["completeness"] == "COMPLETE"
+    assert snapshot.metadata["file_count"] == "1"
+    assert snapshot.metadata["manifest_object"]
+
+
+def test_incomplete_investigation_cannot_be_verdict_ready() -> None:
+    from fas.domain import ExploitabilityAnalysis, InvestigationStatus
+    assert InvestigationStatus.AWAITING_EVIDENCE.value == "AWAITING_EVIDENCE"
+    analysis = ExploitabilityAnalysis(
+        evidence_sufficient=False,
+        missing_evidence=("attacker influence is not deterministically established",),
+    )
+    assert analysis.evidence_sufficient is False
