@@ -3,6 +3,7 @@ from tests.fixtures.graph.conftest import add_evidence, add_node
 from fas.domain.common import GraphNodeType, RelationshipType
 from fas.graph import (
     GraphBuilder,
+    GraphLimits,
     ResultStatus,
     stable_id,
     TraversalDirection,
@@ -216,3 +217,19 @@ def test_recursive_self_loop_is_representable(engine, context, provenance):
     engine.add_edge(edge)
     assert engine.get_edge(edge.id).source_node_id == engine.get_edge(edge.id).target_node_id
     assert engine.detect_cycles() == ((node.id,),)
+
+
+def test_result_size_and_cancellation_limits(context, provenance):
+    from tests.fixtures.graph.conftest import add_evidence, add_node
+
+    engine = __import__("fas.graph", fromlist=["GraphEngine"]).GraphEngine(
+        analysis_id=context["analysis"], snapshot_id=context["snapshot"],
+        limits=GraphLimits(max_result_size=2, max_traversal_depth=8, max_nodes_visited=10, max_edges_visited=10, max_paths=5, max_path_depth=8),
+    )
+    evidence = add_evidence(engine, context, provenance)
+    nodes = [add_node(engine, context, provenance, node_type=GraphNodeType.SYMBOL, identity=str(i), evidence=evidence) for i in range(3)]
+    engine.add_nodes(nodes)
+    result = engine.subgraph([node.id for node in nodes])
+    assert result.status == ResultStatus.TRUNCATED
+    cancelled = engine.traverse(nodes[0].id, cancellation_check=lambda: True)
+    assert cancelled.status == ResultStatus.TRUNCATED
