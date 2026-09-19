@@ -215,3 +215,4 @@ def test_recursive_self_loop_is_representable(engine, context, provenance):
     )
     engine.add_edge(edge)
     assert engine.get_edge(edge.id).source_node_id == engine.get_edge(edge.id).target_node_id
+    assert engine.detect_cycles() == ((node.id,),)
