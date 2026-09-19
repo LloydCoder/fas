@@ -405,13 +405,22 @@ class InvestigationEngine:
         if path is None:
             missing_values.add("validated attack path unavailable")
             return ExploitabilityAnalysis(evidence_sufficient=False,missing_evidence=tuple(sorted(missing_values)),contradictions=tuple(sorted(contradiction_values)))
+        if path.snapshot_id != context.case.snapshot_id:
+            contradiction_values.add("attack path is outside investigation snapshot")
+        edges=[]
         for step in path.steps:
-            edge = context.graph.get_edge(step.edge_id)
+            try:
+                edge=context.graph.get_edge(step.edge_id)
+            except Exception as exc:
+                contradiction_values.add(f"attack path step {step.edge_id} is unavailable: {type(exc).__name__}")
+                continue
             if edge.snapshot_id != context.case.snapshot_id or not edge.evidence_ids:
                 contradiction_values.add(f"attack path step {step.edge_id} is not evidence-backed")
+            edges.append(edge)
         evidence_records=[context.graph.store.evidence(eid) for eid in sorted(path.supporting_evidence_ids)]
         attacker_influence=None
         identity=None
+        permissions=[]
         for evidence in evidence_records:
             value=evidence.observed_value
             if isinstance(value,dict):
@@ -419,17 +428,31 @@ class InvestigationEngine:
                     attacker_influence=True
                 if isinstance(value.get("identity"),str):
                     identity=value["identity"]
+                if isinstance(value.get("permission"),str):
+                    permissions.append(value["permission"])
         if attacker_influence is not True:
             missing_values.add("attacker influence is not deterministically established")
-        if contradiction_values:
-            missing_values.add("contradictory security evidence requires reconciliation")
+        reachable=bool(edges) and not contradiction_values
+        data_flow_established=any(edge.relationship_type.value=="FLOWS_TO" for edge in edges)
+        if not data_flow_established:
+            missing_values.add("deterministic data-flow relationship is not established")
+        alternate=()
+        if edges:
+            alternate=self.find_alternate_paths(context,path.entry,path.steps[-1].next_node_id,frozenset(edge.id for edge in edges))
+        alternate_paths_found=bool(alternate)
         return ExploitabilityAnalysis(
-            attacker_influence=attacker_influence, reachable=True, data_flow_established=True,
-            evidence_sufficient=not missing_values and not contradiction_values, identity=identity,
-            alternate_paths_found=False, missing_evidence=tuple(sorted(missing_values)),
+            attacker_influence=attacker_influence,
+            reachable=reachable,
+            data_flow_established=data_flow_established,
+            evidence_sufficient=not missing_values and not contradiction_values,
+            identity=identity,
+            permissions=tuple(sorted(set(permissions))),
+            alternate_paths_found=alternate_paths_found,
+            missing_evidence=tuple(sorted(missing_values)),
             contradictions=tuple(sorted(contradiction_values)),
             trust_boundaries=tuple(TrustBoundaryAssessment(boundary_node_id=n.id,source=n.metadata.get("source",n.label),target=n.metadata.get("target",n.label),evidence_ids=n.evidence_ids) for n in (context.graph.get_node(i) for i in path.trust_boundaries_crossed)),
         )
+
     def propose_verdict(self, context:InvestigationContext, analysis:ExploitabilityAnalysis, *, attack_path:AttackPath|None, rationale:str)->VerdictProposal:
         evidence=tuple(sorted(set((attack_path.supporting_evidence_ids if attack_path else ()) + tuple(e for c in analysis.controls for e in c.evidence_ids))))
         if analysis.missing_evidence or analysis.contradictions or not analysis.evidence_sufficient:
