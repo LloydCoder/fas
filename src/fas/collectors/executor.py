@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import os
 import hashlib
+import resource
 import shutil
 import signal
 import subprocess
@@ -46,6 +47,11 @@ class ExecutionPolicy:
     isolation_mode: str = "STATIC_ONLY"
     network_policy: str = "DENY_ALL"
     executable_hashes: tuple[tuple[str, str], ...] = ()
+    cpu_seconds: int = 120
+    memory_bytes: int = 1_073_741_824
+    file_size_bytes: int = 64 * 1024 * 1024
+    process_count: int = 128
+    open_files: int = 256
 
     def __post_init__(self) -> None:
         if self.isolation_mode not in {"STATIC_ONLY", "SANDBOXED_TEST", "SANDBOXED_RUNTIME", "CONTROLLED_NETWORK"}:
@@ -60,6 +66,11 @@ class ExecutionPolicy:
             or self.max_stderr_bytes < 1
             or self.max_combined_output_bytes < 1
             or self.max_args < 1
+            or self.cpu_seconds < 1
+            or self.memory_bytes < 1
+            or self.file_size_bytes < 1
+            or self.process_count < 1
+            or self.open_files < 1
         ):
             raise ValueError("invalid execution policy")
         if self.max_combined_output_bytes < min(self.max_output_bytes, self.max_stderr_bytes):
@@ -100,7 +111,7 @@ class SecureExecutor:
             raise PermissionError("no executable is allowlisted")
         approved = set()
         for item in self.policy.allowed_executables:
-                if Path(item).is_absolute():
+            if Path(item).is_absolute():
                     approved.add(str(Path(item).resolve(strict=True)))
                 else:
                     resolved_item = shutil.which(item)
@@ -182,6 +193,7 @@ class SecureExecutor:
                 start_new_session=True,
                 close_fds=True,
                 shell=False,
+                preexec_fn=self._apply_resource_limits if os.name == "posix" else None,
             )
             deadline = time.monotonic() + self.policy.timeout_seconds
             while process.poll() is None:
@@ -209,6 +221,19 @@ class SecureExecutor:
                 stderr,
                 output_limited=output_limited,
             )
+
+    def _apply_resource_limits(self) -> None:
+        limits = (
+            (getattr(resource, "RLIMIT_CPU", None), self.policy.cpu_seconds),
+            (getattr(resource, "RLIMIT_AS", None), self.policy.memory_bytes),
+            (getattr(resource, "RLIMIT_FSIZE", None), self.policy.file_size_bytes),
+            (getattr(resource, "RLIMIT_NPROC", None), self.policy.process_count),
+            (getattr(resource, "RLIMIT_NOFILE", None), self.policy.open_files),
+        )
+        for resource_id, value in limits:
+            if resource_id is None:
+                continue
+            resource.setrlimit(resource_id, (value, value))
 
     @staticmethod
     def _terminate(process: subprocess.Popen[bytes]) -> None:
