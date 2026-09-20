@@ -188,6 +188,7 @@ class ProductService:
             try:
                 executor = SecureExecutor(ExecutionPolicy(
                     allowed_executables=frozenset({executable}),
+                    executable_hashes=((executable, hashlib.sha256(Path(executable).read_bytes()).hexdigest()),),
                     timeout_seconds=float(self.settings.subprocess_timeout_seconds),
                     max_output_bytes=self.settings.max_stdout_bytes,
                     max_stderr_bytes=self.settings.max_stderr_bytes,
