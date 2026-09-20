@@ -23,15 +23,21 @@ class ToolCollector:
     def collect(self,context):
         started=datetime.now(timezone.utc)
         self.raw_dir.mkdir(parents=True,exist_ok=True)
-        argv=tuple(context.root.as_posix() if item=="{target}" else item for item in self.argv)
-        result=self.executor.run(argv,cwd=self.raw_dir,cancel=getattr(context,"cancel",None))
+        target_arg = "/target" if self.executor.policy.isolation_mode != "STATIC_ONLY" else context.root.as_posix()
+        argv=tuple(target_arg if item=="{target}" else item for item in self.argv)
+        try:
+            result=self.executor.run(argv,cwd=self.raw_dir,cancel=getattr(context,"cancel",None))
+        except FileNotFoundError:
+            return CollectionBatch(complete=False,warnings=(f"{self.name}: TOOL_UNAVAILABLE",))
+        except PermissionError as exc:
+            return CollectionBatch(complete=False,warnings=(f"{self.name}: EXECUTION_POLICY_DENIED: {type(exc).__name__}",))
         run_id=stable_run_id(context,self.tool_name)
         raw_name=f"{run_id}-{self.tool_name}.stdout"
         raw_path=self.raw_dir/raw_name
         raw_path.write_bytes(result.stdout)
         stdout_hash=hashlib.sha256(result.stdout).hexdigest()
         stderr_hash=hashlib.sha256(result.stderr).hexdigest()
-        artifact_id="artifact_"+hashlib.sha256(f"{context.snapshot_id}|{self.tool_name}|{stdout_hash}".encode()).hexdigest()[:26]
+        artifact_id="artifact_"+hashlib.sha256(f"{context.analysis_id}|{context.snapshot_id}|{self.tool_name}|{stdout_hash}|{stderr_hash}".encode()).hexdigest()[:26]
         prov=Provenance(category=ProvenanceCategory.TOOL_OBSERVATION,level=ProvenanceLevel.T2,collector=self.tool_name,method="secure_subprocess",source="stdout",observed_at=started,tool_execution_ref=run_id)
         artifact=Artifact(id=artifact_id,analysis_id=context.analysis_id,type=ArtifactType.TOOL_OUTPUT,name=raw_name,media_type="application/json",size_bytes=len(result.stdout),content_hash=ContentHash(digest=stdout_hash),snapshot_id=context.snapshot_id,provenance=(prov,),external_reference=str(raw_path),metadata={"tool":self.tool_name,"exit_code":str(result.returncode),"output_limited":str(result.output_limited).lower()})
         if result.cancelled:
