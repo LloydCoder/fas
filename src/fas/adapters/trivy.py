@@ -15,7 +15,7 @@ class TrivyAdapter:
             if not isinstance(result,dict):
                 raise ValueError(f"trivy result {result_index} is not an object")
             target=result.get("Target")
-            vulnerabilities=vulnerabilities
+            vulnerabilities=result.get("Vulnerabilities") or []
             if not isinstance(vulnerabilities,list):
                 raise ValueError(f"trivy vulnerabilities[{result_index}] is not an array")
             for item_index,vuln in enumerate(vulnerabilities):
