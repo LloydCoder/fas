@@ -164,6 +164,7 @@ class SecureExecutor:
                 raise PermissionError("requested sandbox backend is unavailable; refusing unsandboxed execution")
             sandbox_args = [
                 bwrap, "--die-with-parent", "--new-session",
+                "--unshare-user", "--uid", "65534", "--gid", "65534",
                 "--unshare-pid", "--unshare-uts", "--unshare-ipc",
                 "--ro-bind", "/usr", "/usr",
                 "--ro-bind", "/bin", "/bin",
