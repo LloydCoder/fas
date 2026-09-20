@@ -1,6 +1,5 @@
 """Shared resource-bounded adapter helpers."""
 from __future__ import annotations
-import hashlib
 from fas.domain.common import ObservationId
 from fas.collectors.base import CollectionContext
 from fas.collectors.parsing import ParseLimits,safe_json_loads
