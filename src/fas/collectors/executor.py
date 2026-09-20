@@ -8,6 +8,7 @@ not blocked in an unbounded communicate() call.
 from __future__ import annotations
 
 import os
+import hashlib
 import shutil
 import signal
 import subprocess
@@ -44,12 +45,15 @@ class ExecutionPolicy:
     require_non_root: bool = True
     isolation_mode: str = "STATIC_ONLY"
     network_policy: str = "DENY_ALL"
+    executable_hashes: tuple[tuple[str, str], ...] = ()
 
     def __post_init__(self) -> None:
         if self.isolation_mode not in {"STATIC_ONLY", "SANDBOXED_TEST", "SANDBOXED_RUNTIME", "CONTROLLED_NETWORK"}:
             raise ValueError("invalid isolation mode")
         if self.network_policy not in {"DENY_ALL", "ALLOWLIST"}:
             raise ValueError("invalid network policy")
+        if self.network_policy == "ALLOWLIST":
+            raise ValueError("network allowlist backend is not implemented; refusing downgrade")
         if (
             self.timeout_seconds <= 0
             or self.max_output_bytes < 1
@@ -104,6 +108,11 @@ class SecureExecutor:
                         approved.add(str(Path(resolved_item).resolve(strict=True)))
         if str(resolved) not in approved:
             raise PermissionError("executable is not allowlisted")
+        expected_hash=dict(self.policy.executable_hashes).get(str(resolved))
+        if expected_hash:
+            digest=hashlib.sha256(resolved.read_bytes()).hexdigest()
+            if digest != expected_hash:
+                raise PermissionError("approved executable content changed")
         return str(resolved)
 
     def _environment(self, env: Mapping[str, str] | None) -> dict[str, str]:
@@ -145,7 +154,15 @@ class SecureExecutor:
             sandbox_args = [
                 bwrap, "--die-with-parent", "--new-session",
                 "--unshare-pid", "--unshare-uts", "--unshare-ipc",
+                "--ro-bind", "/usr", "/usr",
+                "--ro-bind", "/bin", "/bin",
+                "--ro-bind", "/lib", "/lib",
+                "--ro-bind", "/lib64", "/lib64",
                 "--ro-bind", str(root), "/target",
+                "--ro-bind", "/etc/ssl", "/etc/ssl",
+                "--ro-bind", "/etc/hosts", "/etc/hosts",
+                "--ro-bind", "/etc/resolv.conf", "/etc/resolv.conf",
+                "--ro-bind", "/etc/nsswitch.conf", "/etc/nsswitch.conf",
                 "--tmpfs", "/tmp", "--proc", "/proc", "--dev", "/dev",
                 "--dir", "/work", "--chdir", "/work",
                 "--ro-bind", executable, "/tool",
