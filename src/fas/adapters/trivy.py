@@ -12,8 +12,15 @@ class TrivyAdapter:
         observations=[]
         now=datetime.now(timezone.utc)
         for result_index,result in enumerate(results):
+            if not isinstance(result,dict):
+                raise ValueError(f"trivy result {result_index} is not an object")
             target=result.get("Target")
-            for item_index,vuln in enumerate(result.get("Vulnerabilities") or []):
+            vulnerabilities=vulnerabilities
+            if not isinstance(vulnerabilities,list):
+                raise ValueError(f"trivy vulnerabilities[{result_index}] is not an array")
+            for item_index,vuln in enumerate(vulnerabilities):
+                if not isinstance(vuln,dict):
+                    raise ValueError(f"trivy vulnerability {result_index}:{item_index} is not an object")
                 vulnerability_id=str(vuln.get("VulnerabilityID") or "unknown")
                 package=str(vuln.get("PkgName") or vuln.get("PkgID") or "unknown")
                 provenance=Provenance(category=ProvenanceCategory.TOOL_OBSERVATION,level=ProvenanceLevel.T2,collector=self.name,method="trivy_json_parse",source=f"Results[{result_index}].Vulnerabilities[{item_index}]",observed_at=now)
