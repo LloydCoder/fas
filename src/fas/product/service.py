@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import subprocess
+import shutil
 from datetime import datetime, timezone
 from pathlib import Path
 from fas.domain import Analysis, AnalysisStatus, AuditEvent, ContentHash, Project, RepositoryReference, Snapshot, new_id
@@ -103,6 +104,7 @@ class ProductService:
         context=CollectionContext(analysis_id=analysis.id,snapshot_id=snap.id,root=root,repository=str(root),
                                   revision=snap.repository.revision,max_files=10000,max_file_bytes=self.settings.max_artifact_bytes)
         collectors = [CodeDiscoveryCollector(), DependencyDiscoveryCollector(), ConfigurationCollector(), CICDCollector(), AgentConfigurationCollector()]
+        collectors.extend(self._tool_collectors(analysis, context))
         plan = CollectionPlan(context=context, collectors=tuple(collectors))
         collection = CollectionOrchestrator().run(plan, cancel=cancel)
         for artifact in collection.batch.artifacts:
@@ -141,6 +143,35 @@ class ProductService:
         # A target repository must not be able to manufacture an expected verdict.
         self._replace_analysis(analysis,project_id)
         return {"analysis":analysis.model_dump(mode="json"),"snapshot":snap.model_dump(mode="json"),"findings":[]}
+
+    def _tool_collectors(self, analysis: Analysis, context: CollectionContext):
+        specs = (
+            ("semgrep", ("semgrep", "scan", "--json", "--config", "auto", "{target}")),
+            ("gitleaks", ("gitleaks", "detect", "--source", "{target}", "--report-format", "json", "--report-path", "-")),
+            ("trivy", ("trivy", "fs", "--format", "json", "--quiet", "{target}")),
+        )
+        raw_root = Path(self.settings.object_store_path) / "tool-runs" / analysis.id
+        collectors = []
+        for name, argv in specs:
+            executable = shutil.which(name)
+            if not executable:
+                collectors.append(UnavailableToolCollector(name, "executable not installed"))
+                continue
+            try:
+                executor = SecureExecutor(ExecutionPolicy(
+                    allowed_executables=frozenset({executable}),
+                    timeout_seconds=float(self.settings.subprocess_timeout_seconds),
+                    max_output_bytes=self.settings.max_stdout_bytes,
+                    max_stderr_bytes=self.settings.max_stderr_bytes,
+                    max_combined_output_bytes=self.settings.max_stdout_bytes + self.settings.max_stderr_bytes,
+                    isolation_mode="SANDBOXED_TEST",
+                    network_policy=self.settings.network_policy,
+                ))
+            except ValueError as exc:
+                collectors.append(UnavailableToolCollector(name, f"invalid execution policy: {type(exc).__name__}"))
+                continue
+            collectors.append(ToolCollector(name, argv, __import__("fas.adapters", fromlist=["AdapterRegistry"]).AdapterRegistry().get(name), executor, raw_root / name))
+        return collectors
 
     def _audit(self, analysis_id: str, snapshot_id: str, event_type: str, subject_id: str, payload: dict[str,object]) -> None:
         event=AuditEvent(id=new_id("audit_event"),analysis_id=analysis_id,snapshot_id=snapshot_id,
