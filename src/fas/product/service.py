@@ -120,7 +120,14 @@ class ProductService:
         plan = CollectionPlan(context=context, collectors=tuple(collectors))
         collection = CollectionOrchestrator().run(plan, cancel=cancel)
         for artifact in collection.batch.artifacts:
-            self.store.put("artifacts",artifact.id,snap.id,artifact.model_dump(mode="json"),artifact.provenance[0].observed_at.isoformat())
+            persisted_artifact=artifact
+            if artifact.type.value == "TOOL_OUTPUT" and artifact.external_reference:
+                raw_path=Path(artifact.external_reference)
+                if raw_path.is_file() and raw_path.stat().st_size <= self.settings.max_stdout_bytes:
+                    raw_bytes=raw_path.read_bytes()
+                    stored=self.objects.put(raw_bytes,media_type=artifact.media_type,snapshot_id=snap.id,source=str(raw_path))
+                    persisted_artifact=artifact.model_copy(update={"external_reference":stored["storage_reference"],"content_hash":stored["content_hash"],"size_bytes":stored["size"]})
+            self.store.put("artifacts",persisted_artifact.id,snap.id,persisted_artifact.model_dump(mode="json"),persisted_artifact.provenance[0].observed_at.isoformat())
         for observation in collection.batch.observations:
             self.store.put("observations",observation.id,snap.id,observation.model_dump(mode="json"),observation.observed_at.isoformat())
         graph = GraphEngine(analysis_id=analysis.id, snapshot_id=snap.id)
