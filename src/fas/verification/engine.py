@@ -144,15 +144,18 @@ class VerificationEngine:
 
     def _candidate_paths(self, original_path: AttackPath, before: GraphEngine, after: GraphEngine, limit: int = 20):
         original_nodes=[before.get_node(original_path.entry)] + [before.get_node(s.next_node_id) for s in original_path.steps]
-        source_target=(original_nodes[0], original_nodes[-1])
-        sources=sorted(
+        source_target=(original_nodes[0],original_nodes[-1])
+        source_candidates=sorted(
             (n for n in after.nodes() if n.type == source_target[0].type and _candidate_matches(n,source_target[0]) > 0),
-            key=lambda n:(- _candidate_matches(n,source_target[0]),n.id),
-        )[:10]
-        sinks=sorted(
+            key=lambda n:(-_candidate_matches(n,source_target[0]),n.id),
+        )
+        sink_candidates=sorted(
             (n for n in after.nodes() if n.type == source_target[1].type and _candidate_matches(n,source_target[1]) > 0),
-            key=lambda n:(- _candidate_matches(n,source_target[1]),n.id),
-        )[:10]
+            key=lambda n:(-_candidate_matches(n,source_target[1]),n.id),
+        )
+        sources=source_candidates[:10]
+        sinks=sink_candidates[:10]
+        complete=len(source_candidates)<=10 and len(sink_candidates)<=10
         paths=[]
         for source in sources:
             for sink in sinks:
@@ -160,9 +163,11 @@ class VerificationEngine:
                     continue
                 result=after.bounded_paths(source.id,sink.id,max_depth=12,max_paths=limit)
                 paths.extend(result.paths)
+                if result.status.value != "COMPLETE":
+                    complete=False
                 if len(paths)>=limit:
-                    return tuple(paths[:limit])
-        return tuple(paths)
+                    return tuple(paths[:limit]), False
+        return tuple(paths), complete
 
     def verify(
         self,
@@ -255,7 +260,9 @@ class VerificationEngine:
             if original_path.snapshot_id != original_snapshot.id:
                 missing.append(f"attack path {original_path.id} has wrong snapshot")
                 continue
-            candidates=self._candidate_paths(original_path,original_graph,candidate_graph)
+            candidates,candidate_search_complete=self._candidate_paths(original_path,original_graph,candidate_graph)
+            if not candidate_search_complete:
+                missing.append(f"candidate path search incomplete for {original_path.id}")
             candidate_attacks=tuple(self._attack_path(candidate_graph,p) for p in candidates)
             candidate_paths.extend(candidate_attacks)
             exact=[]

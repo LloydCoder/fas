@@ -40,10 +40,13 @@ jobs:
         run: ruff check .
 
       - name: Test
-        run: pytest --cov=fas --cov-report=term-missing --cov-report=xml
+        run: pytest --cov=fas --cov-report=term-missing --cov-report=xml --cov-fail-under=70
 
       - name: Static syntax/type gate
         run: python -m compileall -q src tests
+
+      - name: Type check
+        run: mypy src/fas/identity.py src/fas/collectors/executor.py src/fas/collectors/tool.py src/fas/product/storage.py --follow-imports=skip
 
       - name: Security tests
         run: pytest tests/security

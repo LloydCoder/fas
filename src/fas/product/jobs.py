@@ -5,7 +5,7 @@ import socket
 from concurrent.futures import ThreadPoolExecutor, Future
 from dataclasses import dataclass
 from datetime import datetime, timezone, timedelta
-from threading import Event, Lock
+from threading import Event, Lock, Thread
 from fas.domain import new_id
 from .storage import SQLiteStore
 
@@ -37,22 +37,34 @@ class JobManager:
             return jsonable(claimed)
         cancel=Event()
         def run():
-            started=datetime.now(timezone.utc).isoformat()
-            self.store.job_upsert(job_id,operation_key,kind,"RUNNING",payload,now.isoformat(),started)
+            started=datetime.now(timezone.utc)
+            started_iso=started.isoformat()
+            lease_until=(started+timedelta(minutes=5)).isoformat()
+            self.store.job_start(job_id, self.worker_id, started_iso, lease_until)
+            stop_heartbeat=Event()
+            def heartbeat():
+                while not stop_heartbeat.wait(30):
+                    stamp=datetime.now(timezone.utc)
+                    self.store.job_heartbeat(job_id,self.worker_id,(stamp+timedelta(minutes=5)).isoformat(),stamp.isoformat())
+            heartbeat_thread=Thread(target=heartbeat,name=f"fas-heartbeat-{job_id}",daemon=True)
+            heartbeat_thread.start()
             try:
                 result=fn(cancel)
                 status="CANCELLED" if cancel.is_set() else "COMPLETED"
                 finished=datetime.now(timezone.utc).isoformat()
-                self.store.job_upsert(job_id,operation_key,kind,status,{"request":payload,"result":result},now.isoformat(),finished)
+                self.store.job_upsert(job_id,operation_key,kind,status,{"request":payload,"result":result},started_iso,finished)
                 return result
             except TimeoutError as exc:
                 finished=datetime.now(timezone.utc).isoformat()
-                self.store.job_upsert(job_id,operation_key,kind,"TIMEOUT",payload,now.isoformat(),finished,str(exc))
+                self.store.job_upsert(job_id,operation_key,kind,"TIMEOUT",payload,started_iso,finished,str(exc))
                 raise
             except Exception as exc:
                 finished=datetime.now(timezone.utc).isoformat()
-                self.store.job_upsert(job_id,operation_key,kind,"FAILED",payload,now.isoformat(),finished,f"{type(exc).__name__}: {exc}")
+                self.store.job_upsert(job_id,operation_key,kind,"FAILED",payload,started_iso,finished,f"{type(exc).__name__}: {exc}")
                 raise
+            finally:
+                stop_heartbeat.set()
+                heartbeat_thread.join(timeout=1)
         future=self.pool.submit(run)
         with self._lock: self._handles[job_id]=JobHandle(job_id,future,cancel)
         return {"id":job_id,"operation_key":operation_key,"kind":kind,"status":"QUEUED","payload":payload}

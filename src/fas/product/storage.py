@@ -9,6 +9,7 @@ import json
 import sqlite3
 from pathlib import Path
 from typing import Any
+from datetime import datetime, timezone
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS projects(id TEXT PRIMARY KEY, payload TEXT NOT NULL, created_at TEXT NOT NULL);
@@ -24,6 +25,7 @@ CREATE TABLE IF NOT EXISTS verifications(id TEXT PRIMARY KEY, analysis_id TEXT N
 CREATE TABLE IF NOT EXISTS findings(id TEXT PRIMARY KEY, snapshot_id TEXT NOT NULL, payload TEXT NOT NULL, created_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS reports(id TEXT PRIMARY KEY, analysis_id TEXT NOT NULL, payload TEXT NOT NULL, created_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS audit_events(id TEXT PRIMARY KEY, analysis_id TEXT NOT NULL, payload TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS tool_runs(id TEXT PRIMARY KEY, analysis_id TEXT NOT NULL, snapshot_id TEXT NOT NULL, payload TEXT NOT NULL, created_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS jobs(id TEXT PRIMARY KEY, operation_key TEXT NOT NULL UNIQUE, kind TEXT NOT NULL, status TEXT NOT NULL, payload TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, error TEXT, worker_id TEXT, lease_until TEXT, heartbeat_at TEXT, retry_count INTEGER NOT NULL DEFAULT 0);
 CREATE INDEX IF NOT EXISTS idx_analyses_project ON analyses(project_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_snapshots_analysis ON snapshots(analysis_id, created_at);
@@ -48,6 +50,9 @@ class SQLiteStore:
         if raw != ":memory:":
             self.path.parent.mkdir(parents=True, exist_ok=True)
         self._init()
+        if raw != ":memory:":
+            try: self.path.chmod(0o600)
+            except OSError: pass
 
     def _connect(self) -> sqlite3.Connection:
         con = sqlite3.connect(self.path.as_posix(), timeout=30, check_same_thread=False)
@@ -70,7 +75,7 @@ class SQLiteStore:
                     con.execute(f"ALTER TABLE jobs ADD COLUMN {name} {definition}")
 
     def put(self, table: str, identifier: str, foreign_key: str, payload: dict[str, Any], created_at: str) -> None:
-        allowed = {"projects","analyses","snapshots","artifacts","observations","evidence","graph_nodes","graph_edges","remediations","verifications","findings","reports","audit_events"}
+        allowed = {"projects","analyses","snapshots","artifacts","observations","evidence","graph_nodes","graph_edges","remediations","verifications","findings","reports","audit_events","tool_runs"}
         if table not in allowed:
             raise ValueError("unsupported table")
         key_col = "id"
@@ -79,11 +84,11 @@ class SQLiteStore:
             if table == "projects":
                 con.execute("INSERT INTO projects(id,payload,created_at) VALUES(?,?,?)", (identifier, serialized, created_at))
             else:
-                fk_col = {"analyses":"project_id","snapshots":"analysis_id","artifacts":"snapshot_id","observations":"snapshot_id","evidence":"snapshot_id","graph_nodes":"snapshot_id","graph_edges":"snapshot_id","remediations":"analysis_id","verifications":"analysis_id","findings":"snapshot_id","reports":"analysis_id","audit_events":"analysis_id"}[table]
+                fk_col = {"analyses":"project_id","snapshots":"analysis_id","artifacts":"snapshot_id","observations":"snapshot_id","evidence":"snapshot_id","graph_nodes":"snapshot_id","graph_edges":"snapshot_id","remediations":"analysis_id","verifications":"analysis_id","findings":"snapshot_id","reports":"analysis_id","audit_events":"analysis_id","tool_runs":"snapshot_id"}[table]
                 con.execute(f"INSERT INTO {table}({key_col},{fk_col},payload,created_at) VALUES(?,?,?,?)", (identifier, foreign_key, serialized, created_at))
 
     def get(self, table: str, identifier: str) -> dict[str, Any]:
-        if table not in {"projects","analyses","snapshots","artifacts","observations","evidence","graph_nodes","graph_edges","remediations","verifications","findings","reports","audit_events","jobs"}:
+        if table not in {"projects","analyses","snapshots","artifacts","observations","evidence","graph_nodes","graph_edges","remediations","verifications","findings","reports","audit_events","tool_runs","jobs"}:
             raise ValueError("unsupported table")
         with self._connect() as con:
             row = con.execute(f"SELECT payload FROM {table} WHERE id=?", (identifier,)).fetchone()
@@ -92,11 +97,11 @@ class SQLiteStore:
         return json.loads(row["payload"])
 
     def list(self, table: str, foreign_col: str, foreign_value: str, limit: int = 100, offset: int = 0) -> list[dict[str, Any]]:
-        if table not in {"analyses","snapshots","artifacts","observations","evidence","graph_nodes","graph_edges","remediations","verifications","findings","reports","audit_events"}:
-            raise ValueError("unsupported table")
+        allowed = {"analyses":{"project_id"},"snapshots":{"analysis_id"},"artifacts":{"snapshot_id"},"observations":{"snapshot_id"},"evidence":{"snapshot_id"},"graph_nodes":{"snapshot_id"},"graph_edges":{"snapshot_id"},"remediations":{"analysis_id"},"verifications":{"analysis_id"},"findings":{"snapshot_id"},"reports":{"analysis_id"},"audit_events":{"analysis_id"},"tool_runs":{"analysis_id"}}
+        if table not in allowed or foreign_col not in allowed[table]: raise ValueError("unsupported table/foreign key")
+        if limit < 0 or offset < 0: raise ValueError("limit and offset must be non-negative")
         with self._connect() as con:
-            rows = con.execute(f"SELECT payload FROM {table} WHERE {foreign_col}=? ORDER BY created_at ASC, id ASC LIMIT ? OFFSET ?",
-                               (foreign_value, limit, offset)).fetchall()
+            rows=con.execute(f"SELECT payload FROM {table} WHERE {foreign_col}=? ORDER BY created_at ASC,id ASC LIMIT ? OFFSET ?",(foreign_value,limit,offset)).fetchall()
         return [json.loads(r["payload"]) for r in rows]
 
     def append_audit(self, payload: dict[str, Any]) -> None:
@@ -161,15 +166,31 @@ class SQLiteStore:
             row=con.execute("SELECT * FROM jobs WHERE operation_key=?", (operation_key,)).fetchone()
         return dict(row) if row else None
 
-    def recover_running_jobs(self) -> int:
+    def job_start(self, job_id: str, worker_id: str, started_at: str, lease_until: str) -> bool:
         with self._connect() as con:
-            cur=con.execute("UPDATE jobs SET status='FAILED', error='worker restarted while job was running', updated_at=datetime('now'), lease_until=NULL WHERE status='RUNNING'")
+            cur=con.execute(
+                "UPDATE jobs SET status='RUNNING',worker_id=?,lease_until=?,heartbeat_at=?,updated_at=? WHERE id=? AND status='QUEUED'",
+                (worker_id,lease_until,started_at,started_at,job_id),
+            )
+            return cur.rowcount == 1
+
+    def job_heartbeat(self, job_id: str, worker_id: str, lease_until: str, heartbeat_at: str) -> bool:
+        with self._connect() as con:
+            cur=con.execute("UPDATE jobs SET heartbeat_at=?,lease_until=?,updated_at=? WHERE id=? AND status='RUNNING' AND worker_id=?",(heartbeat_at,lease_until,heartbeat_at,job_id,worker_id))
+            return cur.rowcount == 1
+
+    def recover_running_jobs(self, now: str | None = None) -> int:
+        now=now or datetime.now(timezone.utc).isoformat()
+        with self._connect() as con:
+            cur=con.execute("UPDATE jobs SET status='FAILED',error='worker lease expired',updated_at=?,lease_until=NULL WHERE status='RUNNING' AND lease_until IS NOT NULL AND lease_until < ?",(now,now))
             return cur.rowcount
 
 class LocalObjectStore:
     def __init__(self, root: str | Path):
         self.root=Path(root).resolve()
         self.root.mkdir(parents=True,exist_ok=True)
+        try: self.root.chmod(0o700)
+        except OSError: pass
 
     def put(self, data: bytes, *, media_type: str, snapshot_id: str, source: str) -> dict[str, Any]:
         digest=hashlib.sha256(data).hexdigest()

@@ -3,15 +3,20 @@ from __future__ import annotations
 import hashlib
 import json
 import subprocess
+import shutil
+from dataclasses import asdict
+from fas.adapters import AdapterRegistry
 from datetime import datetime, timezone
 from pathlib import Path
 from fas.domain import Analysis, AnalysisStatus, AuditEvent, ContentHash, Project, RepositoryReference, Snapshot, new_id
-from fas.collectors import CollectionContext, CollectionPlan, CollectionOrchestrator, CodeDiscoveryCollector, DependencyDiscoveryCollector, ConfigurationCollector, CICDCollector, AgentConfigurationCollector, CollectionPipeline
+from fas.collectors import CollectionContext, CollectionPlan, CollectionOrchestrator, CodeDiscoveryCollector, DependencyDiscoveryCollector, ConfigurationCollector, CICDCollector, AgentConfigurationCollector, CollectionPipeline, ToolCollector, UnavailableToolCollector, SecureExecutor, ExecutionPolicy
 from .config import Settings
 from .storage import SQLiteStore, LocalObjectStore
 from .reports import ReportService
 from .jobs import JobManager
 from fas.graph import GraphEngine
+from fas.collectors.filesystem import safe_read_bytes, ResourceLimitError
+from fas.collectors.raw import ToolRun
 
 class ProductService:
     def __init__(self, settings: Settings):
@@ -53,15 +58,25 @@ class ProductService:
             if path.is_symlink():
                 omitted.append({"path":rel,"reason":"SYMLINK"})
                 continue
-            try:
-                resolved=path.resolve(strict=True)
-                resolved.relative_to(root)
-                data=resolved.read_bytes()
-            except (OSError,ValueError):
-                omitted.append({"path":rel,"reason":"UNREADABLE"})
-                continue
             if file_count>=max_files:
                 omitted.append({"path":rel,"reason":"FILE_LIMIT"})
+                continue
+            try:
+                stat=path.stat()
+                if not path.is_file():
+                    omitted.append({"path":rel,"reason":"NOT_REGULAR_FILE"})
+                    continue
+                if stat.st_size>self.settings.max_artifact_bytes:
+                    omitted.append({"path":rel,"reason":"FILE_SIZE_LIMIT","size_bytes":stat.st_size})
+                    continue
+                resolved=path.resolve(strict=True)
+                resolved.relative_to(root)
+                data=safe_read_bytes(resolved,root,self.settings.max_artifact_bytes)
+            except ResourceLimitError:
+                omitted.append({"path":rel,"reason":"FILE_CHANGED_OR_SIZE_LIMIT"})
+                continue
+            except (OSError,ValueError):
+                omitted.append({"path":rel,"reason":"UNREADABLE"})
                 continue
             if len(data)>self.settings.max_artifact_bytes:
                 omitted.append({"path":rel,"reason":"FILE_SIZE_LIMIT","size_bytes":len(data)})
@@ -103,12 +118,25 @@ class ProductService:
         context=CollectionContext(analysis_id=analysis.id,snapshot_id=snap.id,root=root,repository=str(root),
                                   revision=snap.repository.revision,max_files=10000,max_file_bytes=self.settings.max_artifact_bytes)
         collectors = [CodeDiscoveryCollector(), DependencyDiscoveryCollector(), ConfigurationCollector(), CICDCollector(), AgentConfigurationCollector()]
+        collectors.extend(self._tool_collectors(analysis, context))
         plan = CollectionPlan(context=context, collectors=tuple(collectors))
         collection = CollectionOrchestrator().run(plan, cancel=cancel)
         for artifact in collection.batch.artifacts:
-            self.store.put("artifacts",artifact.id,snap.id,artifact.model_dump(mode="json"),artifact.provenance[0].observed_at.isoformat())
+            persisted_artifact=artifact
+            if artifact.type.value == "TOOL_OUTPUT" and artifact.external_reference:
+                raw_path=Path(artifact.external_reference)
+                if raw_path.is_file() and raw_path.stat().st_size <= self.settings.max_stdout_bytes:
+                    raw_bytes=raw_path.read_bytes()
+                    stored=self.objects.put(raw_bytes,media_type=artifact.media_type,snapshot_id=snap.id,source=str(raw_path))
+                    persisted_artifact=artifact.model_copy(update={"external_reference":stored["storage_reference"],"content_hash":stored["content_hash"],"size_bytes":stored["size"]})
+            self.store.put("artifacts",persisted_artifact.id,snap.id,persisted_artifact.model_dump(mode="json"),persisted_artifact.provenance[0].observed_at.isoformat())
         for observation in collection.batch.observations:
             self.store.put("observations",observation.id,snap.id,observation.model_dump(mode="json"),observation.observed_at.isoformat())
+        for run in collection.batch.tool_runs:
+            if not isinstance(run, ToolRun):
+                raise TypeError("collector returned an invalid tool-run record")
+            self.store.put("tool_runs",run.run_id,snap.id,asdict(run),run.started_at)
+
         graph = GraphEngine(analysis_id=analysis.id, snapshot_id=snap.id)
         pipeline = CollectionPipeline(graph)
         normalized = pipeline.ingest(collection.batch, context)
@@ -142,6 +170,36 @@ class ProductService:
         self._replace_analysis(analysis,project_id)
         return {"analysis":analysis.model_dump(mode="json"),"snapshot":snap.model_dump(mode="json"),"findings":[]}
 
+    def _tool_collectors(self, analysis: Analysis, context: CollectionContext):
+        specs = (
+            ("semgrep", ("semgrep", "scan", "--json", "--config", "auto", "{target}")),
+            ("gitleaks", ("gitleaks", "detect", "--source", "{target}", "--report-format", "json", "--report-path", "-")),
+            ("trivy", ("trivy", "fs", "--format", "json", "--quiet", "{target}")),
+        )
+        raw_root = Path(self.settings.object_store_path) / "tool-runs" / analysis.id
+        collectors = []
+        for name, argv in specs:
+            executable = shutil.which(name)
+            if not executable:
+                collectors.append(UnavailableToolCollector(name, "executable not installed"))
+                continue
+            try:
+                executor = SecureExecutor(ExecutionPolicy(
+                    allowed_executables=frozenset({executable}),
+                    executable_hashes=((executable, hashlib.sha256(Path(executable).read_bytes()).hexdigest()),),
+                    timeout_seconds=float(self.settings.subprocess_timeout_seconds),
+                    max_output_bytes=self.settings.max_stdout_bytes,
+                    max_stderr_bytes=self.settings.max_stderr_bytes,
+                    max_combined_output_bytes=self.settings.max_stdout_bytes + self.settings.max_stderr_bytes,
+                    isolation_mode="SANDBOXED_TEST",
+                    network_policy=self.settings.network_policy,
+                ))
+            except ValueError as exc:
+                collectors.append(UnavailableToolCollector(name, f"invalid execution policy: {type(exc).__name__}"))
+                continue
+            collectors.append(ToolCollector(name, argv, AdapterRegistry().get(name), executor, raw_root / name))
+        return collectors
+
     def _audit(self, analysis_id: str, snapshot_id: str, event_type: str, subject_id: str, payload: dict[str,object]) -> None:
         event=AuditEvent(id=new_id("audit_event"),analysis_id=analysis_id,snapshot_id=snapshot_id,
                          event_type=event_type,actor="fas",subject_id=subject_id,payload=payload)
@@ -155,8 +213,14 @@ class ProductService:
         return Analysis.model_validate(self.store.get("analyses",analysis_id))
 
     def findings(self, analysis_id: str, snapshot_id: str|None=None, limit:int=100, offset:int=0):
-        self.get_analysis(analysis_id)
-        sid=snapshot_id or self.get_analysis(analysis_id).snapshot_ids[0]
+        analysis=self.get_analysis(analysis_id)
+        if limit < 0 or offset < 0:
+            raise ValueError("limit and offset must be non-negative")
+        if not analysis.snapshot_ids and snapshot_id is None:
+            return []
+        sid=snapshot_id or analysis.snapshot_ids[0]
+        if sid not in analysis.snapshot_ids:
+            raise ValueError("snapshot does not belong to analysis")
         return self.store.list("findings","snapshot_id",sid,limit,offset)
 
     def report(self, analysis_id: str) -> dict[str,object]:

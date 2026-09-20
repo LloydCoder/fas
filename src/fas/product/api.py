@@ -45,7 +45,7 @@ class ApiServer:
         if host not in {"127.0.0.1","localhost","::1"} and not service.settings.auth_required:
             raise ValueError("refusing non-local API binding without FAS_AUTH_REQUIRED=true")
         class Handler(BaseHTTPRequestHandler):
-            server_version="FAS/1"
+            server_version="FAS/0.6.0"
             protocol_version="HTTP/1.1"
             def setup(self):
                 super().setup()

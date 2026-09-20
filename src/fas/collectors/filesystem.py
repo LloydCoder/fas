@@ -55,13 +55,18 @@ def safe_read_bytes(path:Path,root:Path,max_bytes:int)->bytes:
         if stat.st_size>max_bytes:
             raise ResourceLimitError("file exceeds max_bytes")
         chunks=[]
-        remaining=max_bytes
+        expected_size=stat.st_size
+        remaining=expected_size
         while remaining:
             chunk=os.read(fd,min(1024*1024,remaining))
             if not chunk:
                 break
             chunks.append(chunk)
             remaining-=len(chunk)
-        return b"".join(chunks)
+        data=b"".join(chunks)
+        final_stat=os.fstat(fd)
+        if final_stat.st_size != expected_size or len(data) != expected_size:
+            raise ResourceLimitError("file changed during snapshot read")
+        return data
     finally:
         os.close(fd)

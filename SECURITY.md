@@ -37,8 +37,7 @@ bounded graph/path analysis, and evidence-backed security-property evaluation.
 
 Core Phase 5 CI does not execute arbitrary candidate-repository commands and does not expose
 production credentials to verification fixtures. The deterministic security-test executor uses
-fixture results only. A future runtime backend must provide explicit filesystem, network, secret,
-timeout, output, cleanup, and resource isolation.
+fixture results only. The Linux sandbox backend uses bubblewrap when available and fails closed when the requested isolation backend is unavailable. It isolates the target repository, process/user/PID/IPC/UTS/network namespaces as configured, removes ambient credential files, applies resource limits, and restricts the visible filesystem. Other operating systems and runtime backends remain bounded/unsupported unless explicitly implemented.
 
 ## LLM boundary
 

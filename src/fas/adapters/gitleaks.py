@@ -13,6 +13,8 @@ class GitleaksAdapter:
         observations=[]
         now=datetime.now(timezone.utc)
         for index,item in enumerate(raw):
+            if not isinstance(item,dict):
+                raise TypeError(f"gitleaks result {index} is not an object")
             rule_id=str(item.get("RuleID") or "unknown")
             path=item.get("File") or item.get("SymlinkFile")
             fingerprint=item.get("Fingerprint")

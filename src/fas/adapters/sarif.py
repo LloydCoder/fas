@@ -13,13 +13,19 @@ class SarifAdapter:
         if raw.get("version") not in {"2.1.0","2.1.0-errata01"}:
             raise ValueError("unsupported SARIF version")
         observations=[]
-        for run_index,run in enumerate(raw.get("runs",[])):
+        runs=raw.get("runs",[])
+        if not isinstance(runs,list): raise TypeError("SARIF runs must be an array")
+        for run_index,run in enumerate(runs):
+            if not isinstance(run,dict): raise TypeError(f"SARIF run {run_index} is not an object")
             driver=((run.get("tool") or {}).get("driver") or {})
             tool_name=str(driver.get("name") or "unknown")
             version=driver.get("semanticVersion") or driver.get("version")
             now=datetime.now(timezone.utc)
             provenance=Provenance(category=ProvenanceCategory.TOOL_OBSERVATION,level=ProvenanceLevel.T2,collector=f"sarif:{tool_name}",collector_version=str(version) if version else None,method="sarif_parse",source=f"runs[{run_index}]",observed_at=now)
-            for result_index,result in enumerate(run.get("results",[])):
+            results=run.get("results",[])
+            if not isinstance(results,list): raise TypeError(f"SARIF results {run_index} must be an array")
+            for result_index,result in enumerate(results):
+                if not isinstance(result,dict): raise TypeError(f"SARIF result {run_index}:{result_index} is not an object")
                 message=((result.get("message") or {}).get("text") or (result.get("message") or {}).get("markdown") or "SARIF result")
                 rule_id=result.get("ruleId") or "unknown"
                 locations=result.get("locations") or [None]

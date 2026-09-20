@@ -8,6 +8,7 @@ not blocked in an unbounded communicate() call.
 from __future__ import annotations
 
 import os
+import hashlib
 import shutil
 import signal
 import subprocess
@@ -42,14 +43,33 @@ class ExecutionPolicy:
     clean_environment: bool = True
     allowed_environment: frozenset[str] = frozenset()
     require_non_root: bool = True
+    isolation_mode: str = "STATIC_ONLY"
+    network_policy: str = "DENY_ALL"
+    executable_hashes: tuple[tuple[str, str], ...] = ()
+    cpu_seconds: int = 120
+    memory_bytes: int = 1_073_741_824
+    file_size_bytes: int = 64 * 1024 * 1024
+    process_count: int = 128
+    open_files: int = 256
 
     def __post_init__(self) -> None:
+        if self.isolation_mode not in {"STATIC_ONLY", "SANDBOXED_TEST", "SANDBOXED_RUNTIME", "CONTROLLED_NETWORK"}:
+            raise ValueError("invalid isolation mode")
+        if self.network_policy not in {"DENY_ALL", "ALLOWLIST"}:
+            raise ValueError("invalid network policy")
+        if self.network_policy == "ALLOWLIST":
+            raise ValueError("network allowlist backend is not implemented; refusing downgrade")
         if (
             self.timeout_seconds <= 0
             or self.max_output_bytes < 1
             or self.max_stderr_bytes < 1
             or self.max_combined_output_bytes < 1
             or self.max_args < 1
+            or self.cpu_seconds < 1
+            or self.memory_bytes < 1
+            or self.file_size_bytes < 1
+            or self.process_count < 1
+            or self.open_files < 1
         ):
             raise ValueError("invalid execution policy")
         if self.max_combined_output_bytes < min(self.max_output_bytes, self.max_stderr_bytes):
@@ -86,17 +106,23 @@ class SecureExecutor:
             resolved = Path(resolved_path).resolve(strict=True)
         if not resolved.is_file() or not os.access(resolved, os.X_OK):
             raise PermissionError("approved executable is not executable")
-        if self.policy.allowed_executables:
-            approved = set()
-            for item in self.policy.allowed_executables:
-                if Path(item).is_absolute():
-                    approved.add(str(Path(item).resolve(strict=True)))
-                else:
-                    resolved_item = shutil.which(item)
-                    if resolved_item:
-                        approved.add(str(Path(resolved_item).resolve(strict=True)))
-            if str(resolved) not in approved:
-                raise PermissionError("executable is not allowlisted")
+        if not self.policy.allowed_executables:
+            raise PermissionError("no executable is allowlisted")
+        approved = set()
+        for item in self.policy.allowed_executables:
+            if Path(item).is_absolute():
+                approved.add(str(Path(item).resolve(strict=True)))
+            else:
+                resolved_item = shutil.which(item)
+                if resolved_item:
+                    approved.add(str(Path(resolved_item).resolve(strict=True)))
+        if str(resolved) not in approved:
+            raise PermissionError("executable is not allowlisted")
+        expected_hash=dict(self.policy.executable_hashes).get(str(resolved))
+        if expected_hash:
+            digest=hashlib.sha256(resolved.read_bytes()).hexdigest()
+            if digest != expected_hash:
+                raise PermissionError("approved executable content changed")
         return str(resolved)
 
     def _environment(self, env: Mapping[str, str] | None) -> dict[str, str]:
@@ -131,10 +157,47 @@ class SecureExecutor:
         executable = self._resolve_executable(args[0])
         safe_args = (executable, *args[1:])
         child_env = self._environment(env)
+        if self.policy.isolation_mode != "STATIC_ONLY":
+            bwrap = shutil.which("bwrap")
+            if not bwrap:
+                raise PermissionError("requested sandbox backend is unavailable; refusing unsandboxed execution")
+            sandbox_args = [
+                bwrap, "--die-with-parent", "--new-session",
+                "--unshare-user", "--uid", "65534", "--gid", "65534",
+                "--unshare-pid", "--unshare-uts", "--unshare-ipc",
+                "--ro-bind", "/usr", "/usr",
+                "--ro-bind", "/bin", "/bin",
+                "--ro-bind", "/lib", "/lib",
+                "--ro-bind", "/lib64", "/lib64",
+                "--ro-bind", str(root), "/target",
+                "--ro-bind", "/etc/ssl", "/etc/ssl",
+                "--ro-bind", "/etc/hosts", "/etc/hosts",
+                "--ro-bind", "/etc/resolv.conf", "/etc/resolv.conf",
+                "--ro-bind", "/etc/nsswitch.conf", "/etc/nsswitch.conf",
+                "--tmpfs", "/tmp", "--proc", "/proc", "--dev", "/dev",
+                "--dir", "/work", "--chdir", "/work",
+                "--ro-bind", executable, "/tool",
+            ]
+            if self.policy.network_policy == "DENY_ALL":
+                sandbox_args.append("--unshare-net")
+            safe_args = tuple(sandbox_args + ["/tool", *args[1:]])
 
+        prlimit = shutil.which("prlimit")
+        if not prlimit:
+            raise PermissionError("resource-limit backend is unavailable; refusing execution")
+        limited_args = (
+            prlimit,
+            f"--cpu={self.policy.cpu_seconds}",
+            f"--as={self.policy.memory_bytes}",
+            f"--fsize={self.policy.file_size_bytes}",
+            f"--nproc={self.policy.process_count}",
+            f"--nofile={self.policy.open_files}",
+            "--",
+            *safe_args,
+        )
         with tempfile.TemporaryFile(mode="w+b") as stdout_file, tempfile.TemporaryFile(mode="w+b") as stderr_file:
             process = subprocess.Popen(
-                safe_args,
+                limited_args,
                 cwd=root,
                 env=child_env,
                 stdin=subprocess.DEVNULL,

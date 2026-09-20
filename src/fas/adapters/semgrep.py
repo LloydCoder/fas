@@ -13,6 +13,8 @@ class SemgrepAdapter:
         now=datetime.now(timezone.utc)
         version=raw.get("version") if isinstance(raw,dict) else None
         for index,item in enumerate(results):
+            if not isinstance(item,dict):
+                raise TypeError(f"semgrep result {index} is not an object")
             extra=item.get("extra") or {}
             start=item.get("start") or {}
             end=item.get("end") or {}

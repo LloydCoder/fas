@@ -4,6 +4,7 @@ import hashlib,json,os,re,tomllib
 from datetime import datetime,timezone
 from pathlib import Path
 from fas.domain.analysis import Artifact,Observation
+from fas.identity import stable_id
 from fas.domain.common import ArtifactType,ContentHash,Provenance,ProvenanceCategory,ProvenanceLevel,SourceLocation
 from .base import _BatchBuilder
 from .filesystem import safe_read_bytes,ResourceLimitError
@@ -13,13 +14,7 @@ _SOURCE_SUFFIXES=frozenset({".py",".pyi",".js",".jsx",".ts",".tsx",".java",".kt"
 _MANIFEST_NAMES=frozenset({"Dockerfile","docker-compose.yml","docker-compose.yaml",".env","pyproject.toml","requirements.txt","requirements-dev.txt","Pipfile","Pipfile.lock","poetry.lock","package.json","package-lock.json","npm-shrinkwrap.json","yarn.lock","pnpm-lock.yaml","go.mod","go.sum","Cargo.toml","Cargo.lock","Gemfile","Gemfile.lock","composer.json","composer.lock","pom.xml","build.gradle","build.gradle.kts"})
 
 def _stable_id(prefix,material):
-    alphabet="0123456789ABCDEFGHJKMNPQRSTVWXYZ"
-    value=int.from_bytes(hashlib.sha256(material.encode()).digest()[:16],"big")
-    chars=[]
-    for _ in range(26):
-        chars.append(alphabet[value&31])
-    value>>=5
-    return f"{prefix}_{''.join(reversed(chars))}"
+    return stable_id(prefix, material)
 
 def _provenance(method,source):
     return Provenance(category=ProvenanceCategory.VERIFIED_ARTIFACT,level=ProvenanceLevel.T3,collector="repository-discovery",collector_version="1",method=method,source=source,observed_at=datetime.now(timezone.utc))
