@@ -16,7 +16,7 @@ from fas.domain import (
     TrustBoundaryAssessment, ToolPolicy, AttackPath,
     AttackPathStep, new_id, utc_now,
 )
-from fas.domain.common import GraphNodeType, RelationshipType, JSONValue
+from fas.domain.common import GraphNodeType, RelationshipType, JSONValue, ProvenanceLevel, ProvenanceCategory
 from fas.graph import GraphEngine, GraphPath, TraversalDirection
 
 
@@ -433,15 +433,24 @@ class InvestigationEngine:
         attacker_influence=None
         identity=None
         permissions=[]
+        attacker_claims=[]
         for evidence in evidence_records:
             value=evidence.observed_value
             if isinstance(value,dict):
                 if value.get("attacker_controlled") is True:
-                    attacker_influence=True
+                    level=evidence.provenance[0].level if evidence.provenance else None
+                    category=evidence.provenance[0].category if evidence.provenance else None
+                    collector=evidence.provenance[0].collector if evidence.provenance else None
+                    if level in {ProvenanceLevel.T3,ProvenanceLevel.T4,ProvenanceLevel.T5} and category != ProvenanceCategory.LLM_INFERENCE:
+                        attacker_influence=True
+                    elif level == ProvenanceLevel.T2 and category == ProvenanceCategory.TOOL_OBSERVATION and collector:
+                        attacker_claims.append(collector)
                 if isinstance(value.get("identity"),str):
                     identity=value["identity"]
                 if isinstance(value.get("permission"),str):
                     permissions.append(value["permission"])
+        if attacker_influence is not True and len(set(attacker_claims)) >= 2:
+            attacker_influence=True
         if attacker_influence is not True:
             missing_values.add("attacker influence is not deterministically established")
         reachable=bool(edges) and not contradiction_values and path.status == "COMPLETE"
