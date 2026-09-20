@@ -42,8 +42,14 @@ class ExecutionPolicy:
     clean_environment: bool = True
     allowed_environment: frozenset[str] = frozenset()
     require_non_root: bool = True
+    isolation_mode: str = "STATIC_ONLY"
+    network_policy: str = "DENY_ALL"
 
     def __post_init__(self) -> None:
+        if self.isolation_mode not in {"STATIC_ONLY", "SANDBOXED_TEST", "SANDBOXED_RUNTIME", "CONTROLLED_NETWORK"}:
+            raise ValueError("invalid isolation mode")
+        if self.network_policy not in {"DENY_ALL", "ALLOWLIST"}:
+            raise ValueError("invalid network policy")
         if (
             self.timeout_seconds <= 0
             or self.max_output_bytes < 1
@@ -86,17 +92,18 @@ class SecureExecutor:
             resolved = Path(resolved_path).resolve(strict=True)
         if not resolved.is_file() or not os.access(resolved, os.X_OK):
             raise PermissionError("approved executable is not executable")
-        if self.policy.allowed_executables:
-            approved = set()
-            for item in self.policy.allowed_executables:
+        if not self.policy.allowed_executables:
+            raise PermissionError("no executable is allowlisted")
+        approved = set()
+        for item in self.policy.allowed_executables:
                 if Path(item).is_absolute():
                     approved.add(str(Path(item).resolve(strict=True)))
                 else:
                     resolved_item = shutil.which(item)
                     if resolved_item:
                         approved.add(str(Path(resolved_item).resolve(strict=True)))
-            if str(resolved) not in approved:
-                raise PermissionError("executable is not allowlisted")
+        if str(resolved) not in approved:
+            raise PermissionError("executable is not allowlisted")
         return str(resolved)
 
     def _environment(self, env: Mapping[str, str] | None) -> dict[str, str]:
@@ -131,6 +138,21 @@ class SecureExecutor:
         executable = self._resolve_executable(args[0])
         safe_args = (executable, *args[1:])
         child_env = self._environment(env)
+        if self.policy.isolation_mode != "STATIC_ONLY":
+            bwrap = shutil.which("bwrap")
+            if not bwrap:
+                raise PermissionError("requested sandbox backend is unavailable; refusing unsandboxed execution")
+            sandbox_args = [
+                bwrap, "--die-with-parent", "--new-session",
+                "--unshare-pid", "--unshare-uts", "--unshare-ipc",
+                "--ro-bind", str(root), "/target",
+                "--tmpfs", "/tmp", "--proc", "/proc", "--dev", "/dev",
+                "--dir", "/work", "--chdir", "/work",
+                "--ro-bind", executable, "/tool",
+            ]
+            if self.policy.network_policy == "DENY_ALL":
+                sandbox_args.append("--unshare-net")
+            safe_args = tuple(sandbox_args + ["/tool", *args[1:]])
 
         with tempfile.TemporaryFile(mode="w+b") as stdout_file, tempfile.TemporaryFile(mode="w+b") as stderr_file:
             process = subprocess.Popen(
