@@ -8,7 +8,7 @@ from fas.adapters import AdapterRegistry
 from datetime import datetime, timezone
 from pathlib import Path
 from fas.domain import Analysis, AnalysisStatus, AuditEvent, ContentHash, Project, RepositoryReference, Snapshot, new_id
-from fas.collectors import CollectionContext, CollectionPlan, CollectionOrchestrator, CodeDiscoveryCollector, DependencyDiscoveryCollector, ConfigurationCollector, CICDCollector, AgentConfigurationCollector, CollectionPipeline
+from fas.collectors import CollectionContext, CollectionPlan, CollectionOrchestrator, CodeDiscoveryCollector, DependencyDiscoveryCollector, ConfigurationCollector, CICDCollector, AgentConfigurationCollector, CollectionPipeline, ToolCollector, UnavailableToolCollector, SecureExecutor, ExecutionPolicy
 from .config import Settings
 from .storage import SQLiteStore, LocalObjectStore
 from .reports import ReportService
