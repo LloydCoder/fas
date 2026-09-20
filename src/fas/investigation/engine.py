@@ -434,7 +434,6 @@ class InvestigationEngine:
         attacker_influence=None
         identity=None
         permissions=[]
-        attacker_claims=[]
         for evidence in evidence_records:
             value=evidence.observed_value
             if isinstance(value,dict):
@@ -445,13 +444,11 @@ class InvestigationEngine:
                     if level in {ProvenanceLevel.T3,ProvenanceLevel.T4,ProvenanceLevel.T5} and category != ProvenanceCategory.LLM_INFERENCE:
                         attacker_influence=True
                     elif level == ProvenanceLevel.T2 and category == ProvenanceCategory.TOOL_OBSERVATION and collector:
-                        attacker_claims.append(collector)
+                        attacker_influence=True
                 if isinstance(value.get("identity"),str):
                     identity=value["identity"]
                 if isinstance(value.get("permission"),str):
                     permissions.append(value["permission"])
-        if attacker_influence is not True and len(set(attacker_claims)) >= 2:
-            attacker_influence=True
         if attacker_influence is not True:
             missing_values.add("attacker influence is not deterministically established")
         reachable=bool(edges) and not contradiction_values and path.status == "COMPLETE"
