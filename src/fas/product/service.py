@@ -13,6 +13,7 @@ from .storage import SQLiteStore, LocalObjectStore
 from .reports import ReportService
 from .jobs import JobManager
 from fas.graph import GraphEngine
+from fas.collectors.filesystem import safe_read_bytes, ResourceLimitError
 
 class ProductService:
     def __init__(self, settings: Settings):
@@ -54,15 +55,25 @@ class ProductService:
             if path.is_symlink():
                 omitted.append({"path":rel,"reason":"SYMLINK"})
                 continue
-            try:
-                resolved=path.resolve(strict=True)
-                resolved.relative_to(root)
-                data=resolved.read_bytes()
-            except (OSError,ValueError):
-                omitted.append({"path":rel,"reason":"UNREADABLE"})
-                continue
             if file_count>=max_files:
                 omitted.append({"path":rel,"reason":"FILE_LIMIT"})
+                continue
+            try:
+                stat=path.stat()
+                if not path.is_file():
+                    omitted.append({"path":rel,"reason":"NOT_REGULAR_FILE"})
+                    continue
+                if stat.st_size>self.settings.max_artifact_bytes:
+                    omitted.append({"path":rel,"reason":"FILE_SIZE_LIMIT","size_bytes":stat.st_size})
+                    continue
+                resolved=path.resolve(strict=True)
+                resolved.relative_to(root)
+                data=safe_read_bytes(resolved,root,self.settings.max_artifact_bytes)
+            except ResourceLimitError:
+                omitted.append({"path":rel,"reason":"FILE_CHANGED_OR_SIZE_LIMIT"})
+                continue
+            except (OSError,ValueError):
+                omitted.append({"path":rel,"reason":"UNREADABLE"})
                 continue
             if len(data)>self.settings.max_artifact_bytes:
                 omitted.append({"path":rel,"reason":"FILE_SIZE_LIMIT","size_bytes":len(data)})
