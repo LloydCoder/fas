@@ -4,6 +4,7 @@ import hashlib
 import json
 import subprocess
 import shutil
+from fas.adapters import AdapterRegistry
 from datetime import datetime, timezone
 from pathlib import Path
 from fas.domain import Analysis, AnalysisStatus, AuditEvent, ContentHash, Project, RepositoryReference, Snapshot, new_id
@@ -181,7 +182,7 @@ class ProductService:
             except ValueError as exc:
                 collectors.append(UnavailableToolCollector(name, f"invalid execution policy: {type(exc).__name__}"))
                 continue
-            collectors.append(ToolCollector(name, argv, __import__("fas.adapters", fromlist=["AdapterRegistry"]).AdapterRegistry().get(name), executor, raw_root / name))
+            collectors.append(ToolCollector(name, argv, AdapterRegistry().get(name), executor, raw_root / name))
         return collectors
 
     def _audit(self, analysis_id: str, snapshot_id: str, event_type: str, subject_id: str, payload: dict[str,object]) -> None:
