@@ -14,7 +14,7 @@ class SemgrepAdapter:
         version=raw.get("version") if isinstance(raw,dict) else None
         for index,item in enumerate(results):
             if not isinstance(item,dict):
-                raise ValueError(f"semgrep result {index} is not an object")
+                raise TypeError(f"semgrep result {index} is not an object")
             extra=item.get("extra") or {}
             start=item.get("start") or {}
             end=item.get("end") or {}
