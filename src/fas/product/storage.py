@@ -9,6 +9,7 @@ import json
 import sqlite3
 from pathlib import Path
 from typing import Any
+from datetime import datetime, timezone
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS projects(id TEXT PRIMARY KEY, payload TEXT NOT NULL, created_at TEXT NOT NULL);
@@ -48,6 +49,9 @@ class SQLiteStore:
         if raw != ":memory:":
             self.path.parent.mkdir(parents=True, exist_ok=True)
         self._init()
+        if raw != ":memory:":
+            try: self.path.chmod(0o600)
+            except OSError: pass
 
     def _connect(self) -> sqlite3.Connection:
         con = sqlite3.connect(self.path.as_posix(), timeout=30, check_same_thread=False)
@@ -92,14 +96,14 @@ class SQLiteStore:
         return json.loads(row["payload"])
 
     def list(self, table: str, foreign_col: str, foreign_value: str, limit: int = 100, offset: int = 0) -> list[dict[str, Any]]:
-        if table not in {"analyses","snapshots","artifacts","observations","evidence","graph_nodes","graph_edges","remediations","verifications","findings","reports","audit_events"}:
-            raise ValueError("unsupported table")
+        allowed = {"analyses":{"project_id"},"snapshots":{"analysis_id"},"artifacts":{"snapshot_id"},"observations":{"snapshot_id"},"evidence":{"snapshot_id"},"graph_nodes":{"snapshot_id"},"graph_edges":{"snapshot_id"},"remediations":{"analysis_id"},"verifications":{"analysis_id"},"findings":{"snapshot_id"},"reports":{"analysis_id"},"audit_events":{"analysis_id"}}
+        if table not in allowed or foreign_col not in allowed[table]: raise ValueError("unsupported table/foreign key")
+        if limit < 0 or offset < 0: raise ValueError("limit and offset must be non-negative")
         with self._connect() as con:
-            rows = con.execute(f"SELECT payload FROM {table} WHERE {foreign_col}=? ORDER BY created_at ASC, id ASC LIMIT ? OFFSET ?",
-                               (foreign_value, limit, offset)).fetchall()
+            rows=con.execute(f"SELECT payload FROM {table} WHERE {foreign_col}=? ORDER BY created_at ASC,id ASC LIMIT ? OFFSET ?",(foreign_value,limit,offset)).fetchall()
         return [json.loads(r["payload"]) for r in rows]
 
-    def append_audit(self, payload: dict[str, Any]) -> None:
+    def append_audit((self, payload: dict[str, Any]) -> None:
         with self._connect() as con:
             rows=con.execute("SELECT payload FROM audit_events WHERE analysis_id=? ORDER BY created_at ASC, id ASC",(payload["analysis_id"],)).fetchall()
             previous=None
@@ -161,12 +165,18 @@ class SQLiteStore:
             row=con.execute("SELECT * FROM jobs WHERE operation_key=?", (operation_key,)).fetchone()
         return dict(row) if row else None
 
-    def recover_running_jobs(self) -> int:
+    def job_heartbeat(self, job_id: str, worker_id: str, lease_until: str, heartbeat_at: str) -> bool:
         with self._connect() as con:
-            cur=con.execute("UPDATE jobs SET status='FAILED', error='worker restarted while job was running', updated_at=datetime('now'), lease_until=NULL WHERE status='RUNNING'")
+            cur=con.execute("UPDATE jobs SET heartbeat_at=?,lease_until=?,updated_at=? WHERE id=? AND status='RUNNING' AND worker_id=?",(heartbeat_at,lease_until,heartbeat_at,job_id,worker_id))
+            return cur.rowcount == 1
+
+    def recover_running_jobs(self, now: str | None = None) -> int:
+        now=now or datetime.now(timezone.utc).isoformat()
+        with self._connect() as con:
+            cur=con.execute("UPDATE jobs SET status='FAILED',error='worker lease expired',updated_at=?,lease_until=NULL WHERE status='RUNNING' AND lease_until IS NOT NULL AND lease_until < ?",(now,now))
             return cur.rowcount
 
-class LocalObjectStore:
+class LocalObjectStore(:
     def __init__(self, root: str | Path):
         self.root=Path(root).resolve()
         self.root.mkdir(parents=True,exist_ok=True)
