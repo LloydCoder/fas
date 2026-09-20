@@ -88,7 +88,7 @@ class SQLiteStore:
                 con.execute(f"INSERT INTO {table}({key_col},{fk_col},payload,created_at) VALUES(?,?,?,?)", (identifier, foreign_key, serialized, created_at))
 
     def get(self, table: str, identifier: str) -> dict[str, Any]:
-        if table not in {"projects","analyses","snapshots","artifacts","observations","evidence","graph_nodes","graph_edges","remediations","verifications","findings","reports","audit_events","jobs"}:
+        if table not in {"projects","analyses","snapshots","artifacts","observations","evidence","graph_nodes","graph_edges","remediations","verifications","findings","reports","audit_events","tool_runs","jobs"}:
             raise ValueError("unsupported table")
         with self._connect() as con:
             row = con.execute(f"SELECT payload FROM {table} WHERE id=?", (identifier,)).fetchone()
