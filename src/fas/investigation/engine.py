@@ -395,9 +395,10 @@ class InvestigationEngine:
             issues.append("path has no supporting evidence")
         return not issues, tuple(sorted(set(issues)))
 
-    def find_alternate_paths(self, context: InvestigationContext, source_id: str, target_id: str, primary_edge_ids: frozenset[str]) -> tuple[GraphPath, ...]:
+    def find_alternate_paths(self, context: InvestigationContext, source_id: str, target_id: str, primary_edge_ids: frozenset[str]) -> tuple[tuple[GraphPath, ...], str]:
         paths = context.graph.bounded_paths(source_id, target_id, max_depth=context.case.budget.max_depth, max_paths=min(100, context.case.budget.max_tool_calls))
-        return tuple(path for path in paths.paths if not primary_edge_ids.intersection(edge.id for edge in path.edges))
+        alternates=tuple(path for path in paths.paths if not primary_edge_ids.intersection(edge.id for edge in path.edges))
+        return alternates, paths.status.value
 
     def analyze_exploitability(self, context:InvestigationContext, path:AttackPath|None, *, missing:Iterable[str]=(), contradictions:Iterable[str]=())->ExploitabilityAnalysis:
         missing_values=set(missing)
@@ -459,10 +460,10 @@ class InvestigationEngine:
             missing_values.add("deterministic data-flow relationship is not established")
         alternate=()
         if edges:
-            alternate=self.find_alternate_paths(context,path.entry,path.steps[-1].next_node_id,frozenset(edge.id for edge in edges))
+            alternate, alternate_status=self.find_alternate_paths(context,path.entry,path.steps[-1].next_node_id,frozenset(edge.id for edge in edges))
         alternate_paths_found=bool(alternate)
-        if alternate and path.status != "COMPLETE":
-            missing_values.add("alternate-path search was not complete")
+        if alternate_status != "COMPLETE":
+            missing_values.add(f"alternate-path search is {alternate_status}")
         return ExploitabilityAnalysis(
             attacker_influence=attacker_influence,
             reachable=reachable,
