@@ -459,6 +459,7 @@ class InvestigationEngine:
         if not data_flow_established:
             missing_values.add("deterministic data-flow relationship is not established")
         alternate=()
+        alternate_status="COMPLETE"
         if edges:
             alternate, alternate_status=self.find_alternate_paths(context,path.entry,path.steps[-1].next_node_id,frozenset(edge.id for edge in edges))
         alternate_paths_found=bool(alternate)
