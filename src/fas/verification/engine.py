@@ -154,15 +154,18 @@ class VerificationEngine:
             key=lambda n:(- _candidate_matches(n,source_target[1]),n.id),
         )[:10]
         paths=[]
+        complete=True
         for source in sources:
             for sink in sinks:
                 if source.id == sink.id:
                     continue
                 result=after.bounded_paths(source.id,sink.id,max_depth=12,max_paths=limit)
                 paths.extend(result.paths)
+                if result.status.value != "COMPLETE":
+                    complete=False
                 if len(paths)>=limit:
-                    return tuple(paths[:limit])
-        return tuple(paths)
+                    return tuple(paths[:limit]), complete
+        return tuple(paths), complete
 
     def verify(
         self,
@@ -255,7 +258,9 @@ class VerificationEngine:
             if original_path.snapshot_id != original_snapshot.id:
                 missing.append(f"attack path {original_path.id} has wrong snapshot")
                 continue
-            candidates=self._candidate_paths(original_path,original_graph,candidate_graph)
+            candidates,candidate_search_complete=self._candidate_paths(original_path,original_graph,candidate_graph)
+            if not candidate_search_complete:
+                missing.append(f"candidate path search incomplete for {original_path.id}")
             candidate_attacks=tuple(self._attack_path(candidate_graph,p) for p in candidates)
             candidate_paths.extend(candidate_attacks)
             exact=[]
