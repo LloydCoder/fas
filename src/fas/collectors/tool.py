@@ -66,3 +66,12 @@ class ToolCollector:
         final_status="OUTPUT_LIMITED" if result.output_limited else ("NO_FINDINGS" if not observations else "FINDINGS")
         run=ToolRun(run.run_id,run.analysis_id,run.snapshot_id,run.tool_name,run.tool_version,run.argv,run.cwd,run.environment_fingerprint,run.started_at,run.completed_at,run.exit_code,final_status,run.stdout_hash,run.stderr_hash,run.raw_artifact_id,run.configuration_hash,run.repository_revision)
         return CollectionBatch(artifacts=(artifact,),observations=observations,complete=not result.output_limited,warnings=("tool output was truncated",) if result.output_limited else (),raw_artifacts=(raw,),tool_runs=(run,))
+
+
+class UnavailableToolCollector:
+    def __init__(self, tool_name: str, reason: str):
+        self.name = f"tool:{tool_name}"
+        self.reason = reason
+
+    def collect(self, context):
+        return CollectionBatch(complete=False, warnings=(f"{self.name}: TOOL_UNAVAILABLE: {self.reason}",))
