@@ -4,6 +4,7 @@ import hashlib
 import json
 import subprocess
 import shutil
+from dataclasses import asdict
 from fas.adapters import AdapterRegistry
 from datetime import datetime, timezone
 from pathlib import Path
@@ -15,6 +16,7 @@ from .reports import ReportService
 from .jobs import JobManager
 from fas.graph import GraphEngine
 from fas.collectors.filesystem import safe_read_bytes, ResourceLimitError
+from fas.collectors.raw import ToolRun
 
 class ProductService:
     def __init__(self, settings: Settings):
@@ -131,13 +133,9 @@ class ProductService:
         for observation in collection.batch.observations:
             self.store.put("observations",observation.id,snap.id,observation.model_dump(mode="json"),observation.observed_at.isoformat())
         for run in collection.batch.tool_runs:
-            fields = (
-                "run_id","analysis_id","snapshot_id","tool_name","tool_version","argv","cwd",
-                "environment_fingerprint","started_at","completed_at","exit_code","status",
-                "stdout_hash","stderr_hash","raw_artifact_id","configuration_hash","repository_revision",
-            )
-            payload = {field: getattr(run, field, None) for field in fields}
-            self.store.put("tool_runs",str(getattr(run,"run_id")),snap.id,payload,str(getattr(run,"started_at")))
+            if not isinstance(run, ToolRun):
+                raise TypeError("collector returned an invalid tool-run record")
+            self.store.put("tool_runs",run.run_id,snap.id,asdict(run),run.started_at)
 
         graph = GraphEngine(analysis_id=analysis.id, snapshot_id=snap.id)
         pipeline = CollectionPipeline(graph)
