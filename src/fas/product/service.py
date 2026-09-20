@@ -198,8 +198,14 @@ class ProductService:
         return Analysis.model_validate(self.store.get("analyses",analysis_id))
 
     def findings(self, analysis_id: str, snapshot_id: str|None=None, limit:int=100, offset:int=0):
-        self.get_analysis(analysis_id)
-        sid=snapshot_id or self.get_analysis(analysis_id).snapshot_ids[0]
+        analysis=self.get_analysis(analysis_id)
+        if limit < 0 or offset < 0:
+            raise ValueError("limit and offset must be non-negative")
+        if not analysis.snapshot_ids and snapshot_id is None:
+            return []
+        sid=snapshot_id or analysis.snapshot_ids[0]
+        if sid not in analysis.snapshot_ids:
+            raise ValueError("snapshot does not belong to analysis")
         return self.store.list("findings","snapshot_id",sid,limit,offset)
 
     def report(self, analysis_id: str) -> dict[str,object]:
