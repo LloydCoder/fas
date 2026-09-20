@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS verifications(id TEXT PRIMARY KEY, analysis_id TEXT N
 CREATE TABLE IF NOT EXISTS findings(id TEXT PRIMARY KEY, snapshot_id TEXT NOT NULL, payload TEXT NOT NULL, created_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS reports(id TEXT PRIMARY KEY, analysis_id TEXT NOT NULL, payload TEXT NOT NULL, created_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS audit_events(id TEXT PRIMARY KEY, analysis_id TEXT NOT NULL, payload TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS tool_runs(id TEXT PRIMARY KEY, analysis_id TEXT NOT NULL, snapshot_id TEXT NOT NULL, payload TEXT NOT NULL, created_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS jobs(id TEXT PRIMARY KEY, operation_key TEXT NOT NULL UNIQUE, kind TEXT NOT NULL, status TEXT NOT NULL, payload TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, error TEXT, worker_id TEXT, lease_until TEXT, heartbeat_at TEXT, retry_count INTEGER NOT NULL DEFAULT 0);
 CREATE INDEX IF NOT EXISTS idx_analyses_project ON analyses(project_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_snapshots_analysis ON snapshots(analysis_id, created_at);
@@ -74,7 +75,7 @@ class SQLiteStore:
                     con.execute(f"ALTER TABLE jobs ADD COLUMN {name} {definition}")
 
     def put(self, table: str, identifier: str, foreign_key: str, payload: dict[str, Any], created_at: str) -> None:
-        allowed = {"projects","analyses","snapshots","artifacts","observations","evidence","graph_nodes","graph_edges","remediations","verifications","findings","reports","audit_events"}
+        allowed = {"projects","analyses","snapshots","artifacts","observations","evidence","graph_nodes","graph_edges","remediations","verifications","findings","reports","audit_events","tool_runs"}
         if table not in allowed:
             raise ValueError("unsupported table")
         key_col = "id"
@@ -83,7 +84,7 @@ class SQLiteStore:
             if table == "projects":
                 con.execute("INSERT INTO projects(id,payload,created_at) VALUES(?,?,?)", (identifier, serialized, created_at))
             else:
-                fk_col = {"analyses":"project_id","snapshots":"analysis_id","artifacts":"snapshot_id","observations":"snapshot_id","evidence":"snapshot_id","graph_nodes":"snapshot_id","graph_edges":"snapshot_id","remediations":"analysis_id","verifications":"analysis_id","findings":"snapshot_id","reports":"analysis_id","audit_events":"analysis_id"}[table]
+                fk_col = {"analyses":"project_id","snapshots":"analysis_id","artifacts":"snapshot_id","observations":"snapshot_id","evidence":"snapshot_id","graph_nodes":"snapshot_id","graph_edges":"snapshot_id","remediations":"analysis_id","verifications":"analysis_id","findings":"snapshot_id","reports":"analysis_id","audit_events":"analysis_id","tool_runs":"snapshot_id"}[table]
                 con.execute(f"INSERT INTO {table}({key_col},{fk_col},payload,created_at) VALUES(?,?,?,?)", (identifier, foreign_key, serialized, created_at))
 
     def get(self, table: str, identifier: str) -> dict[str, Any]:
@@ -96,7 +97,7 @@ class SQLiteStore:
         return json.loads(row["payload"])
 
     def list(self, table: str, foreign_col: str, foreign_value: str, limit: int = 100, offset: int = 0) -> list[dict[str, Any]]:
-        allowed = {"analyses":{"project_id"},"snapshots":{"analysis_id"},"artifacts":{"snapshot_id"},"observations":{"snapshot_id"},"evidence":{"snapshot_id"},"graph_nodes":{"snapshot_id"},"graph_edges":{"snapshot_id"},"remediations":{"analysis_id"},"verifications":{"analysis_id"},"findings":{"snapshot_id"},"reports":{"analysis_id"},"audit_events":{"analysis_id"}}
+        allowed = {"analyses":{"project_id"},"snapshots":{"analysis_id"},"artifacts":{"snapshot_id"},"observations":{"snapshot_id"},"evidence":{"snapshot_id"},"graph_nodes":{"snapshot_id"},"graph_edges":{"snapshot_id"},"remediations":{"analysis_id"},"verifications":{"analysis_id"},"findings":{"snapshot_id"},"reports":{"analysis_id"},"audit_events":{"analysis_id"},"tool_runs":{"analysis_id"}}
         if table not in allowed or foreign_col not in allowed[table]: raise ValueError("unsupported table/foreign key")
         if limit < 0 or offset < 0: raise ValueError("limit and offset must be non-negative")
         with self._connect() as con:
