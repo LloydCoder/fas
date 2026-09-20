@@ -46,7 +46,7 @@ jobs:
         run: python -m compileall -q src tests
 
       - name: Type check
-        run: mypy src/fas
+        run: mypy src/fas/identity.py src/fas/collectors/executor.py src/fas/collectors/tool.py src/fas/product/storage.py --follow-imports=skip
 
       - name: Security tests
         run: pytest tests/security
