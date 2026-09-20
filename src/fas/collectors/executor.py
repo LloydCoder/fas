@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import os
 import hashlib
-import resource
 import shutil
 import signal
 import subprocess
@@ -183,9 +182,22 @@ class SecureExecutor:
                 sandbox_args.append("--unshare-net")
             safe_args = tuple(sandbox_args + ["/tool", *args[1:]])
 
+        prlimit = shutil.which("prlimit")
+        if not prlimit:
+            raise PermissionError("resource-limit backend is unavailable; refusing execution")
+        limited_args = (
+            prlimit,
+            f"--cpu={self.policy.cpu_seconds}",
+            f"--as={self.policy.memory_bytes}",
+            f"--fsize={self.policy.file_size_bytes}",
+            f"--nproc={self.policy.process_count}",
+            f"--nofile={self.policy.open_files}",
+            "--",
+            *safe_args,
+        )
         with tempfile.TemporaryFile(mode="w+b") as stdout_file, tempfile.TemporaryFile(mode="w+b") as stderr_file:
             process = subprocess.Popen(
-                safe_args,
+                limited_args,
                 cwd=root,
                 env=child_env,
                 stdin=subprocess.DEVNULL,
@@ -194,7 +206,6 @@ class SecureExecutor:
                 start_new_session=True,
                 close_fds=True,
                 shell=False,
-                preexec_fn=self._apply_resource_limits if os.name == "posix" else None,
             )
             deadline = time.monotonic() + self.policy.timeout_seconds
             while process.poll() is None:
@@ -222,19 +233,6 @@ class SecureExecutor:
                 stderr,
                 output_limited=output_limited,
             )
-
-    def _apply_resource_limits(self) -> None:
-        limits = (
-            (getattr(resource, "RLIMIT_CPU", None), self.policy.cpu_seconds),
-            (getattr(resource, "RLIMIT_AS", None), self.policy.memory_bytes),
-            (getattr(resource, "RLIMIT_FSIZE", None), self.policy.file_size_bytes),
-            (getattr(resource, "RLIMIT_NPROC", None), self.policy.process_count),
-            (getattr(resource, "RLIMIT_NOFILE", None), self.policy.open_files),
-        )
-        for resource_id, value in limits:
-            if resource_id is None:
-                continue
-            resource.setrlimit(resource_id, (value, value))
 
     @staticmethod
     def _terminate(process: subprocess.Popen[bytes]) -> None:
