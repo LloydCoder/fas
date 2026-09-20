@@ -144,17 +144,19 @@ class VerificationEngine:
 
     def _candidate_paths(self, original_path: AttackPath, before: GraphEngine, after: GraphEngine, limit: int = 20):
         original_nodes=[before.get_node(original_path.entry)] + [before.get_node(s.next_node_id) for s in original_path.steps]
-        source_target=(original_nodes[0], original_nodes[-1])
-        sources=sorted(
+        source_target=(original_nodes[0],original_nodes[-1])
+        source_candidates=sorted(
             (n for n in after.nodes() if n.type == source_target[0].type and _candidate_matches(n,source_target[0]) > 0),
-            key=lambda n:(- _candidate_matches(n,source_target[0]),n.id),
-        )[:10]
-        sinks=sorted(
+            key=lambda n:(-_candidate_matches(n,source_target[0]),n.id),
+        )
+        sink_candidates=sorted(
             (n for n in after.nodes() if n.type == source_target[1].type and _candidate_matches(n,source_target[1]) > 0),
-            key=lambda n:(- _candidate_matches(n,source_target[1]),n.id),
-        )[:10]
+            key=lambda n:(-_candidate_matches(n,source_target[1]),n.id),
+        )
+        sources=source_candidates[:10]
+        sinks=sink_candidates[:10]
+        complete=len(source_candidates)<=10 and len(sink_candidates)<=10
         paths=[]
-        complete=True
         for source in sources:
             for sink in sinks:
                 if source.id == sink.id:
@@ -164,7 +166,7 @@ class VerificationEngine:
                 if result.status.value != "COMPLETE":
                     complete=False
                 if len(paths)>=limit:
-                    return tuple(paths[:limit]), complete
+                    return tuple(paths[:limit]), False
         return tuple(paths), complete
 
     def verify(
