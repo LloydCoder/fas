@@ -130,6 +130,15 @@ class ProductService:
             self.store.put("artifacts",persisted_artifact.id,snap.id,persisted_artifact.model_dump(mode="json"),persisted_artifact.provenance[0].observed_at.isoformat())
         for observation in collection.batch.observations:
             self.store.put("observations",observation.id,snap.id,observation.model_dump(mode="json"),observation.observed_at.isoformat())
+        for run in collection.batch.tool_runs:
+            payload = run.__dict__ if hasattr(run, "__dict__") else {
+                field: getattr(run, field) for field in (
+                    "run_id","analysis_id","snapshot_id","tool_name","tool_version","argv","cwd",
+                    "environment_fingerprint","started_at","completed_at","exit_code","status",
+                    "stdout_hash","stderr_hash","raw_artifact_id","configuration_hash","repository_revision",
+                )
+            }
+            self.store.put("tool_runs",run.run_id,snap.id,payload,run.started_at)
         graph = GraphEngine(analysis_id=analysis.id, snapshot_id=snap.id)
         pipeline = CollectionPipeline(graph)
         normalized = pipeline.ingest(collection.batch, context)
