@@ -103,7 +103,7 @@ class SQLiteStore:
             rows=con.execute(f"SELECT payload FROM {table} WHERE {foreign_col}=? ORDER BY created_at ASC,id ASC LIMIT ? OFFSET ?",(foreign_value,limit,offset)).fetchall()
         return [json.loads(r["payload"]) for r in rows]
 
-    def append_audit((self, payload: dict[str, Any]) -> None:
+    def append_audit(self, payload: dict[str, Any]) -> None:
         with self._connect() as con:
             rows=con.execute("SELECT payload FROM audit_events WHERE analysis_id=? ORDER BY created_at ASC, id ASC",(payload["analysis_id"],)).fetchall()
             previous=None
@@ -176,7 +176,7 @@ class SQLiteStore:
             cur=con.execute("UPDATE jobs SET status='FAILED',error='worker lease expired',updated_at=?,lease_until=NULL WHERE status='RUNNING' AND lease_until IS NOT NULL AND lease_until < ?",(now,now))
             return cur.rowcount
 
-class LocalObjectStore(:
+class LocalObjectStore:
     def __init__(self, root: str | Path):
         self.root=Path(root).resolve()
         self.root.mkdir(parents=True,exist_ok=True)
