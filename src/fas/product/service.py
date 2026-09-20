@@ -138,7 +138,7 @@ class ProductService:
                     "stdout_hash","stderr_hash","raw_artifact_id","configuration_hash","repository_revision",
                 )
             }
-            self.store.put("tool_runs",run.run_id,snap.id,payload,run.started_at)
+            self.store.put("tool_runs",str(getattr(run,"run_id")),snap.id,payload,str(getattr(run,"started_at")))
         graph = GraphEngine(analysis_id=analysis.id, snapshot_id=snap.id)
         pipeline = CollectionPipeline(graph)
         normalized = pipeline.ingest(collection.batch, context)
