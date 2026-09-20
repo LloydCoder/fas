@@ -112,11 +112,11 @@ class SecureExecutor:
         approved = set()
         for item in self.policy.allowed_executables:
             if Path(item).is_absolute():
-                    approved.add(str(Path(item).resolve(strict=True)))
-                else:
-                    resolved_item = shutil.which(item)
-                    if resolved_item:
-                        approved.add(str(Path(resolved_item).resolve(strict=True)))
+                approved.add(str(Path(item).resolve(strict=True)))
+            else:
+                resolved_item = shutil.which(item)
+                if resolved_item:
+                    approved.add(str(Path(resolved_item).resolve(strict=True)))
         if str(resolved) not in approved:
             raise PermissionError("executable is not allowlisted")
         expected_hash=dict(self.policy.executable_hashes).get(str(resolved))
