@@ -165,6 +165,14 @@ class SQLiteStore:
             row=con.execute("SELECT * FROM jobs WHERE operation_key=?", (operation_key,)).fetchone()
         return dict(row) if row else None
 
+    def job_start(self, job_id: str, worker_id: str, started_at: str, lease_until: str) -> bool:
+        with self._connect() as con:
+            cur=con.execute(
+                "UPDATE jobs SET status='RUNNING',worker_id=?,lease_until=?,heartbeat_at=?,updated_at=? WHERE id=? AND status='QUEUED'",
+                (worker_id,lease_until,started_at,started_at,job_id),
+            )
+            return cur.rowcount == 1
+
     def job_heartbeat(self, job_id: str, worker_id: str, lease_until: str, heartbeat_at: str) -> bool:
         with self._connect() as con:
             cur=con.execute("UPDATE jobs SET heartbeat_at=?,lease_until=?,updated_at=? WHERE id=? AND status='RUNNING' AND worker_id=?",(heartbeat_at,lease_until,heartbeat_at,job_id,worker_id))
