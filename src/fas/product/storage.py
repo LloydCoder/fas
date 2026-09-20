@@ -180,6 +180,8 @@ class LocalObjectStore:
     def __init__(self, root: str | Path):
         self.root=Path(root).resolve()
         self.root.mkdir(parents=True,exist_ok=True)
+        try: self.root.chmod(0o700)
+        except OSError: pass
 
     def put(self, data: bytes, *, media_type: str, snapshot_id: str, source: str) -> dict[str, Any]:
         digest=hashlib.sha256(data).hexdigest()
