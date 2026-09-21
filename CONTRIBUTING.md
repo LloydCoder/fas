@@ -1,44 +1,69 @@
 # Contributing to FAS
 
-FAS is security-analysis software. Contributions should prioritize correctness, reproducibility,
-provenance, immutable history, and safe execution.
+Thank you for contributing to FAS. The project is security-analysis software, so correctness, reproducibility, provenance, immutable history, and safe execution matter more than feature volume.
 
-## Before contributing
+## Start here
 
-1. Read the README and the applicable architecture/ADR documentation.
-2. Keep changes within one architectural phase where practical.
-3. Do not commit secrets, credentials, customer data, or production artifacts.
-4. Add security-focused regression tests for security-sensitive changes.
-5. Keep schemas and documentation synchronized with domain contracts.
+1. Read the [README](README.md).
+2. Read the relevant [architecture documentation](docs/architecture/README.md).
+3. Check the [ADRs](docs/decisions/README.md) before changing security semantics.
+4. For security vulnerabilities, follow [SECURITY.md](SECURITY.md) rather than opening a public issue.
+5. If you are unsure whether a proposed change fits the architecture, open a design discussion/issue before implementing a large change.
+
+## What makes a good contribution?
+
+Prefer changes that are:
+
+- narrowly scoped
+- reproducible
+- testable
+- evidence-backed
+- explicit about capability boundaries
+- documented at the same time as the implementation
+
+High-value contribution areas include program analysis, evidence/provenance, graph algorithms, agent/MCP security, security-tool adapters, remediation verification, adversarial testing, reproducible security research, and documentation.
 
 ## Domain and evidence rules
 
 - Observation, evidence, finding, investigation, verdict, remediation, and verification are distinct.
-- Every security-relevant relationship must be provenance/evidence backed.
+- Security-relevant relationships must be provenance/evidence backed.
 - Original snapshot/evidence history is immutable.
-- Candidate verification data must never silently cross snapshot boundaries.
-- Missing evidence is explicit; do not turn absence into a negative fact.
+- Candidate verification data must not silently cross snapshot boundaries.
+- Missing evidence is explicit; absence is not negative evidence.
 - LLM output is advisory and never the source of truth.
 
 ## Verification rules
 
 - A remediation declares an expected security property and root cause.
 - Verification compares explicit before/after snapshots.
-- Semantic graph diff must distinguish security-relevant changes from identifier churn.
-- Original attack paths must be accounted for.
-- Bounded residual/alternate-path analysis is required where technically applicable.
-- `REMEDIATED` requires completed required checks, verification evidence, and no blocking
-  contradiction or missing evidence.
+- Semantic graph diff distinguishes security-relevant changes from identifier churn.
+- Original attack paths are accounted for.
+- Residual/alternate-path analysis is used where technically applicable.
+- `REMEDIATED` requires completed required checks, verification evidence, and no blocking contradiction or missing evidence.
 - `UNKNOWN` is the correct outcome when required evidence is unavailable.
-- Candidate repositories are untrusted and must not receive ambient credentials or arbitrary
-  execution privileges.
+- Candidate repositories are untrusted and must not receive ambient credentials or arbitrary execution privileges.
 
-## CI requirements
-
-Run the local validation baseline:
+## Development setup
 
 ```bash
+git clone https://github.com/LloydCoder/fas.git
+cd fas
 python -m pip install -e ".[dev]"
+```
+
+Run the local product smoke path:
+
+```bash
+fas doctor --format json
+fas tools --format json
+fas analyze ./path-to-fixture --format json
+fas status <analysis-id> --format json
+fas report <analysis-id> --format json
+```
+
+## Validation baseline
+
+```bash
 ruff check .
 pytest --cov=fas --cov-report=term-missing
 pytest tests/security
@@ -47,41 +72,25 @@ python scripts/check_schema_parity.py
 python -m build
 ```
 
-CI additionally exercises Python 3.11–3.14, clean wheel installation, CLI/API smoke,
-reproducibility checks, product integration, and graph/collection benchmarks.
-Do not weaken assertions, remove security tests, skip workflows, or reduce permissions merely to
-obtain a green build.
+CI also exercises supported Python versions, clean package installation, API/CLI smoke paths, reproducibility, product integration, and security gates.
 
-## Documentation
+**Never weaken assertions, remove security tests, skip workflows, or reduce permissions simply to obtain a green build.**
 
-Update the relevant ADR, schema, README, threat model, CLI documentation, and changelog whenever
-the public architecture or security semantics change.
+## Documentation synchronization
+
+When a change affects public behavior or security semantics, update the relevant combination of:
+
+- README
+- CLI/API documentation
+- schemas
+- architecture documentation
+- ADR
+- threat model
+- security verification matrix
+- changelog
+
+New domain objects normally require corresponding schema, persistence, API/CLI, tests, and documentation work where applicable.
 
 ## Security research
 
-Use FAS only against systems you are authorized to analyze. Demonstrations should use controlled
-fixtures or authorized environments.
-
-
-## Phase 6 product development
-
-Install with `python -m pip install -e ".[dev]"`. The local product backend creates SQLite state
-under `.fas/` by default. Use `fas doctor --format json` before integration work.
-
-Run the local product smoke path:
-
-```bash
-fas analyze ./path-to-fixture --format json
-fas status <analysis-id> --format json
-fas report <analysis-id> --format json
-fas tools --format json
-fas doctor --format json
-```
-
-The HTTP API is started with `fas api` and binds to localhost by default. Production exposure must
-set `FAS_AUTH_REQUIRED=true` and provide `FAS_API_TOKEN`; do not expose the development mode on
-a public interface.
-
-Product changes must preserve explicit unsupported-capability errors rather than introducing fake
-endpoints. New domain objects require schema, persistence, API/CLI, tests, and documentation
-reconciliation as applicable.
+Use FAS only against systems you are authorized to analyze. Prefer controlled fixtures for demonstrations and regression tests.
