@@ -1,2 +1,11 @@
-# FAS maintainers
+# FAS ownership
+# Keep repository governance and security-sensitive paths under maintainer review.
+
 * @LloydCoder
+/.github/ @LloydCoder
+/docs/ @LloydCoder
+/schemas/ @LloydCoder
+/src/fas/security/ @LloydCoder
+/src/fas/verification/ @LloydCoder
+/tests/security/ @LloydCoder
+/SECURITY.md @LloydCoder
