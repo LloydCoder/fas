@@ -1,3 +1,16 @@
+# Changelog
+
+All notable changes to FAS are documented here.
+
+## Documentation and repository experience — 2026-09-21
+
+- Reworked the root README into a contributor-oriented project entry point with quick start, architecture boundaries, capability limits, documentation map, roadmap, and FAS-Bench integration context.
+- Reconciled architecture, evidence-model, and threat-model indexes with the implemented Phase 6 product boundary.
+- Added a canonical documentation index at `docs/README.md`.
+- Added `SUPPORT.md` with clear routing for usage questions, bugs, feature proposals, and private security reports.
+- Added repository ownership, pull-request guidance, and structured issue templates to improve contribution quality and maintainer review.
+- Removed documentation ambiguity that described Phase 6 as future work after its implementation.
+
 ## Phase 6 V2 enforcement — 2026-09-19
 
 - Hardened subprocess execution with canonical executable resolution, sanitized environment, bounded output, timeout/cancellation handling and non-root policy.
