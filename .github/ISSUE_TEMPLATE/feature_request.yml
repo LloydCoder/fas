@@ -1,0 +1,34 @@
+name: Feature request
+description: Propose a focused improvement to FAS
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What user or security-analysis problem should be solved?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: Describe the smallest useful solution.
+    validations:
+      required: true
+  - type: textarea
+    id: security
+    attributes:
+      label: Security and trust-boundary impact
+      description: Explain how this affects evidence, execution, permissions, provenance, or untrusted input.
+    validations:
+      required: true
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Compatibility and contract impact
+      description: Note API, CLI, schema, persistence, or report changes.
+    validations:
+      required: true
