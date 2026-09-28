@@ -45,7 +45,7 @@ jobs:
         run: uv run python -m compileall -q src tests
 
       - name: Type check
-        run: uv run mypy src/fas --follow-imports=skip --disable-error-code=arg-type,dict-item,var-annotated,misc,attr-defined
+        run: uv run mypy src/fas --follow-imports=skip --disable-error-code=arg-type,dict-item,var-annotated,attr-defined
 
       - name: Security tests
         run: uv run pytest tests/security
