@@ -71,16 +71,16 @@ jobs:
 
       - name: Clean wheel installation
         run: |
-          python -m venv /tmp/fas-clean
+          uv venv --python ${{ matrix.python-version }} /tmp/fas-clean
           /tmp/fas-clean/bin/python -m pip install --upgrade pip
           /tmp/fas-clean/bin/python -m pip install dist/*.whl
           /tmp/fas-clean/bin/fas --version
 
       - name: CLI smoke
         run: |
-          fas --version
-          fas doctor --format json
-          fas tools --format json
+          /tmp/fas-clean/bin/fas --version
+          /tmp/fas-clean/bin/fas doctor --format json
+          /tmp/fas-clean/bin/fas tools --format json
 
       - name: API smoke
         run: uv run pytest tests -k "api"
