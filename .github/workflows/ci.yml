@@ -71,7 +71,7 @@ jobs:
 
       - name: Clean wheel installation
         run: |
-          uv venv --python ${{ matrix.python-version }} /tmp/fas-clean
+          uv venv --python ${{ matrix.python-version }} --seed /tmp/fas-clean
           /tmp/fas-clean/bin/python -m pip install --upgrade pip
           /tmp/fas-clean/bin/python -m pip install dist/*.whl
           /tmp/fas-clean/bin/fas --version
