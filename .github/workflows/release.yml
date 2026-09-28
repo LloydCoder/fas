@@ -1,0 +1,71 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build, SBOM, and attest
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+
+      - name: Build distributions
+        run: |
+          python -m pip install --upgrade pip build
+          python -m build
+
+      - name: Create isolated release environment
+        run: |
+          python -m venv /tmp/fas-release
+          /tmp/fas-release/bin/python -m pip install --upgrade pip
+          /tmp/fas-release/bin/python -m pip install dist/*.whl
+
+      - name: Generate SPDX SBOM
+        run: |
+          /tmp/fas-release/bin/python -m pip install cyclonedx-bom
+          /tmp/fas-release/bin/cyclonedx-py environment --output-format json --output-file sbom.json
+
+      - name: Upload release evidence
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-evidence
+          path: |
+            dist/*
+            sbom.json
+
+      - name: Attest distributions
+        uses: actions/attest@v4
+        with:
+          subject-path: "dist/*"
+
+      - name: Attest SBOM
+        uses: actions/attest@v4
+        with:
+          subject-path: "sbom.json"
+          predicate-type: "https://spdx.dev/Document/v2.3"
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" dist/* sbom.json --generate-notes --verify-tag
