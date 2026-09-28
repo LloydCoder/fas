@@ -1,11 +1,17 @@
 # FAS ownership
-# Keep repository governance and security-sensitive paths under maintainer review.
+# Security-sensitive execution, evidence, verification, policy, and workflow paths require maintainer review.
 
 * @LloydCoder
 /.github/ @LloydCoder
 /docs/ @LloydCoder
 /schemas/ @LloydCoder
-/src/fas/security/ @LloydCoder
+/src/fas/collectors/ @LloydCoder
+/src/fas/domain/ @LloydCoder
+/src/fas/graph/ @LloydCoder
+/src/fas/identity.py @LloydCoder
+/src/fas/investigation/ @LloydCoder
+/src/fas/product/ @LloydCoder
 /src/fas/verification/ @LloydCoder
 /tests/security/ @LloydCoder
+/tests/integration/ @LloydCoder
 /SECURITY.md @LloydCoder

@@ -475,7 +475,43 @@ class InvestigationEngine:
             trust_boundaries=tuple(TrustBoundaryAssessment(boundary_node_id=n.id,source=n.metadata.get("source",n.label),target=n.metadata.get("target",n.label),evidence_ids=n.evidence_ids) for n in (context.graph.get_node(i) for i in path.trust_boundaries_crossed)),
         )
 
+    def _validate_attack_path_contract(self, context: InvestigationContext, attack_path: AttackPath) -> tuple[str, ...]:
+        if attack_path.snapshot_id != context.case.snapshot_id:
+            return ("attack path is outside investigation snapshot",)
+        issues: list[str] = []
+        if attack_path.entry != attack_path.steps[0].node_id:
+            issues.append("attack path entry does not match first step")
+        for index, step in enumerate(attack_path.steps):
+            if index and attack_path.steps[index - 1].next_node_id != step.node_id:
+                issues.append(f"attack path discontinuity before step {index}")
+            try:
+                edge = context.graph.get_edge(step.edge_id)
+            except (KeyError, ValueError, TypeError):
+                issues.append(f"attack path edge {step.edge_id} is unavailable")
+                continue
+            if edge.source_node_id != step.node_id or edge.target_node_id != step.next_node_id:
+                issues.append(f"attack path edge {step.edge_id} does not match its step")
+            if edge.snapshot_id != context.case.snapshot_id:
+                issues.append(f"attack path edge {step.edge_id} crosses snapshot")
+            if not step.evidence_ids or not set(step.evidence_ids).issubset(set(edge.evidence_ids)):
+                issues.append(f"attack path step {step.edge_id} is not fully evidence-backed")
+            for evidence_id in step.evidence_ids:
+                try:
+                    evidence = context.graph.store.evidence(evidence_id)
+                except (KeyError, ValueError):
+                    issues.append(f"attack path evidence {evidence_id} is unavailable")
+                    continue
+                if evidence.snapshot_id != context.case.snapshot_id:
+                    issues.append(f"attack path evidence {evidence_id} crosses snapshot")
+        if not attack_path.supporting_evidence_ids:
+            issues.append("attack path has no supporting evidence")
+        return tuple(sorted(set(issues)))
+
     def propose_verdict(self, context:InvestigationContext, analysis:ExploitabilityAnalysis, *, attack_path:AttackPath|None, rationale:str)->VerdictProposal:
+        if attack_path is not None:
+            contract_issues = self._validate_attack_path_contract(context, attack_path)
+            if contract_issues:
+                raise InvestigationError("attack path contract validation failed: " + "; ".join(contract_issues))
         evidence=tuple(sorted(set((attack_path.supporting_evidence_ids if attack_path else ()) + tuple(e for c in analysis.controls for e in c.evidence_ids))))
         if analysis.missing_evidence or analysis.contradictions or not analysis.evidence_sufficient:
             verdict="UNKNOWN"
@@ -486,6 +522,10 @@ class InvestigationEngine:
         return VerdictProposal(verdict=verdict,supporting_evidence_ids=evidence,missing_evidence=analysis.missing_evidence,attack_path_ids=(attack_path.id,) if attack_path else (),rationale=rationale,preconditions=analysis.preconditions,trust_boundaries=analysis.trust_boundaries,identity=analysis.identity,permissions=analysis.permissions,controls=analysis.controls,investigation_id=context.case.id,snapshot_id=context.case.snapshot_id)
 
     def complete(self, context:InvestigationContext, analysis:ExploitabilityAnalysis, *, attack_path:AttackPath|None, rationale:str)->InvestigationResult:
+        if attack_path is not None:
+            contract_issues = self._validate_attack_path_contract(context, attack_path)
+            if contract_issues:
+                raise InvestigationError("refusing verdict completion for invalid attack path: " + "; ".join(contract_issues))
         proposal=self.propose_verdict(context,analysis,attack_path=attack_path,rationale=rationale)
         status=(InvestigationStatus.READY_FOR_VERDICT if proposal.verdict != "UNKNOWN" and analysis.evidence_sufficient and attack_path is not None else InvestigationStatus.AWAITING_EVIDENCE)
         result=InvestigationResult(investigation_id=context.case.id,finding_id=context.case.finding_id,analysis_id=context.case.analysis_id,snapshot_id=context.case.snapshot_id,status=status,hypotheses=context.case.hypotheses,evidence_ids=tuple(sorted(set(context.case.acquired_evidence))),missing_evidence=analysis.missing_evidence,contradictions=analysis.contradictions,attack_paths=proposal.attack_path_ids,controls=analysis.controls,identities=(analysis.identity,) if analysis.identity else (),permissions=analysis.permissions,trust_boundaries=analysis.trust_boundaries,exploitability_analysis=analysis,verdict_proposal=proposal,limitations=(),audit_reference=f"investigation:{context.case.id}")

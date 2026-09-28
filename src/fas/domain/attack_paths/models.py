@@ -47,6 +47,11 @@ class AttackPath(DomainModel):
 
     @model_validator(mode="after")
     def validate_support(self) -> "AttackPath":
+        if self.steps[0].node_id != self.entry:
+            raise ValueError("attack path entry must equal the first step node")
+        for previous, current in zip(self.steps, self.steps[1:]):
+            if previous.next_node_id != current.node_id:
+                raise ValueError("attack path steps must form a continuous node chain")
         step_evidence = {e for step in self.steps for e in step.evidence_ids}
         if not self.supporting_evidence_ids and not step_evidence:
             raise ValueError("attack path requires supporting evidence")

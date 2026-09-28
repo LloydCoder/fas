@@ -31,9 +31,27 @@ class RawArtifact:
     sha256:str
     storage_reference:str
     redacted:bool=False
-def stable_run_id(context:CollectionContext, tool_name: str | None = None)->str:
-    material=f"{context.analysis_id}|{context.snapshot_id}|{context.repository}|{context.revision or ''}|{tool_name or ''}"
-    return "toolrun_"+hashlib.sha256(material.encode()).hexdigest()[:26]
+def stable_run_id(
+    context: CollectionContext,
+    tool_name: str | None = None,
+    *,
+    argv: tuple[str, ...] = (),
+    configuration_hash: str | None = None,
+) -> str:
+    material = json.dumps(
+        {
+            "analysis_id": str(context.analysis_id),
+            "snapshot_id": str(context.snapshot_id),
+            "repository": context.repository,
+            "revision": context.revision or "",
+            "tool_name": tool_name or "",
+            "argv": argv,
+            "configuration_hash": configuration_hash or "",
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    return "toolrun_" + hashlib.sha256(material.encode()).hexdigest()[:26]
 def environment_fingerprint(env:dict[str,str]|None=None)->str:
     selected=env or {}
     material=json.dumps({"python":sys.version.split()[0],"platform":platform.platform(),"env_keys":sorted(selected)},sort_keys=True)

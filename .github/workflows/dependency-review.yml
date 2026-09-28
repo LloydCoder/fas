@@ -1,0 +1,38 @@
+name: Dependency Security
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dependency-security-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  dependency-security:
+    name: Dependency Security
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install uv and Python
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          python-version: "3.13"
+
+      - name: Install locked environment
+        run: uv sync --locked --extra dev
+
+      - name: Export locked dependency graph
+        run: uv export --locked --format requirements.txt --no-hashes --no-emit-project --output-file /tmp/fas-requirements.txt
+
+      - name: Audit resolved dependency graph
+        run: uv run pip-audit --strict -r /tmp/fas-requirements.txt
+
+      - name: Verify lockfile is authoritative
+        run: uv lock --check
