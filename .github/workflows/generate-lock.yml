@@ -1,0 +1,30 @@
+name: Generate dependency lock
+
+on:
+  push:
+    branches: [hardening/zero-gap-release-readiness]
+
+permissions:
+  contents: write
+
+jobs:
+  lock:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.2.0
+        with:
+          version: "latest"
+      - name: Generate lockfile
+        run: uv lock
+      - name: Commit lockfile
+        run: |
+          if git diff --quiet -- uv.lock; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add uv.lock
+          git commit -m "build: add deterministic uv lockfile"
+          git push
