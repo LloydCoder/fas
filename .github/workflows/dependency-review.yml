@@ -29,7 +29,7 @@ jobs:
         run: uv sync --locked --extra dev
 
       - name: Export locked dependency graph
-        run: uv export --locked --format requirements.txt --no-hashes --output-file /tmp/fas-requirements.txt
+        run: uv export --locked --format requirements.txt --no-hashes --no-emit-project --output-file /tmp/fas-requirements.txt
 
       - name: Audit resolved dependency graph
         run: uv run pip-audit --strict -r /tmp/fas-requirements.txt
