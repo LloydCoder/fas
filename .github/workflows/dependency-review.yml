@@ -29,7 +29,7 @@ jobs:
         run: uv sync --locked --extra dev
 
       - name: Audit resolved dependency graph
-        run: uv run pip-audit --strict
+        run: uv run pip-audit --strict --skip-editable
 
       - name: Verify lockfile is authoritative
         run: uv lock --check
