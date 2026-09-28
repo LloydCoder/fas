@@ -6,8 +6,9 @@ import socket
 from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
+from collections.abc import Callable
 from threading import Event, Lock, Thread
-from typing import Callable, Any
+from typing import Any
 
 from fas.domain import new_id
 
