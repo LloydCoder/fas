@@ -55,6 +55,4 @@ class AttackPath(DomainModel):
         step_evidence = {e for step in self.steps for e in step.evidence_ids}
         if not self.supporting_evidence_ids and not step_evidence:
             raise ValueError("attack path requires supporting evidence")
-        if self.status == "COMPLETE" and not self.confidence:
-            raise ValueError("complete attack paths require confidence")
         return self
