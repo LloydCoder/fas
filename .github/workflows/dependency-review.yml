@@ -1,4 +1,4 @@
-name: Dependency Review
+name: Dependency Security
 
 on:
   pull_request:
@@ -8,17 +8,28 @@ permissions:
   contents: read
 
 concurrency:
-  group: dependency-review-${{ github.workflow }}-${{ github.ref }}
+  group: dependency-security-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  dependency-review:
-    name: Dependency Review
+  dependency-security:
+    name: Dependency Security
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
-      - name: Dependency Review
-        uses: actions/dependency-review-action@v5
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install uv and Python
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
-          fail-on-severity: high
-          fail-on-scopes: runtime
+          python-version: "3.13"
+
+      - name: Install locked environment
+        run: uv sync --locked --extra dev
+
+      - name: Audit resolved dependency graph
+        run: uv run pip-audit --strict
+
+      - name: Verify lockfile is authoritative
+        run: uv lock --check
