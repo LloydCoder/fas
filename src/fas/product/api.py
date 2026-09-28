@@ -96,7 +96,7 @@ OPENAPI = {
                 "responses": {"200": {"description": "paginated findings"}},
             }
         },
-        "/v1/reports/{id}": {"get": {"security": [{"bearerAuth": []}], "responses": {"200": {"description": "report"}}},
+        "/v1/reports/{id}": {"get": {"security": [{"bearerAuth": []}], "responses": {"200": {"description": "report"}}}},
     },
 }
 
