@@ -20,11 +20,15 @@ jobs:
         run: uv lock
       - name: Commit lockfile
         run: |
-          if [ -z "$(git status --porcelain -- uv.lock)" ]; then
+          if [ ! -f uv.lock ]; then
+            echo "uv lock did not produce uv.lock"
+            exit 1
+          fi
+          git add -f uv.lock
+          if git diff --cached --quiet -- uv.lock; then
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add uv.lock
           git commit -m "build: add deterministic uv lockfile"
           git push
