@@ -211,21 +211,20 @@ class SecureExecutor:
             while process.poll() is None:
                 if cancel is not None and cancel.cancelled:
                     self._terminate(process)
-                    return ExecutionResult(safe_args, process.returncode, b"", b"", cancelled=True)
+                    stdout, stderr, limited = self._collect_output(stdout_file, stderr_file)
+                    return ExecutionResult(
+                        safe_args, process.returncode, stdout, stderr,
+                        cancelled=True, output_limited=limited,
+                    )
                 if time.monotonic() >= deadline:
                     self._terminate(process)
-                    return ExecutionResult(safe_args, process.returncode, b"", b"", timed_out=True)
+                    stdout, stderr, limited = self._collect_output(stdout_file, stderr_file)
+                    return ExecutionResult(
+                        safe_args, process.returncode, stdout, stderr,
+                        timed_out=True, output_limited=limited,
+                    )
                 time.sleep(0.02)
-            stdout_file.seek(0)
-            stdout = stdout_file.read(self.policy.max_output_bytes)
-            stdout_file.seek(0, os.SEEK_END)
-            stdout_total = stdout_file.tell()
-            stderr_budget = min(self.policy.max_stderr_bytes, max(0, self.policy.max_combined_output_bytes - len(stdout)))
-            stderr_file.seek(0)
-            stderr = stderr_file.read(stderr_budget)
-            stderr_file.seek(0, os.SEEK_END)
-            stderr_total = stderr_file.tell()
-            output_limited = (stdout_total > self.policy.max_output_bytes or stderr_total > self.policy.max_stderr_bytes or stdout_total + stderr_total > self.policy.max_combined_output_bytes)
+            stdout, stderr, output_limited = self._collect_output(stdout_file, stderr_file)
             return ExecutionResult(
                 safe_args,
                 process.returncode,
@@ -233,6 +232,26 @@ class SecureExecutor:
                 stderr,
                 output_limited=output_limited,
             )
+
+    def _collect_output(self, stdout_file, stderr_file) -> tuple[bytes, bytes, bool]:
+        stdout_file.seek(0)
+        stdout = stdout_file.read(self.policy.max_output_bytes)
+        stdout_file.seek(0, os.SEEK_END)
+        stdout_total = stdout_file.tell()
+        stderr_budget = min(
+            self.policy.max_stderr_bytes,
+            max(0, self.policy.max_combined_output_bytes - len(stdout)),
+        )
+        stderr_file.seek(0)
+        stderr = stderr_file.read(stderr_budget)
+        stderr_file.seek(0, os.SEEK_END)
+        stderr_total = stderr_file.tell()
+        limited = (
+            stdout_total > self.policy.max_output_bytes
+            or stderr_total > self.policy.max_stderr_bytes
+            or stdout_total + stderr_total > self.policy.max_combined_output_bytes
+        )
+        return stdout, stderr, limited
 
     @staticmethod
     def _terminate(process: subprocess.Popen[bytes]) -> None:
