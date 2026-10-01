@@ -37,3 +37,11 @@ class IdempotencyLedger:
         key=(event.tenant_id,event.fingerprint)
         if key in self._seen: return False
         self._seen.add(key); return True
+
+
+class DurableIdempotencyLedger:
+    """Adapter for a tenant-scoped durable accept(fingerprint,event_id) function."""
+    def __init__(self,accept_fn):
+        self._accept_fn=accept_fn
+    def accept(self,event:IntegrationEvent)->bool:
+        return bool(self._accept_fn(event.tenant_id,event.fingerprint,event.event_id))
