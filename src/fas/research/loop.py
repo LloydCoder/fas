@@ -38,7 +38,7 @@ class ResearchLoop:
                 continue
             try:
                 ok=executor(request)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 ok=False
             completed += int(ok)
             requests.append(request); hypotheses.append(candidate.hypothesis)
