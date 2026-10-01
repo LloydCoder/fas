@@ -26,6 +26,10 @@ Source files, configuration, documentation, scanner output, tool metadata, depen
 - confused-deputy behavior
 - unauthorized remediation
 - resource exhaustion
+- tenant isolation failure
+- distributed worker lease races
+- object-store integrity or authorization failure
+- production telemetry leakage
 
 ## Security invariants
 
@@ -37,6 +41,12 @@ Source files, configuration, documentation, scanner output, tool metadata, depen
 6. Missing evidence is not silently converted into a negative fact.
 7. Unsupported execution capabilities fail explicitly.
 8. Security-sensitive changes require regression coverage.
+
+## Phase 7 hosted boundary
+
+Hosted deployments use PostgreSQL tenant scoping and S3 content-addressed objects. Membership authorization is deny-by-default and worker leases are persisted so a second worker cannot normally claim an active operation.
+
+See [Phase 7 production threats](phase7-production.md).
 
 ## Current runtime boundary
 
