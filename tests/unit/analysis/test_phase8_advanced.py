@@ -1,6 +1,6 @@
 from tests.fixtures.graph.scenarios import scenario_agent_tool_chain, scenario_code_flow
 from fas.analysis.advanced import AdvancedAnalysisEngine
-from fas.domain.common import GraphNodeType, ResultStatus
+from fas.domain.common import GraphNodeType
 
 def test_agent_tool_reachability_is_evidence_backed():
     graph=scenario_agent_tool_chain()
