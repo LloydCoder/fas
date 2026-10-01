@@ -92,3 +92,10 @@ The project is in alpha; the 0.6.0 Phase 6 product boundary remains bounded and 
 - Added a controlled sandboxed runtime verification adapter over SecureExecutor.
 - Enforced explicit executable allowlisting, DENY_ALL networking, secret denial, bounded execution, and output integrity digests.
 - Added runtime contract and threat-model documentation plus regression coverage.
+
+## Phase 10
+
+- Added tenant-scoped integration event normalization and idempotency contracts.
+- Added HTTPS host-allowlisted outbound connectors and a GitHub REST connector.
+- Added bounded GitHub webhook authentication/normalization primitives.
+- Added enterprise integration architecture and threat-model documentation.
