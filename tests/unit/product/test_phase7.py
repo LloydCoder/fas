@@ -41,3 +41,16 @@ def test_hosted_configuration_is_explicit():
     settings=Settings(database_url="postgresql://db/fas",object_store_path="s3://bucket/fas",tenant_id="tenant-a",subject_id="alice",role="analyst")
     assert settings.tenant_id=="tenant-a"
     assert settings.role=="analyst"
+
+
+def test_reader_role_cannot_create_project(tmp_path):
+    from fas.product.service import ProductService
+    from fas.product.config import Settings
+    service=ProductService(Settings(database_url="sqlite:///"+str(tmp_path/"fas.db"),object_store_path=str(tmp_path/"objects"),role="reader"))
+    try:
+        service.create_project("x","repo")
+    except PermissionError:
+        pass
+    else:
+        raise AssertionError("reader unexpectedly created a project")
+    service.jobs.close()
