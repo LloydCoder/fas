@@ -1,8 +1,8 @@
-"""Safe security-test execution boundary.
+"""Security-test execution boundaries.
 
-This module intentionally has no shell/process execution backend. Core Phase 5 CI uses a
-deterministic executor over registered fixture results. A future runtime backend must implement
-the protocol under an explicit sandbox policy rather than accepting arbitrary commands.
+The deterministic Phase 5 executor remains available for fixture-based verification. Phase 9
+adds a separately policy-bound runtime adapter; it does not turn arbitrary command execution into
+a general-purpose capability.
 """
 from __future__ import annotations
 from typing import Protocol
