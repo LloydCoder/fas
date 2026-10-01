@@ -25,7 +25,7 @@ class PostgresStore:
 
     def _connect(self): return self._connect_factory()
     @staticmethod
-    def _ts(value:str)->datetime: return datetime.fromisoformat(value.replace("Z","+00:00"))
+    def _ts(value:str)->datetime: return datetime.fromisoformat(value)
 
     def _init(self)->None:
         with self._connect() as con:
