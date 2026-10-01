@@ -5,6 +5,7 @@ from typing import Any
 from urllib.parse import urlparse
 import json
 import urllib.request
+from urllib.error import HTTPError
 
 @dataclass(frozen=True, slots=True)
 class ConnectorResponse:
@@ -16,9 +17,9 @@ class ConnectorResponse:
 class ConnectorError(RuntimeError): ...
 
 class SecureHttpClient:
-    def __init__(self,allowed_hosts:frozenset[str],timeout:float=15.0):
-        if timeout<=0: raise ValueError("timeout must be positive")
-        self.allowed_hosts=allowed_hosts; self.timeout=timeout
+    def __init__(self,allowed_hosts:frozenset[str],timeout:float=15.0,max_response_bytes:int=2*1024*1024):
+        if timeout<=0 or max_response_bytes<1: raise ValueError("invalid connector limits")
+        self.allowed_hosts=allowed_hosts; self.timeout=timeout; self.max_response_bytes=max_response_bytes
     def request(self,url:str,*,token:str|None=None,accept:str="application/json")->ConnectorResponse:
         parsed=urlparse(url)
         if parsed.scheme!="https" or not parsed.hostname or parsed.hostname.lower() not in self.allowed_hosts:
@@ -27,9 +28,29 @@ class SecureHttpClient:
         headers={"Accept":accept,"User-Agent":"FAS-enterprise-connector/1"}
         if token: headers["Authorization"]=f"Bearer {token}"
         req=urllib.request.Request(url,headers=headers,method="GET")
+        class NoRedirect(urllib.request.HTTPRedirectHandler):
+            def redirect_request(self, req, fp, code, msg, headers, newurl):
+                return None
         try:
-            with urllib.request.urlopen(req,timeout=self.timeout) as response:
-                return ConnectorResponse(response.status,{k:v for k,v in response.headers.items()},response.read())
+            opener=urllib.request.build_opener(NoRedirect)
+            with opener.open(req,timeout=self.timeout) as response:
+                location=response.headers.get("Location")
+                if location: raise ConnectorError("connector redirects are not permitted")
+                length=response.headers.get("Content-Length")
+                if length and int(length)>self.max_response_bytes: raise ConnectorError("connector response exceeds limit")
+                chunks=[]; total=0
+                while True:
+                    chunk=response.read(min(65536,self.max_response_bytes-total+1))
+                    if not chunk: break
+                    total+=len(chunk)
+                    if total>self.max_response_bytes: raise ConnectorError("connector response exceeds limit")
+                    chunks.append(chunk)
+                return ConnectorResponse(response.status,{k:v for k,v in response.headers.items()},b"".join(chunks))
+        except HTTPError as exc:
+            if 300<=exc.code<400: raise ConnectorError("connector redirects are not permitted") from exc
+            raise ConnectorError("connector request failed") from exc
+        except ConnectorError:
+            raise
         except Exception as exc:
             raise ConnectorError("connector request failed") from exc
 
