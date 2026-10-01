@@ -44,4 +44,4 @@ Documentation changes should be:
 - free of unsupported compliance or production-readiness claims
 - linked using repository-relative paths where possible
 
-The root [README](../README.md) is the starting point for new users and contributors.
+- **Phase 7 production architecture** — hosted PostgreSQL/S3, tenant authorization, worker leases, and operational boundaries. See [phase7-production.md](architecture/phase7-production.md).\n\nThe root [README](../README.md) is the starting point for new users and contributors.
