@@ -1,5 +1,13 @@
 # Changelog
 
+## Phase 8
+
+- Added bounded deterministic advanced graph analysis for reachability, privilege, agent/tool, and sensitive-resource paths.
+- Added attack-surface inventory and evidence-scoped analysis signals.
+- Preserved explicit limits and incomplete/truncated semantics.
+- Reconciled the architecture and README analysis boundaries.
+
+
 ## 0.7.0 — Phase 7
 
 - Added production-selectable PostgreSQL persistence with tenant-scoped rows and membership roles.

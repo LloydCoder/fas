@@ -481,7 +481,7 @@ FAS has completed the foundational phases through Phase 6. Future work should be
 - **Phase 6 — Productization:** installable package, shared CLI/API service, SQLite persistence, content-addressed objects, deterministic collection, bounded subprocess policy, durable jobs, completeness-aware reporting, diagnostics, API health/OpenAPI metadata, and CI/package hardening.
 - **Phase 7 — Production Runtime & Scale:** hosted PostgreSQL persistence, S3-compatible content-addressed objects, tenant-scoped authorization primitives, distributed-safe job leasing, production dependency profile, structured operational events, migrations, and deployment documentation.
 
-### Phase 7 hosted profile
+### Phase 8 advanced analysis\n\nFAS now includes bounded deterministic graph analysis for reachability, privilege paths, agent/tool paths, sensitive resources, and attack-surface inventory. These signals remain evidence-scoped and cannot directly create findings or verdicts.\n\n### Phase 7 hosted profile
 
 FAS now supports an explicit production profile using PostgreSQL persistence, S3-compatible content-addressed objects, tenant-scoped roles, lease-aware durable jobs, and structured operational events. The local SQLite profile remains supported.
 
