@@ -1,23 +1,32 @@
 # Changelog
 
+## Phase 12
+
+- Added bounded governed research contracts, approval states, budgets, stopping reasons, and a non-authoritative autonomy boundary.
+
+## Phase 11
+
+- Added machine-readable control assessment and versioned framework reference contracts.
+- Added deterministic evidence-bundle manifests with independent integrity verification.
+
+## Phase 10
+
+- Added tenant-scoped integration event normalization and durable idempotency contracts.
+- Added HTTPS host-allowlisted outbound connectors and GitHub REST/webhook boundaries.
+
+## Phase 9
+
+- Added controlled sandboxed runtime verification over SecureExecutor with explicit executable allowlisting, deny-all networking, secret denial, and output integrity digests.
+
 ## Phase 8
 
-- Added bounded deterministic advanced graph analysis for reachability, privilege, agent/tool, and sensitive-resource paths.
+- Added bounded deterministic graph analysis for reachability, privilege, agent/tool, and sensitive-resource paths.
 - Added attack-surface inventory and evidence-scoped analysis signals.
-- Preserved explicit limits and incomplete/truncated semantics.
-- Reconciled the architecture and README analysis boundaries.
-
 
 ## 0.7.0 — Phase 7
 
-- Added production-selectable PostgreSQL persistence with tenant-scoped rows and membership roles.
-- Added S3-compatible content-addressed object storage with read-time SHA-256 verification.
-- Made durable worker lifecycle tenant-aware and preserved lease/cancellation semantics.
-- Added hosted deployment configuration, structured operational events, migration contract, and production architecture/threat documentation.
-- Added Phase 7 regression coverage for tenant authorization, S3 integrity/idempotency, and hosted configuration.
-
-
-All notable changes to FAS are documented here.
+- Added production-selectable PostgreSQL persistence with tenant-scoped rows and memberships.
+- Added S3-compatible content-addressed object storage, tenant-aware durable jobs, migrations, and hosted deployment documentation.
 
 ## Documentation and repository experience — 2026-09-21
 
@@ -116,7 +125,3 @@ All notable changes to FAS are documented here.
 
 - Added tenant-scoped integration event normalization and idempotency contracts.
 - Added HTTPS host-allowlisted outbound connectors and GitHub REST/webhook boundaries.
-
-## Phase 9
-
-- Added controlled sandboxed runtime verification over SecureExecutor with explicit executable allowlisting, deny-all networking, secret denial, and output integrity digests.
