@@ -87,5 +87,6 @@ Unsupported functionality must fail explicitly. The product must not simulate Po
 5. **Verification** — remediation verification, semantic graph diff, path revalidation, regression baselines, and deterministic security-test contracts.
 6. **Productization** — installable local product boundary, persistence, API/CLI, jobs, reporting, diagnostics, and CI/package hardening.
 7. **Production Runtime & Scale** — hosted PostgreSQL/S3 adapters, tenant-scoped authorization, distributed-safe leases, operational telemetry, and production deployment boundaries.
+8. **Advanced Security Analysis** — bounded deterministic reachability, privilege, agent/tool, sensitive-resource, and attack-surface analysis.
 
 Detailed phase decisions are recorded in [Architecture Decision Records](../decisions/README.md).
