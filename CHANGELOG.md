@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.7.0 — Phase 7
+
+- Added production-selectable PostgreSQL persistence with tenant-scoped rows and membership roles.
+- Added S3-compatible content-addressed object storage with read-time SHA-256 verification.
+- Made durable worker lifecycle tenant-aware and preserved lease/cancellation semantics.
+- Added hosted deployment configuration, structured operational events, migration contract, and production architecture/threat documentation.
+- Added Phase 7 regression coverage for tenant authorization, S3 integrity/idempotency, and hosted configuration.
+
+
 All notable changes to FAS are documented here.
 
 ## Documentation and repository experience — 2026-09-21
