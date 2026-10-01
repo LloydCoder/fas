@@ -35,7 +35,7 @@ class ProductService:
         else:
             self.objects=LocalObjectStore(settings.object_store_path)
         self.jobs=JobManager(self.store,settings.max_workers,settings.tenant_id)
-        self.reports=ReportService(self.store)
+        self.reports=ReportService(self.store,settings.tenant_id)
 
     def create_project(self, name: str, repository: str, owner: str="local") -> Project:
         p=Project(id=new_id("project"),name=name,repository=repository,owner=owner,created_at=datetime.now(timezone.utc))
