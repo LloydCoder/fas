@@ -12,6 +12,9 @@ from fas.domain import Analysis, AnalysisStatus, AuditEvent, ContentHash, Projec
 from fas.collectors import CollectionContext, CollectionPlan, CollectionOrchestrator, CodeDiscoveryCollector, DependencyDiscoveryCollector, ConfigurationCollector, CICDCollector, AgentConfigurationCollector, CollectionPipeline, ToolCollector, UnavailableToolCollector, SecureExecutor, ExecutionPolicy
 from .config import Settings
 from .storage import SQLiteStore, LocalObjectStore
+from .object_store import S3ObjectStore
+from .tenancy import TenantContext, Role
+from fas.persistence.postgres import PostgresStore
 from .reports import ReportService
 from .jobs import JobManager
 from fas.graph import GraphEngine
@@ -21,24 +24,32 @@ from fas.collectors.raw import ToolRun
 class ProductService:
     def __init__(self, settings: Settings):
         self.settings=settings
-        self.store=SQLiteStore(settings.database_url)
-        self.objects=LocalObjectStore(settings.object_store_path)
-        self.jobs=JobManager(self.store,settings.max_workers)
+        if settings.database_url.startswith(("postgresql://", "postgres://")):
+            self.store=PostgresStore(settings.database_url)
+            self.store.ensure_tenant(settings.tenant_id, settings.subject_id, settings.role)
+        else:
+            self.store=SQLiteStore(settings.database_url)
+        self.tenant=TenantContext(settings.tenant_id, settings.subject_id, Role(settings.role))
+        if settings.object_store_path.startswith("s3://"):
+            self.objects=S3ObjectStore(settings.object_store_path)
+        else:
+            self.objects=LocalObjectStore(settings.object_store_path)
+        self.jobs=JobManager(self.store,settings.max_workers,settings.tenant_id)
         self.reports=ReportService(self.store)
 
     def create_project(self, name: str, repository: str, owner: str="local") -> Project:
         p=Project(id=new_id("project"),name=name,repository=repository,owner=owner,created_at=datetime.now(timezone.utc))
-        self.store.put("projects",p.id,p.id,p.model_dump(mode="json"),p.created_at.isoformat())
+        self.store.put("projects",p.id,p.id,p.model_dump(mode="json"),p.created_at.isoformat(),tenant_id=self.settings.tenant_id)
         return p
 
     def get_project(self, project_id: str) -> Project:
-        return Project.model_validate(self.store.get("projects",project_id))
+        return Project.model_validate(self.store.get("projects",project_id,tenant_id=self.settings.tenant_id))
 
     def create_analysis(self, project_id: str, source: str) -> Analysis:
         self.get_project(project_id)
         a=Analysis(id=new_id("analysis"),project=project_id,status=AnalysisStatus.CREATED,
                    metadata={"source":source,"coverage":"collection_only"})
-        self.store.put("analyses",a.id,project_id,a.model_dump(mode="json"),a.created_at.isoformat())
+        self.store.put("analyses",a.id,project_id,a.model_dump(mode="json"),a.created_at.isoformat(),tenant_id=self.settings.tenant_id)
         return a
 
     def snapshot(self, analysis: Analysis, root: Path) -> Snapshot:
@@ -103,7 +114,7 @@ class ProductService:
                                 "completeness":completeness,"omitted_count":str(len(omitted))})
         manifest_ref=self.objects.put(manifest_bytes,media_type="application/vnd.fas.snapshot-manifest+json",snapshot_id=snap.id,source=str(root))
         snap=snap.model_copy(update={"metadata":{**snap.metadata,"manifest_object":manifest_ref["storage_reference"]}})
-        self.store.put("snapshots",snap.id,analysis.id,snap.model_dump(mode="json"),now.isoformat())
+        self.store.put("snapshots",snap.id,analysis.id,snap.model_dump(mode="json"),now.isoformat(),tenant_id=self.settings.tenant_id)
         self._audit(analysis.id,snap.id,"SNAPSHOT_CREATED",snap.id,{"source":str(root),"content_hash":snap.content_hash.value if snap.content_hash else None,
                                                                     "manifest_sha256":manifest_hash,"completeness":completeness})
         return snap
@@ -129,24 +140,24 @@ class ProductService:
                     raw_bytes=raw_path.read_bytes()
                     stored=self.objects.put(raw_bytes,media_type=artifact.media_type,snapshot_id=snap.id,source=str(raw_path))
                     persisted_artifact=artifact.model_copy(update={"external_reference":stored["storage_reference"],"content_hash":stored["content_hash"],"size_bytes":stored["size"]})
-            self.store.put("artifacts",persisted_artifact.id,snap.id,persisted_artifact.model_dump(mode="json"),persisted_artifact.provenance[0].observed_at.isoformat())
+            self.store.put("artifacts",persisted_artifact.id,snap.id,persisted_artifact.model_dump(mode="json"),persisted_artifact.provenance[0].observed_at.isoformat(),tenant_id=self.settings.tenant_id)
         for observation in collection.batch.observations:
-            self.store.put("observations",observation.id,snap.id,observation.model_dump(mode="json"),observation.observed_at.isoformat())
+            self.store.put("observations",observation.id,snap.id,observation.model_dump(mode="json"),observation.observed_at.isoformat(),tenant_id=self.settings.tenant_id)
         for run in collection.batch.tool_runs:
             if not isinstance(run, ToolRun):
                 raise TypeError("collector returned an invalid tool-run record")
-            self.store.put("tool_runs",run.run_id,snap.id,asdict(run),run.started_at)
+            self.store.put("tool_runs",run.run_id,snap.id,asdict(run),run.started_at,tenant_id=self.settings.tenant_id)
 
         graph = GraphEngine(analysis_id=analysis.id, snapshot_id=snap.id)
         pipeline = CollectionPipeline(graph)
         normalized = pipeline.ingest(collection.batch, context)
         for evidence in normalized.evidence:
-            self.store.put("evidence",evidence.id,snap.id,evidence.model_dump(mode="json"),evidence.observed_at.isoformat())
+            self.store.put("evidence",evidence.id,snap.id,evidence.model_dump(mode="json"),evidence.observed_at.isoformat(),tenant_id=self.settings.tenant_id)
         graph_view = pipeline.build_graph(complete=normalized.complete)
         for node in graph_view.nodes():
-            self.store.put("graph_nodes",node.id,snap.id,node.model_dump(mode="json"),datetime.now(timezone.utc).isoformat())
+            self.store.put("graph_nodes",node.id,snap.id,node.model_dump(mode="json"),datetime.now(timezone.utc).isoformat(),tenant_id=self.settings.tenant_id)
         for edge in graph_view.edges():
-            self.store.put("graph_edges",edge.id,snap.id,edge.model_dump(mode="json"),edge.observed_at.isoformat())
+            self.store.put("graph_edges",edge.id,snap.id,edge.model_dump(mode="json"),edge.observed_at.isoformat(),tenant_id=self.settings.tenant_id)
         analysis=analysis.model_copy(update={"status":AnalysisStatus.NORMALIZING,
             "metadata":{**analysis.metadata,"collection_status":collection.summary.status.value,
                         "artifact_count":str(collection.summary.artifacts),
@@ -203,14 +214,14 @@ class ProductService:
     def _audit(self, analysis_id: str, snapshot_id: str, event_type: str, subject_id: str, payload: dict[str,object]) -> None:
         event=AuditEvent(id=new_id("audit_event"),analysis_id=analysis_id,snapshot_id=snapshot_id,
                          event_type=event_type,actor="fas",subject_id=subject_id,payload=payload)
-        self.store.append_audit(event.model_dump(mode="json"))
+        self.store.append_audit(event.model_dump(mode="json"),tenant_id=self.settings.tenant_id)
 
     def _replace_analysis(self, analysis: Analysis, project_id: str) -> None:
         with self.store._connect() as con:
             con.execute("UPDATE analyses SET payload=? WHERE id=?", (json.dumps(analysis.model_dump(mode="json"),sort_keys=True),analysis.id))
 
     def get_analysis(self, analysis_id: str) -> Analysis:
-        return Analysis.model_validate(self.store.get("analyses",analysis_id))
+        return Analysis.model_validate(self.store.get("analyses",analysis_id,tenant_id=self.settings.tenant_id))
 
     def findings(self, analysis_id: str, snapshot_id: str|None=None, limit:int=100, offset:int=0):
         analysis=self.get_analysis(analysis_id)
@@ -221,7 +232,7 @@ class ProductService:
         sid=snapshot_id or analysis.snapshot_ids[0]
         if sid not in analysis.snapshot_ids:
             raise ValueError("snapshot does not belong to analysis")
-        return self.store.list("findings","snapshot_id",sid,limit,offset)
+        return self.store.list("findings","snapshot_id",sid,limit,offset,tenant_id=self.settings.tenant_id)
 
     def report(self, analysis_id: str) -> dict[str,object]:
         a=self.get_analysis(analysis_id)
@@ -232,8 +243,8 @@ class ProductService:
     def doctor(self) -> dict[str,object]:
         checks=[]
         checks.append({"name":"python","ok":__import__("sys").version_info >= (3,11),"detail":__import__("sys").version.split()[0]})
-        checks.append({"name":"database","ok":True,"detail":str(self.store.path)})
-        checks.append({"name":"object_store","ok":self.objects.root.is_dir(),"detail":str(self.objects.root)})
+        checks.append({"name":"database","ok":True,"detail":type(self.store).__name__})
+        checks.append({"name":"object_store","ok":True,"detail":type(self.objects).__name__})
         checks.append({"name":"api_auth","ok":(not self.settings.auth_required) or bool(self.settings.api_token),"detail":"configured" if self.settings.api_token else "not configured"})
         return {"ok":all(c["ok"] for c in checks),"checks":checks}
 
