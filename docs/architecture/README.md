@@ -86,5 +86,6 @@ Unsupported functionality must fail explicitly. The product must not simulate Po
 4. **Investigation** — evidence-grounded deterministic investigation and constrained LLM advisory.
 5. **Verification** — remediation verification, semantic graph diff, path revalidation, regression baselines, and deterministic security-test contracts.
 6. **Productization** — installable local product boundary, persistence, API/CLI, jobs, reporting, diagnostics, and CI/package hardening.
+7. **Production Runtime & Scale** — hosted PostgreSQL/S3 adapters, tenant-scoped authorization, distributed-safe leases, operational telemetry, and production deployment boundaries.
 
 Detailed phase decisions are recorded in [Architecture Decision Records](../decisions/README.md).
