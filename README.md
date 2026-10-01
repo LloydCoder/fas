@@ -64,9 +64,9 @@ The goal is not to maximize the number of findings. It is to make important conc
 
 ## Current status
 
-**Version:** `0.6.0`  
+**Version:** `0.7.0`  
 **Maturity:** Alpha  
-**Current milestone:** Phase 6 productization is implemented as a bounded local product layer.
+**Current milestone:** Phase 7 production runtime and scale is implemented as an explicit hosted deployment profile.
 
 Phase 6 includes:
 
@@ -479,6 +479,11 @@ FAS has completed the foundational phases through Phase 6. Future work should be
 - **Phase 4 — Investigation:** immutable cases, evidence requests, deterministic graph/data-flow primitives, attack-path reconstruction, exploitability analysis, and constrained LLM advisory boundary.
 - **Phase 5 — Verification:** before/after remediation verification, semantic graph diff, attack-path revalidation, residual/alternate-path analysis, regression baselines, and deterministic security-test contracts.
 - **Phase 6 — Productization:** installable package, shared CLI/API service, SQLite persistence, content-addressed objects, deterministic collection, bounded subprocess policy, durable jobs, completeness-aware reporting, diagnostics, API health/OpenAPI metadata, and CI/package hardening.
+- **Phase 7 — Production Runtime & Scale:** hosted PostgreSQL persistence, S3-compatible content-addressed objects, tenant-scoped authorization primitives, distributed-safe job leasing, production dependency profile, structured operational events, migrations, and deployment documentation.
+
+### Phase 7 hosted profile
+
+FAS now supports an explicit production profile using PostgreSQL persistence, S3-compatible content-addressed objects, tenant-scoped roles, lease-aware durable jobs, and structured operational events. The local SQLite profile remains supported.
 
 ### Explicit extension seams
 
