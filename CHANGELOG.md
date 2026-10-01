@@ -99,3 +99,10 @@ The project is in alpha; the 0.6.0 Phase 6 product boundary remains bounded and 
 - Added HTTPS host-allowlisted outbound connectors and a GitHub REST connector.
 - Added bounded GitHub webhook authentication/normalization primitives.
 - Added enterprise integration architecture and threat-model documentation.
+
+## Phase 11
+
+- Added machine-readable control assessment and framework reference contracts.
+- Added deterministic evidence-bundle manifests with independent integrity verification.
+- Added explicit assurance states and evidence requirements.
+- Added governance architecture and threat-model documentation.
