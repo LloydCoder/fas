@@ -1,6 +1,6 @@
 import hmac
 from hashlib import sha256
-from fas.integrations.events import EventNormalizer, IdempotencyLedger
+from fas.integrations.events import DurableIdempotencyLedger, EventNormalizer, IdempotencyLedger
 from fas.integrations.http import SecureHttpClient
 from fas.integrations.webhook import verify_github_signature, normalize_github_webhook
 
@@ -31,3 +31,11 @@ def test_connector_host_allowlist_rejects_untrusted_hosts():
         pass
     else:
         raise AssertionError("connector accepted an untrusted host")
+
+
+def test_durable_idempotency_adapter_delegates_tenant_scope():
+    seen=set()
+    ledger=DurableIdempotencyLedger(lambda tenant,fingerprint,event_id: (tenant,fingerprint) not in seen and not seen.add((tenant,fingerprint)))
+    event=EventNormalizer("tenant-a").normalize("github","push","1",{"ref":"main"})
+    assert ledger.accept(event)
+    assert not ledger.accept(event)
