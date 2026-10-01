@@ -43,6 +43,7 @@ class PostgresStore:
                 error text,worker_id text,lease_until timestamptz,heartbeat_at timestamptz,
                 retry_count integer NOT NULL DEFAULT 0,cancel_requested boolean NOT NULL DEFAULT false)""")
             con.execute("CREATE INDEX IF NOT EXISTS idx_fas_jobs_tenant_status ON fas_jobs(tenant_id,status,updated_at)")
+            con.execute("CREATE TABLE IF NOT EXISTS fas_integration_events(tenant_id text NOT NULL,fingerprint text NOT NULL,event_id text NOT NULL,created_at timestamptz NOT NULL DEFAULT now(),PRIMARY KEY(tenant_id,fingerprint))")
             con.execute("CREATE UNIQUE INDEX IF NOT EXISTS uq_fas_jobs_tenant_operation ON fas_jobs(tenant_id,operation_key)")
             con.commit()
 
