@@ -217,8 +217,7 @@ class ProductService:
         self.store.append_audit(event.model_dump(mode="json"),tenant_id=self.settings.tenant_id)
 
     def _replace_analysis(self, analysis: Analysis, project_id: str) -> None:
-        with self.store._connect() as con:
-            con.execute("UPDATE analyses SET payload=? WHERE id=?", (json.dumps(analysis.model_dump(mode="json"),sort_keys=True),analysis.id))
+        self.store.replace("analyses", analysis.id, analysis.model_dump(mode="json"), tenant_id=self.settings.tenant_id)
 
     def get_analysis(self, analysis_id: str) -> Analysis:
         return Analysis.model_validate(self.store.get("analyses",analysis_id,tenant_id=self.settings.tenant_id))
