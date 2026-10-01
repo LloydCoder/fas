@@ -59,7 +59,9 @@ class AdvancedAnalysisEngine:
                 pairs+=1
                 if pairs>self.max_pairs:
                     return (*out,AnalysisSignal(kind+"_LIMIT",source.id,sink.id,None,ResultStatus.TRUNCATED,()))
-                kwargs={"allowed_relationship_types":relationships}\n                if max_depth is not None: kwargs["max_depth"]=max_depth\n                result=self.graph.shortest_path(source.id,sink.id,**kwargs)
+                kwargs={"allowed_relationship_types":relationships}
+                if max_depth is not None: kwargs["max_depth"]=max_depth
+                result=self.graph.shortest_path(source.id,sink.id,**kwargs)
                 for path in result.paths:
                     evidence=tuple(sorted({e for n in path.nodes for e in n.evidence_ids}|{e for e in path.edges for e in e.evidence_ids}))
                     out.append(AnalysisSignal(kind,source.id,sink.id,path,result.status,evidence))
