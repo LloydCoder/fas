@@ -1,4 +1,3 @@
-from hashlib import sha256
 from fas.governance.bundle import build_bundle
 from fas.governance.controls import AssessmentStatus, Control, ControlAssessment, Framework
 
