@@ -1,42 +1,38 @@
-"""Safe security-test execution boundary.
-
-This module intentionally has no shell/process execution backend. Core Phase 5 CI uses a
-deterministic executor over registered fixture results. A future runtime backend must implement
-the protocol under an explicit sandbox policy rather than accepting arbitrary commands.
-"""
+"""Controlled runtime verification adapter."""
 from __future__ import annotations
-from typing import Protocol
-from fas.domain.verification import SecurityTestDefinition, SecurityTestResult
+import hashlib, shlex
+from pathlib import Path
 from datetime import datetime, timezone
+from fas.collectors.executor import ExecutionPolicy, SecureExecutor
+from fas.domain.verification import SecurityTestDefinition, SecurityTestResult
 
-
-class SecurityTestExecutor(Protocol):
-    name: str
-    version: str
-    def execute(self, definition: SecurityTestDefinition) -> SecurityTestResult: ...
-
-
-class DeterministicSecurityTestExecutor:
-    name="fixture-executor"
+class SandboxedSecurityTestExecutor:
+    name="sandboxed-runtime"
     version="1.0"
-    def __init__(self, outcomes: dict[str, bool] | None = None):
-        self._outcomes=dict(outcomes or {})
-    def execute(self, definition: SecurityTestDefinition) -> SecurityTestResult:
-        passed=self._outcomes.get(definition.test_id, False)
-        now=datetime.now(timezone.utc)
-        actual=definition.expected_result if passed else "UNEXPECTED_RESULT"
+    def __init__(self,root:Path,allowed_executables:frozenset[str])->None:
+        self.root=Path(root).resolve()
+        if not self.root.is_dir(): raise ValueError("runtime root must be a directory")
+        self.executor=SecureExecutor(ExecutionPolicy(
+            allowed_executables=allowed_executables,isolation_mode="SANDBOXED_RUNTIME",
+            network_policy="DENY_ALL",require_non_root=True))
+    def execute(self,definition:SecurityTestDefinition)->SecurityTestResult:
+        if definition.network_policy!="DENY_ALL" or definition.secret_policy!="DENY_ALL":
+            raise PermissionError("runtime policy is broader than the controlled executor")
+        command=shlex.split(definition.target,posix=True)
+        if not command or any("\x00" in item for item in command): raise ValueError("invalid security test target")
+        started=datetime.now(timezone.utc)
+        result=self.executor.run(command,cwd=self.root)
+        completed=datetime.now(timezone.utc)
+        output_digest=hashlib.sha256(result.stdout+result.stderr).hexdigest()
+        if result.timed_out: actual="TIMEOUT"
+        elif result.cancelled: actual="CANCELLED"
+        elif result.output_limited: actual="OUTPUT_LIMIT"
+        else: actual=f"exit_code:{result.returncode}"
         return SecurityTestResult(
-            test_id=definition.test_id,
-            test_version=definition.version,
-            snapshot_id=definition.snapshot_id,
-            executor=self.name,
-            executor_version=self.version,
-            expected_result=definition.expected_result,
-            actual_result=actual,
-            passed=passed,
-            exit_code=0 if passed else 1,
-            input_digest=definition.input_digest,
-            started_at=now,
-            completed_at=now,
-            environment={"network":"DENY_ALL","filesystem":definition.filesystem_policy,"secrets":"DENY_ALL"},
+            test_id=definition.test_id,test_version=definition.version,snapshot_id=definition.snapshot_id,
+            executor=self.name,executor_version=self.version,expected_result=definition.expected_result,
+            actual_result=actual,passed=actual==definition.expected_result,exit_code=result.returncode,
+            input_digest=definition.input_digest,started_at=started,completed_at=completed,
+            output_digest=output_digest,
+            environment={"network":"DENY_ALL","filesystem":definition.filesystem_policy,"secrets":"DENY_ALL","sandbox":"controlled"},
         )
