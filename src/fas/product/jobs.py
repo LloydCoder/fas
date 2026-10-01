@@ -47,7 +47,7 @@ class JobManager:
         claim_token = f"{self.worker_id}:{new_id('claim')}"
         now = datetime.now(timezone.utc)
         job_id = (
-            (self.store.job_by_key(operation_key) or {}).get("id")
+            (self.store.job_by_key(operation_key, tenant_id=self.tenant_id) or {}).get("id")
             or new_id("job")
         )
         lease = (now + timedelta(minutes=5)).isoformat()
@@ -59,6 +59,7 @@ class JobManager:
             now.isoformat(),
             claim_token,
             lease,
+            tenant_id=self.tenant_id,
         )
         if claimed["status"] in {"RUNNING", "COMPLETED", "QUEUED"} and claimed.get(
             "worker_id"
@@ -85,6 +86,7 @@ class JobManager:
                         claim_token,
                         (stamp + timedelta(minutes=5)).isoformat(),
                         stamp.isoformat(),
+                        tenant_id=self.tenant_id,
                     )
                     if requested:
                         cancel.set()
@@ -109,6 +111,7 @@ class JobManager:
                     {"request": payload, "result": result},
                     started_iso,
                     finished,
+                    tenant_id=self.tenant_id,
                 )
                 return result
             except TimeoutError as exc:
@@ -122,6 +125,7 @@ class JobManager:
                     started_iso,
                     finished,
                     str(exc),
+                    tenant_id=self.tenant_id,
                 )
                 raise
             except Exception as exc:
@@ -135,6 +139,7 @@ class JobManager:
                     started_iso,
                     finished,
                     f"{type(exc).__name__}: {exc}",
+                    tenant_id=self.tenant_id,
                 )
                 raise
             finally:
