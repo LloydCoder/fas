@@ -68,6 +68,12 @@ class PostgresStore:
         with self._connect() as con:
             con.execute(f"INSERT INTO {table}({columns}) VALUES({','.join(['%s']*len(values))})",values); con.commit()
 
+    def replace(self,table:str,identifier:str,payload:dict[str,Any],*,tenant_id:str="local")->None:
+        if table not in TABLES: raise ValueError("unsupported table")
+        with self._connect() as con:
+            cur=con.execute(f"UPDATE {table} SET payload=%s WHERE id=%s AND tenant_id=%s",(json.dumps(payload),identifier,tenant_id));
+            if cur.rowcount!=1: raise KeyError(identifier)
+            con.commit()
     def get(self,table:str,identifier:str,*,tenant_id:str="local")->dict[str,Any]:
         if table not in TABLES: raise ValueError("unsupported table")
         with self._connect() as con:
