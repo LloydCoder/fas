@@ -2,7 +2,7 @@
 from __future__ import annotations
 import hmac, json
 from hashlib import sha256
-from typing import Mapping
+from collections.abc import Mapping
 from .events import EventNormalizer, IntegrationEvent
 
 MAX_WEBHOOK_BYTES=2*1024*1024
@@ -18,5 +18,5 @@ def normalize_github_webhook(headers:Mapping[str,str],body:bytes,normalizer:Even
     delivery=headers.get("X-GitHub-Delivery") or headers.get("x-github-delivery")
     if not event or not delivery: raise ValueError("GitHub event headers are required")
     payload=json.loads(body)
-    if not isinstance(payload,dict): raise ValueError("webhook payload must be an object")
+    if not isinstance(payload,dict): raise TypeError("webhook payload must be an object")
     return normalizer.normalize("github",event,delivery,payload,delivery_id=delivery)
