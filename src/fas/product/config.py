@@ -10,6 +10,9 @@ from pathlib import Path
 class Settings:
     database_url: str = "sqlite:///./.fas/fas.db"
     object_store_path: str = ".fas/objects"
+    tenant_id: str = "local"
+    subject_id: str = "local"
+    role: str = "admin"
     api_host: str = "127.0.0.1"
     api_port: int = 8765
     api_token: str | None = None
@@ -43,6 +46,12 @@ class Settings:
             raise ValueError("numeric configuration limits must be positive")
         if self.api_port > 65535:
             raise ValueError("api_port must be <= 65535")
+        if not self.tenant_id or len(self.tenant_id) > 128:
+            raise ValueError("tenant_id must be non-empty and <=128 characters")
+        if not self.subject_id or len(self.subject_id) > 512:
+            raise ValueError("subject_id must be non-empty and <=512 characters")
+        if self.role not in {"reader", "analyst", "admin"}:
+            raise ValueError("role must be reader, analyst, or admin")
         if self.network_policy not in {"DENY_ALL", "ALLOWLIST"}:
             raise ValueError("network_policy must be DENY_ALL or ALLOWLIST")
 
