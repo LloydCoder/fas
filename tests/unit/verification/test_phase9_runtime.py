@@ -1,5 +1,4 @@
 from types import SimpleNamespace
-from datetime import datetime, timezone
 from pathlib import Path
 from fas.domain.common import new_id
 from fas.domain.verification import SecurityTestDefinition
