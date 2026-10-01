@@ -48,6 +48,15 @@ Hosted deployments use PostgreSQL tenant scoping and S3 content-addressed object
 
 See [Phase 7 production threats](phase7-production.md).
 
+## Phase 7–12 threat documents
+
+- [Phase 7 production](phase7-production.md)
+- [Phase 8 analysis](phase8-analysis.md)
+- [Phase 9 runtime](phase9-runtime.md)
+- [Phase 10 integrations](phase10-integrations.md)
+- [Phase 11 assurance](phase11-assurance.md)
+- [Phase 12 research](phase12-research.md)
+
 ## Current runtime boundary
 
 The core product does not execute arbitrary candidate-repository code. Runtime verification remains a controlled extension seam; any future implementation must establish explicit filesystem, network, credential, timeout, process, and resource isolation.
