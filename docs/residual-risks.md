@@ -15,6 +15,10 @@ This document is the authoritative register for controls that are deliberately o
 
 The source repository cannot encode GitHub branch-protection state in tracked files. These settings must be enabled in repository administration.
 
+## Phase 7 hosted profile
+
+PostgreSQL, S3-compatible objects, tenant membership primitives, lease-aware durable jobs, and structured operational events are implemented for the hosted adapter profile. The deployment still owns TLS termination, external secret management, backup/restore, HA topology, network policy, IAM policy, and centralized metrics/tracing retention.
+
 ## Product boundary
 
 FAS local Alpha uses SQLite, a local content-addressed object store, and bounded in-process workers. A hosted multi-tenant deployment additionally requires PostgreSQL/S3 adapters, tenant identity/RBAC, centralized observability, external secret management, HA, and network/TLS termination.

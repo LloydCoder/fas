@@ -110,6 +110,8 @@ class SQLiteStore:
         foreign_key: str,
         payload: dict[str, Any],
         created_at: str,
+        *,
+        tenant_id: str = "local",
     ) -> None:
         allowed = {
             "projects",
@@ -157,7 +159,13 @@ class SQLiteStore:
                     (identifier, foreign_key, serialized, created_at),
                 )
 
-    def get(self, table: str, identifier: str) -> dict[str, Any]:
+    def replace(self, table: str, identifier: str, payload: dict[str, Any], *, tenant_id: str = "local") -> None:
+        if table not in {"projects","analyses","snapshots","artifacts","observations","evidence","graph_nodes","graph_edges","remediations","verifications","findings","reports","audit_events","tool_runs"}:
+            raise ValueError("unsupported table")
+        with self._connect() as con:
+            cur=con.execute(f"UPDATE {table} SET payload=? WHERE id=?", (json.dumps(payload, sort_keys=True, separators=(",", ":")), identifier))
+            if cur.rowcount != 1: raise KeyError(identifier)
+    def get(self, table: str, identifier: str, *, tenant_id: str = "local") -> dict[str, Any]:
         if table not in {
             "projects",
             "analyses",
@@ -191,6 +199,8 @@ class SQLiteStore:
         foreign_value: str,
         limit: int = 100,
         offset: int = 0,
+        *,
+        tenant_id: str = "local",
     ) -> list[dict[str, Any]]:
         allowed = {
             "analyses": {"project_id"},
@@ -219,7 +229,7 @@ class SQLiteStore:
             ).fetchall()
         return [json.loads(row["payload"]) for row in rows]
 
-    def append_audit(self, payload: dict[str, Any]) -> None:
+    def append_audit(self, payload: dict[str, Any], *, tenant_id: str = "local") -> None:
         with self._connect() as con:
             rows = con.execute(
                 "SELECT payload FROM audit_events WHERE analysis_id=? "
@@ -297,6 +307,8 @@ class SQLiteStore:
         created_at: str,
         updated_at: str,
         error: str | None = None,
+        *,
+        tenant_id: str = "local",
     ) -> None:
         with self._connect() as con:
             con.execute(
@@ -329,6 +341,8 @@ class SQLiteStore:
         created_at: str,
         claim_token: str,
         lease_until: str,
+        *,
+        tenant_id: str = "local",
     ) -> dict[str, Any]:
         serialized = json.dumps(payload, sort_keys=True)
         with self._connect() as con:
@@ -383,7 +397,7 @@ class SQLiteStore:
             raise RuntimeError("job claim failed")
         return dict(row)
 
-    def job_by_key(self, operation_key: str) -> dict[str, Any] | None:
+    def job_by_key(self, operation_key: str, *, tenant_id: str = "local") -> dict[str, Any] | None:
         with self._connect() as con:
             row = con.execute(
                 "SELECT * FROM jobs WHERE operation_key=?", (operation_key,)
@@ -391,7 +405,7 @@ class SQLiteStore:
         return dict(row) if row else None
 
     def job_start(
-        self, job_id: str, worker_id: str, started_at: str, lease_until: str
+        self, job_id: str, worker_id: str, started_at: str, lease_until: str, *, tenant_id: str = "local"
     ) -> bool:
         with self._connect() as con:
             cur = con.execute(
@@ -403,7 +417,7 @@ class SQLiteStore:
             return cur.rowcount == 1
 
     def job_heartbeat(
-        self, job_id: str, worker_id: str, lease_until: str, heartbeat_at: str
+        self, job_id: str, worker_id: str, lease_until: str, heartbeat_at: str, *, tenant_id: str = "local"
     ) -> bool:
         with self._connect() as con:
             cur = con.execute(
@@ -418,7 +432,7 @@ class SQLiteStore:
             ).fetchone()
             return bool(row and row["cancel_requested"])
 
-    def job_request_cancel(self, job_id: str, worker_id: str) -> bool:
+    def job_request_cancel(self, job_id: str, worker_id: str, *, tenant_id: str = "local") -> bool:
         with self._connect() as con:
             cur = con.execute(
                 "UPDATE jobs SET cancel_requested=1,updated_at=? "
@@ -428,7 +442,7 @@ class SQLiteStore:
             )
             return cur.rowcount == 1
 
-    def job_cancel_requested(self, job_id: str, worker_id: str) -> bool:
+    def job_cancel_requested(self, job_id: str, worker_id: str, *, tenant_id: str = "local") -> bool:
         with self._connect() as con:
             row = con.execute(
                 "SELECT cancel_requested FROM jobs "
@@ -437,7 +451,7 @@ class SQLiteStore:
             ).fetchone()
         return bool(row and row["cancel_requested"])
 
-    def recover_stale_jobs(self, now: str | None = None) -> int:
+    def recover_stale_jobs(self, now: str | None = None, *, tenant_id: str = "local") -> int:
         now = now or datetime.now(timezone.utc).isoformat()
         with self._connect() as con:
             cur = con.execute(
@@ -454,8 +468,8 @@ class SQLiteStore:
             )
             return cur.rowcount
 
-    def recover_running_jobs(self, now: str | None = None) -> int:
-        return self.recover_stale_jobs(now)
+    def recover_running_jobs(self, now: str | None = None, *, tenant_id: str = "local") -> int:
+        return self.recover_stale_jobs(now, tenant_id=tenant_id)
 
 
 class LocalObjectStore:
