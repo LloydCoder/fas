@@ -44,4 +44,13 @@ Documentation changes should be:
 - free of unsupported compliance or production-readiness claims
 - linked using repository-relative paths where possible
 
-- **Phase 7 production architecture** — hosted PostgreSQL/S3, tenant authorization, worker leases, and operational boundaries. See [phase7-production.md](architecture/phase7-production.md).\n\nThe root [README](../README.md) is the starting point for new users and contributors.
+- **Phase 7 production architecture** — hosted PostgreSQL/S3, tenant authorization, worker leases, and operational boundaries. See [phase7-production.md](architecture/phase7-production.md).\n\n### Maturity architecture documents
+
+- [Phase 7 — Production Runtime](architecture/phase7-production.md)
+- [Phase 8 — Advanced Analysis](architecture/phase8-advanced-analysis.md)
+- [Phase 9 — Trusted Runtime](architecture/phase9-trusted-runtime.md)
+- [Phase 10 — Enterprise Integrations](architecture/phase10-enterprise-integrations.md)
+- [Phase 11 — Governance & Assurance](architecture/phase11-governance-assurance.md)
+- [Phase 12 — Platform Maturity](architecture/phase12-platform-maturity.md)
+
+The root [README](../README.md) is the starting point for new users and contributors.
