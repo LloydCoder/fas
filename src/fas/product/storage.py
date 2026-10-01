@@ -301,6 +301,8 @@ class SQLiteStore:
         created_at: str,
         updated_at: str,
         error: str | None = None,
+        *,
+        tenant_id: str = "local",
     ) -> None:
         with self._connect() as con:
             con.execute(
@@ -443,7 +445,7 @@ class SQLiteStore:
             ).fetchone()
         return bool(row and row["cancel_requested"])
 
-    def recover_stale_jobs(self, now: str | None = None) -> int:
+    def recover_stale_jobs(self, now: str | None = None, *, tenant_id: str = "local") -> int:
         now = now or datetime.now(timezone.utc).isoformat()
         with self._connect() as con:
             cur = con.execute(
@@ -460,8 +462,8 @@ class SQLiteStore:
             )
             return cur.rowcount
 
-    def recover_running_jobs(self, now: str | None = None) -> int:
-        return self.recover_stale_jobs(now)
+    def recover_running_jobs(self, now: str | None = None, *, tenant_id: str = "local") -> int:
+        return self.recover_stale_jobs(now, tenant_id=tenant_id)
 
 
 class LocalObjectStore:
