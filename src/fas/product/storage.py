@@ -159,6 +159,12 @@ class SQLiteStore:
                     (identifier, foreign_key, serialized, created_at),
                 )
 
+    def replace(self, table: str, identifier: str, payload: dict[str, Any], *, tenant_id: str = "local") -> None:
+        if table not in {"projects","analyses","snapshots","artifacts","observations","evidence","graph_nodes","graph_edges","remediations","verifications","findings","reports","audit_events","tool_runs"}:
+            raise ValueError("unsupported table")
+        with self._connect() as con:
+            cur=con.execute(f"UPDATE {table} SET payload=? WHERE id=?", (json.dumps(payload, sort_keys=True, separators=(",", ":")), identifier))
+            if cur.rowcount != 1: raise KeyError(identifier)
     def get(self, table: str, identifier: str, *, tenant_id: str = "local") -> dict[str, Any]:
         if table not in {
             "projects",
