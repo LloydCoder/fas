@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from hashlib import sha256
 import json
-from typing import Mapping
+from collections.abc import Mapping
 
 @dataclass(frozen=True, slots=True)
 class IntegrationEvent:
