@@ -28,17 +28,17 @@ Reporting
 
 ## Current implementation boundary
 
-Phases 1–6 are implemented. Phase 6 is the current bounded local product boundary.
+Phases 1–12 are implemented. The repository now contains local and hosted product profiles plus bounded advanced analysis, runtime verification, integrations, assurance, and governed research.
 
-Implemented product concerns include the installable package, CLI/API service, local SQLite persistence, content-addressed objects, deterministic snapshot/discovery/collection, bounded subprocess policy, durable local jobs, completeness-aware reporting, diagnostics, health/OpenAPI metadata, and package/CI hardening.
+Implemented product concerns include the installable package, CLI/API service, local SQLite persistence, hosted PostgreSQL/S3 adapters, tenant-scoped roles, content-addressed objects, deterministic snapshot/discovery/collection, bounded subprocess policy, durable jobs, advanced graph analysis, controlled runtime verification, enterprise integration contracts, assurance bundles, governed research, completeness-aware reporting, diagnostics, health/OpenAPI metadata, and package/CI hardening.
 
 The following remain explicit extension seams rather than implied capabilities:
 
-- hardened arbitrary candidate-code runtime execution
-- PostgreSQL/S3 production adapters
-- horizontally scaled workers
+- unrestricted candidate-code execution outside the controlled runtime policy
+- deployment-owned TLS, IAM, backup/restore, HA topology, network controls, and centralized telemetry
 - universal scanner/vulnerability coverage
-- broader runtime/cloud/environment collectors
+- provider-specific integrations not yet implemented beyond the current connector substrate
+- independent external assurance or penetration testing
 
 ## Architectural rules
 
@@ -88,5 +88,9 @@ Unsupported functionality must fail explicitly. The product must not simulate Po
 6. **Productization** — installable local product boundary, persistence, API/CLI, jobs, reporting, diagnostics, and CI/package hardening.
 7. **Production Runtime & Scale** — hosted PostgreSQL/S3 adapters, tenant-scoped authorization, distributed-safe leases, operational telemetry, and production deployment boundaries.
 8. **Advanced Security Analysis** — bounded deterministic reachability, privilege, agent/tool, sensitive-resource, and attack-surface analysis.
+9. **Trusted Runtime Verification** — controlled sandboxed runtime verification over the bounded execution policy.
+10. **Enterprise Integrations** — tenant-scoped event normalization, idempotency, secure outbound connectors, and authenticated webhook processing.
+11. **Governance & Assurance** — versioned framework references, evidence-required assessments, and deterministic evidence bundles.
+12. **Platform Maturity** — bounded governed research with explicit approval and non-authoritative autonomy boundaries.
 
 Detailed phase decisions are recorded in [Architecture Decision Records](../decisions/README.md).
