@@ -38,14 +38,17 @@ class ProductService:
         self.reports=ReportService(self.store,settings.tenant_id)
 
     def create_project(self, name: str, repository: str, owner: str="local") -> Project:
+        self.tenant.require(Role.ANALYST, Role.ADMIN)
         p=Project(id=new_id("project"),name=name,repository=repository,owner=owner,created_at=datetime.now(timezone.utc))
         self.store.put("projects",p.id,p.id,p.model_dump(mode="json"),p.created_at.isoformat(),tenant_id=self.settings.tenant_id)
         return p
 
     def get_project(self, project_id: str) -> Project:
+        self.tenant.require(Role.READER, Role.ANALYST, Role.ADMIN)
         return Project.model_validate(self.store.get("projects",project_id,tenant_id=self.settings.tenant_id))
 
     def create_analysis(self, project_id: str, source: str) -> Analysis:
+        self.tenant.require(Role.ANALYST, Role.ADMIN)
         self.get_project(project_id)
         a=Analysis(id=new_id("analysis"),project=project_id,status=AnalysisStatus.CREATED,
                    metadata={"source":source,"coverage":"collection_only"})
@@ -220,9 +223,11 @@ class ProductService:
         self.store.replace("analyses", analysis.id, analysis.model_dump(mode="json"), tenant_id=self.settings.tenant_id)
 
     def get_analysis(self, analysis_id: str) -> Analysis:
+        self.tenant.require(Role.READER, Role.ANALYST, Role.ADMIN)
         return Analysis.model_validate(self.store.get("analyses",analysis_id,tenant_id=self.settings.tenant_id))
 
     def findings(self, analysis_id: str, snapshot_id: str|None=None, limit:int=100, offset:int=0):
+        self.tenant.require(Role.READER, Role.ANALYST, Role.ADMIN)
         analysis=self.get_analysis(analysis_id)
         if limit < 0 or offset < 0:
             raise ValueError("limit and offset must be non-negative")
@@ -234,6 +239,7 @@ class ProductService:
         return self.store.list("findings","snapshot_id",sid,limit,offset,tenant_id=self.settings.tenant_id)
 
     def report(self, analysis_id: str) -> dict[str,object]:
+        self.tenant.require(Role.READER, Role.ANALYST, Role.ADMIN)
         a=self.get_analysis(analysis_id)
         if not a.snapshot_ids:
             raise ValueError("analysis has no snapshot")
