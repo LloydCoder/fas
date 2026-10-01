@@ -64,9 +64,9 @@ The goal is not to maximize the number of findings. It is to make important conc
 
 ## Current status
 
-**Version:** `0.7.0`  
+**Version:** `0.6.0`  
 **Maturity:** Alpha  
-**Current milestone:** Phase 7 production runtime and scale is implemented as an explicit hosted deployment profile.
+**Current milestone:** Phases 1–12 are implemented and merged; the project is now in continuous enterprise hardening and forensic maintenance.
 
 Phase 6 includes:
 
@@ -469,35 +469,26 @@ The README is intentionally the orientation layer. Deep design rationale belongs
 
 ## Roadmap
 
-FAS has completed the foundational phases through Phase 6. Future work should be advertised as explicit milestones, not implied capabilities.
+The numbered enterprise maturity sequence is complete through Phase 12. Further work should be handled as versioned hardening, capability releases, and benchmark-driven improvements rather than inventing additional phases.
 
 ### Completed
 
-- **Phase 1 — Foundations:** domain contracts, evidence/provenance model, immutable snapshots.
-- **Phase 2 — Evidence Graph:** provenance-aware graph storage, bounded traversal/path analysis, validation, serialization, and graph comparison primitives.
-- **Phase 3 — Security Collection:** repository discovery, tool adapters, hostile-input hardening, raw artifacts, replay metadata, and collection acceptance tests.
-- **Phase 4 — Investigation:** immutable cases, evidence requests, deterministic graph/data-flow primitives, attack-path reconstruction, exploitability analysis, and constrained LLM advisory boundary.
-- **Phase 5 — Verification:** before/after remediation verification, semantic graph diff, attack-path revalidation, residual/alternate-path analysis, regression baselines, and deterministic security-test contracts.
-- **Phase 6 — Productization:** installable package, shared CLI/API service, SQLite persistence, content-addressed objects, deterministic collection, bounded subprocess policy, durable jobs, completeness-aware reporting, diagnostics, API health/OpenAPI metadata, and CI/package hardening.
-- **Phase 7 — Production Runtime & Scale:** hosted PostgreSQL persistence, S3-compatible content-addressed objects, tenant-scoped authorization primitives, distributed-safe job leasing, production dependency profile, structured operational events, migrations, and deployment documentation.
+- **Phase 1 — Foundations:** canonical domain contracts, evidence/provenance model, immutable snapshots.
+- **Phase 2 — Evidence Graph:** provenance-aware graph storage, bounded traversal/path analysis, validation, serialization, and graph comparison.
+- **Phase 3 — Security Collection:** repository discovery, tool adapters, hostile-input hardening, raw artifacts, replay metadata, and collection acceptance.
+- **Phase 4 — Investigation:** immutable cases, evidence requests, deterministic graph/data-flow primitives, attack-path reconstruction, exploitability analysis, and constrained model advisory.
+- **Phase 5 — Verification:** remediation verification, semantic graph diff, attack-path revalidation, residual/alternate paths, regression baselines, and deterministic security-test contracts.
+- **Phase 6 — Productization:** installable package, CLI/API service, SQLite persistence, content-addressed objects, durable jobs, reporting, diagnostics, and CI/package hardening.
+- **Phase 7 — Production Runtime & Scale:** PostgreSQL/S3 hosted adapters, tenant-scoped roles, distributed-safe job leasing, structured operational events, and hosted deployment boundaries.
+- **Phase 8 — Advanced Security Analysis:** bounded deterministic reachability, privilege paths, agent/tool and MCP paths, sensitive-resource reachability, and attack-surface inventory.
+- **Phase 9 — Trusted Runtime Verification:** controlled sandboxed runtime verification over the existing executor with explicit executable allowlisting, deny-all networking, secret denial, and output integrity.
+- **Phase 10 — Enterprise Integrations:** normalized tenant-scoped integration events, idempotency, HTTPS host allowlisting, GitHub REST access, and authenticated webhook normalization.
+- **Phase 11 — Governance & Assurance:** versioned framework references, evidence-required control assessments, deterministic evidence bundles, and independently verifiable manifests.
+- **Phase 12 — Platform Maturity:** bounded governed research with approval states, budgets, stopping conditions, and an explicit non-authoritative autonomy boundary.
 
-### Phase 8 advanced analysis\n\nFAS now includes bounded deterministic graph analysis for reachability, privilege paths, agent/tool paths, sensitive resources, and attack-surface inventory. These signals remain evidence-scoped and cannot directly create findings or verdicts.\n\n### Phase 7 hosted profile
+### Post-Phase-12 evolution
 
-FAS now supports an explicit production profile using PostgreSQL persistence, S3-compatible content-addressed objects, tenant-scoped roles, lease-aware durable jobs, and structured operational events. The local SQLite profile remains supported.
-
-### Explicit extension seams
-
-- hardened arbitrary runtime execution
-- PostgreSQL/S3 production adapters
-- horizontally scaled workers
-- additional security-tool integrations
-- broader runtime/cloud/environment evidence
-- deeper agent/MCP security analysis
-- additional benchmark/interoperability integrations
-
-A future milestone becomes “implemented” only after code, tests, security controls, schemas, and documentation are reconciled.
-
----
+Future releases should concentrate on deeper language-aware analysis, additional provider integrations, stronger hosted operations, benchmark expansion, independently assessed assurance, and controlled model-assisted research while preserving the existing evidence and authority boundaries.
 
 ## Relationship to FAS-Bench
 
