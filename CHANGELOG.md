@@ -86,3 +86,9 @@ The project is in alpha; the 0.6.0 Phase 6 product boundary remains bounded and 
 - Added append-only JSONL verification persistence seam and deterministic fixture security-test executor.
 - Added Phase 5 schema parity, verification fixtures, threat-model coverage, ADRs, and structured `fas verify` CLI support.
 - Kept arbitrary candidate-repository execution outside the core Phase 5 runtime boundary.
+
+## Phase 9
+
+- Added a controlled sandboxed runtime verification adapter over SecureExecutor.
+- Enforced explicit executable allowlisting, DENY_ALL networking, secret denial, bounded execution, and output integrity digests.
+- Added runtime contract and threat-model documentation plus regression coverage.
