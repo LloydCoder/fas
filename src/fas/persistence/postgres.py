@@ -38,11 +38,12 @@ class PostgresStore:
                 con.execute(f"CREATE TABLE IF NOT EXISTS {table}({columns})")
                 con.execute(f"CREATE INDEX IF NOT EXISTS idx_{table}_tenant_created ON {table}(tenant_id,created_at,{pk})")
             con.execute("""CREATE TABLE IF NOT EXISTS fas_jobs(
-                id text PRIMARY KEY,operation_key text NOT NULL UNIQUE,kind text NOT NULL,status text NOT NULL,
+                id text PRIMARY KEY,operation_key text NOT NULL,kind text NOT NULL,status text NOT NULL,
                 tenant_id text NOT NULL,payload jsonb NOT NULL,created_at timestamptz NOT NULL,updated_at timestamptz NOT NULL,
                 error text,worker_id text,lease_until timestamptz,heartbeat_at timestamptz,
                 retry_count integer NOT NULL DEFAULT 0,cancel_requested boolean NOT NULL DEFAULT false)""")
             con.execute("CREATE INDEX IF NOT EXISTS idx_fas_jobs_tenant_status ON fas_jobs(tenant_id,status,updated_at)")
+            con.execute("CREATE UNIQUE INDEX IF NOT EXISTS uq_fas_jobs_tenant_operation ON fas_jobs(tenant_id,operation_key)")
             con.commit()
 
     def ensure_tenant(self,tenant_id:str,subject:str,role:str="admin")->None:
@@ -119,7 +120,7 @@ class PostgresStore:
     def job_claim(self,job_id:str,operation_key:str,kind:str,payload:dict[str,Any],created_at:str,claim_token:str,lease_until:str,*,tenant_id:str="local")->dict[str,Any]:
         now=self._ts(created_at); lease=self._ts(lease_until)
         with self._connect() as con:
-            con.execute("INSERT INTO fas_jobs(id,operation_key,kind,status,tenant_id,payload,created_at,updated_at,worker_id,lease_until,heartbeat_at) VALUES(%s,%s,%s,'QUEUED',%s,%s,%s,%s,%s,%s,%s) ON CONFLICT(operation_key) DO NOTHING",(job_id,operation_key,kind,tenant_id,json.dumps(payload),now,now,claim_token,lease,now))
+            con.execute("INSERT INTO fas_jobs(id,operation_key,kind,status,tenant_id,payload,created_at,updated_at,worker_id,lease_until,heartbeat_at) VALUES(%s,%s,%s,'QUEUED',%s,%s,%s,%s,%s,%s,%s) ON CONFLICT(tenant_id,operation_key) DO NOTHING",(job_id,operation_key,kind,tenant_id,json.dumps(payload),now,now,claim_token,lease,now))
             con.execute("UPDATE fas_jobs SET status='QUEUED',kind=%s,payload=%s,updated_at=%s,worker_id=%s,lease_until=%s,heartbeat_at=%s,error=NULL,retry_count=retry_count+1,cancel_requested=false WHERE operation_key=%s AND tenant_id=%s AND status IN ('FAILED','TIMEOUT','CANCELLED')",(kind,json.dumps(payload),now,claim_token,lease,now,operation_key,tenant_id))
             row=con.execute("SELECT * FROM fas_jobs WHERE operation_key=%s AND tenant_id=%s FOR UPDATE",(operation_key,tenant_id)).fetchone(); con.commit()
         if row is None: raise RuntimeError("job claim failed")
@@ -149,7 +150,7 @@ class PostgresStore:
 
     def job_upsert(self,job_id:str,operation_key:str,kind:str,status:str,payload:dict[str,Any],created_at:str,updated_at:str,error:str|None=None,*,tenant_id:str="local")->None:
         with self._connect() as con:
-            con.execute("INSERT INTO fas_jobs(id,operation_key,kind,status,tenant_id,payload,created_at,updated_at,error) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s) ON CONFLICT(operation_key) DO UPDATE SET status=excluded.status,payload=excluded.payload,updated_at=excluded.updated_at,error=excluded.error",(job_id,operation_key,kind,status,tenant_id,json.dumps(payload),self._ts(created_at),self._ts(updated_at),error)); con.commit()
+            con.execute("INSERT INTO fas_jobs(id,operation_key,kind,status,tenant_id,payload,created_at,updated_at,error) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s) ON CONFLICT(tenant_id,operation_key) DO UPDATE SET status=excluded.status,payload=excluded.payload,updated_at=excluded.updated_at,error=excluded.error",(job_id,operation_key,kind,status,tenant_id,json.dumps(payload),self._ts(created_at),self._ts(updated_at),error)); con.commit()
 
     def recover_stale_jobs(self,now:str|None=None,*,tenant_id:str="local")->int:
         stamp=self._ts(now or datetime.now(timezone.utc).isoformat())
