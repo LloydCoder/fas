@@ -47,7 +47,7 @@ All notable changes to FAS are documented here.
 - Added configuration precedence, resource limits, secret-safe diagnostics and explicit sandbox policy primitives.
 - Added package installation and CLI smoke gates to CI, plus Phase 6 product/security integration tests.
 - Added benchmark-compatible machine-readable output schema and Phase 6 architecture/threat-model ADRs.
-- Kept unsupported PostgreSQL/S3/runtime-sandbox capabilities explicit rather than simulating them.
+- Kept deployment-owned TLS/IAM/HA/backup controls explicit rather than simulating them.
 
 ## Phase 3 completion — 2026-09-19
 
@@ -57,11 +57,6 @@ All notable changes to FAS are documented here.
 - Added parser, filesystem, path, resource, fuzz/property and benchmark hardening.
 - Preserved the Phase 3 boundary: collectors produce observations/evidence only; findings, exploitability and verdicts remain later phases.
 
-# Changelog
-
-All notable changes to FAS will be documented here.
-
-The project is in alpha; the 0.6.0 Phase 6 product boundary remains bounded and does not claim universal vulnerability coverage or arbitrary runtime sandboxing.
 
 ## Unreleased
 
@@ -106,3 +101,22 @@ The project is in alpha; the 0.6.0 Phase 6 product boundary remains bounded and 
 - Added deterministic evidence-bundle manifests with independent integrity verification.
 - Added explicit assurance states and evidence requirements.
 - Added governance architecture and threat-model documentation.
+
+
+## Phase 12
+
+- Added bounded governed research contracts, approval states, budgets, stopping reasons, and a non-authoritative autonomy boundary.
+
+## Phase 11
+
+- Added machine-readable control assessment and versioned framework reference contracts.
+- Added deterministic evidence-bundle manifests with independent integrity verification.
+
+## Phase 10
+
+- Added tenant-scoped integration event normalization and idempotency contracts.
+- Added HTTPS host-allowlisted outbound connectors and GitHub REST/webhook boundaries.
+
+## Phase 9
+
+- Added controlled sandboxed runtime verification over SecureExecutor with explicit executable allowlisting, deny-all networking, secret denial, and output integrity digests.
