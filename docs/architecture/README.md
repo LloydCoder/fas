@@ -28,7 +28,7 @@ Reporting
 
 ## Current implementation boundary
 
-Phases 1–12 are implemented. The repository now contains local and hosted product profiles plus bounded advanced analysis, runtime verification, integrations, assurance, and governed research.
+Phases 1–16 are implemented. The repository now contains local and hosted product profiles plus bounded advanced analysis, runtime verification, integrations, assurance, and governed research.
 
 Implemented product concerns include the installable package, CLI/API service, local SQLite persistence, hosted PostgreSQL/S3 adapters, tenant-scoped roles, content-addressed objects, deterministic snapshot/discovery/collection, bounded subprocess policy, durable jobs, advanced graph analysis, controlled runtime verification, enterprise integration contracts, assurance bundles, governed research, completeness-aware reporting, diagnostics, health/OpenAPI metadata, and package/CI hardening.
 
@@ -92,5 +92,9 @@ Unsupported functionality must fail explicitly. The product must not simulate Po
 10. **Enterprise Integrations** — tenant-scoped event normalization, idempotency, secure outbound connectors, and authenticated webhook processing.
 11. **Governance & Assurance** — versioned framework references, evidence-required assessments, and deterministic evidence bundles.
 12. **Platform Maturity** — bounded governed research with explicit approval and non-authoritative autonomy boundaries.
+13. **Analysis Query Kernel** — bounded deterministic graph selection, reachability, and evidence correlation primitives.
+14. **Evidence Correlation** — deterministic evidence grouping and timezone-aware temporal indexing.
+15. **Analyzer SDK** — read-only extension contracts for deterministic security analyzers.
+16. **Supply-Chain Inventory** — bounded CycloneDX 1.7 inventory normalization without treating inventory as vulnerability truth.
 
 Detailed phase decisions are recorded in [Architecture Decision Records](../decisions/README.md).

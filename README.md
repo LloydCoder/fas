@@ -66,7 +66,7 @@ The goal is not to maximize the number of findings. It is to make important conc
 
 **Version:** `0.6.0`  
 **Maturity:** Alpha  
-**Current milestone:** Phases 1–12 are implemented and merged; the project is now in continuous enterprise hardening and forensic maintenance.
+**Current milestone:** Phases 1–16 are implemented and merged; the project is in continuous enterprise hardening, capability expansion, and forensic maintenance.
 
 Phase 6 includes:
 
