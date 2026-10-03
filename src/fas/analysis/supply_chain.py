@@ -2,8 +2,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
-from fas.domain.common import ContentHash
-
 @dataclass(frozen=True, slots=True)
 class PackageComponent:
     bom_ref: str
