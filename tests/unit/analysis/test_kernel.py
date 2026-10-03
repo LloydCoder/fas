@@ -6,7 +6,8 @@ from fas.graph import GraphEngine, ResultStatus
 
 def _provenance():
     return (Provenance(category=ProvenanceCategory.VERIFIED_ARTIFACT,
-                       level=ProvenanceLevel.T3, source="test"),)
+                       level=ProvenanceLevel.T3, collector="test",
+                       method="fixture", source="test", observed_at=datetime.now(timezone.utc)),)
 
 def _graph():
     analysis_id, snapshot_id = new_id("analysis"), new_id("snapshot")
