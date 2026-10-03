@@ -1,5 +1,5 @@
-"""analysis package."""
-
+"""Analysis engines and deterministic query primitives."""
 from .advanced import AdvancedAnalysisEngine, AnalysisSignal, AttackSurface
-
-__all__ = ["AdvancedAnalysisEngine", "AnalysisSignal", "AttackSurface"]
+from .kernel import AnalysisQueryEngine, EdgeSelection, NodeSelection, PathSelection, QueryLimits
+__all__ = ["AdvancedAnalysisEngine", "AnalysisSignal", "AttackSurface",
+           "AnalysisQueryEngine", "EdgeSelection", "NodeSelection", "PathSelection", "QueryLimits"]
