@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from hashlib import sha256
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from fas.domain.evidence import Evidence
 from fas.domain.common import EvidenceId
 
