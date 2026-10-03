@@ -38,13 +38,13 @@ class CycloneDXInventoryParser:
         raw_components = document.get("components", [])
         raw_dependencies = document.get("dependencies", [])
         if not isinstance(raw_components, list) or not isinstance(raw_dependencies, list):
-            raise ValueError("components and dependencies must be arrays")
+            raise TypeError("components and dependencies must be arrays")
         if len(raw_components) > self.max_components or len(raw_dependencies) > self.max_dependencies:
             raise ValueError("CycloneDX inventory exceeds configured limits")
         components: list[PackageComponent] = []
         for item in raw_components:
             if not isinstance(item, dict):
-                raise ValueError("component entries must be objects")
+                raise TypeError("component entries must be objects")
             ref, name, version_value = item.get("bom-ref"), item.get("name"), item.get("version")
             if not all(isinstance(v, str) and v for v in (ref, name, version_value)):
                 raise ValueError("component requires bom-ref, name, and version")
@@ -54,10 +54,10 @@ class CycloneDXInventoryParser:
         relations: list[DependencyRelation] = []
         for item in raw_dependencies:
             if not isinstance(item, dict) or not isinstance(item.get("ref"), str):
-                raise ValueError("dependency requires ref")
+                raise TypeError("dependency requires ref")
             for target in item.get("dependsOn", []):
                 if not isinstance(target, str):
-                    raise ValueError("dependency targets must be strings")
+                    raise TypeError("dependency targets must be strings")
                 relations.append(DependencyRelation(item["ref"], target))
         return SupplyChainInventory(version, tuple(sorted(components, key=lambda x: x.bom_ref)),
                                     tuple(sorted(relations, key=lambda x: (x.source, x.target))))
