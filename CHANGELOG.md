@@ -5,6 +5,7 @@ All notable changes to FAS are documented here.
 ## [Unreleased]
 
 ### Added
+- Phase 16 bounded CycloneDX 1.7 supply-chain inventory normalization.
 - Phase 15 deterministic security analyzer extension SDK and registry.
 - Phase 14 deterministic evidence correlation groups and temporal evidence filtering.
 - Phase 13 deterministic analysis query kernel.
