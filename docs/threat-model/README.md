@@ -48,7 +48,7 @@ Hosted deployments use PostgreSQL tenant scoping and S3 content-addressed object
 
 See [Phase 7 production threats](phase7-production.md).
 
-## Phase 7–12 threat documents
+## Phase 7–16 threat documents
 
 - [Phase 7 production](phase7-production.md)
 - [Phase 8 analysis](phase8-analysis.md)
@@ -56,6 +56,10 @@ See [Phase 7 production threats](phase7-production.md).
 - [Phase 10 integrations](phase10-integrations.md)
 - [Phase 11 assurance](phase11-assurance.md)
 - [Phase 12 research](phase12-research.md)
+- [Phase 13 analysis kernel](phase13-analysis-kernel.md)
+- [Phase 14 evidence correlation](phase14-evidence-correlation.md)
+- [Phase 15 analyzer SDK](phase15-analyzer-sdk.md)
+- [Phase 16 supply-chain inventory](phase16-supply-chain.md)
 
 ## Current runtime boundary
 
