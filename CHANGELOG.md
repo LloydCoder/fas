@@ -5,7 +5,8 @@ All notable changes to FAS are documented here.
 ## [Unreleased]
 
 ### Added
-- Phase 14 deterministic evidence correlation groups and timezone-aware temporal evidence filtering.
+- Phase 15 deterministic security analyzer extension SDK and registry.
+- Phase 14 deterministic evidence correlation groups and temporal evidence filtering.
 - Phase 13 deterministic analysis query kernel.
 
 ## [0.6.0] - 2026-10-01
