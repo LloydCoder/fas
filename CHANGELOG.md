@@ -5,7 +5,8 @@ All notable changes to FAS are documented here.
 ## [Unreleased]
 
 ### Added
-- Phase 13 deterministic analysis query kernel for bounded node, edge, reachability, and evidence-correlation queries.
+- Phase 14 deterministic evidence correlation groups and timezone-aware temporal evidence filtering.
+- Phase 13 deterministic analysis query kernel.
 
 ## [0.6.0] - 2026-10-01
 
