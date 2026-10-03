@@ -96,8 +96,10 @@ class AnalysisQueryEngine:
                 pairs += 1
                 if pairs > pair_cap:
                     return PathSelection(tuple(paths), ResultStatus.TRUNCATED, "path pair limit exceeded")
-                result = self.graph.shortest_path(source.id, target.id,
-                    allowed_relationship_types=relationships, max_depth=max_depth)
+                kwargs = {"allowed_relationship_types": relationships}
+                if max_depth is not None:
+                    kwargs["max_depth"] = max_depth
+                result = self.graph.shortest_path(source.id, target.id, **kwargs)
                 paths.extend(sorted(result.paths, key=lambda p: p.path_id))
                 if len(paths) >= pair_cap:
                     return PathSelection(tuple(paths[:pair_cap]), ResultStatus.TRUNCATED, "path result limit exceeded")
