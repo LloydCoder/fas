@@ -56,3 +56,10 @@ def test_reachability_and_evidence_correlation():
     assert result.status == ResultStatus.COMPLETE
     assert len(result.paths) == 1
     assert AnalysisQueryEngine.evidence_ids(paths=result.paths) == (evidence_id,)
+
+
+def test_empty_queries_are_explicitly_empty():
+    graph, _ = _graph()
+    result = AnalysisQueryEngine(graph).nodes(node_types=frozenset({GraphNodeType.AGENT}))
+    assert result.status == ResultStatus.EMPTY
+    assert result.complete is False
