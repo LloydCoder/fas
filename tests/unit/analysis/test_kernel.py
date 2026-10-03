@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from fas.analysis import AnalysisQueryEngine, QueryLimits
-from fas.domain.common import GraphNodeType, Provenance, ProvenanceCategory, ProvenanceLevel, RelationshipType, new_id
+from fas.domain.common import EvidenceType, GraphNodeType, Provenance, ProvenanceCategory, ProvenanceLevel, RelationshipType, new_id
+from fas.domain.evidence import Evidence
 from fas.domain.graph import GraphEdge, GraphNode
 from fas.graph import GraphEngine, ResultStatus
 
@@ -12,10 +13,14 @@ def _provenance():
 def _graph():
     analysis_id, snapshot_id = new_id("analysis"), new_id("snapshot")
     graph = GraphEngine(analysis_id=analysis_id, snapshot_id=snapshot_id, complete=True)
+    evidence_id = new_id("evidence")
+    evidence = Evidence(id=evidence_id, analysis_id=analysis_id, snapshot_id=snapshot_id,
+        type=EvidenceType.CODE, claim="fixture evidence", provenance=_provenance(),
+        observed_at=datetime.now(timezone.utc))
+    graph.add_evidence(evidence)
     source = GraphNode(id=new_id("node"), type=GraphNodeType.ENDPOINT, label="endpoint",
         analysis_id=analysis_id, snapshot_id=snapshot_id, canonical_identity="endpoint:test",
         provenance=_provenance())
-    evidence_id = new_id("evidence")
     secret = GraphNode(id=new_id("node"), type=GraphNodeType.SECRET, label="secret",
         analysis_id=analysis_id, snapshot_id=snapshot_id, canonical_identity="secret:test",
         evidence_ids=(evidence_id,), provenance=_provenance(), security_relevant=True)
