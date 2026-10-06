@@ -109,41 +109,36 @@ These are explicit capability boundaries, not hidden assumptions.
 
 ### Install for development
 
-```bash
-git clone https://github.com/LloydCoder/fas.git
+<pre><code>git clone https://github.com/LloydCoder/fas.git
 cd fas
 python -m pip install -e ".[dev]"
-```
+</code></pre>
 
 ### Inspect the environment
 
-```bash
-fas doctor --format json
+<pre><code>fas doctor --format json
 fas tools --format json
-```
+</code></pre>
 
 ### Analyze a local project
 
-```bash
-fas analyze ./example-project --format json
-fas status <analysis-id> --format json
-fas findings <analysis-id> --format json
-fas report <analysis-id> --format json
-```
+<pre><code>fas analyze ./example-project --format json
+fas status &lt;analysis-id&gt; --format json
+fas findings &lt;analysis-id&gt; --format json
+fas report &lt;analysis-id&gt; --format json
+</code></pre>
 
 ### Run the local API
 
-```bash
-fas api
-```
+<pre><code>fas api
+</code></pre>
 
 The API binds to `127.0.0.1` by default. Non-local exposure requires explicit bearer-token authentication. Read [SECURITY.md](SECURITY.md) before exposing the service beyond a trusted local environment.
 
 ### Explore verification
 
-```bash
-fas verify --help
-```
+<pre><code>fas verify --help
+</code></pre>
 
 Verification operates on explicit verification inputs. It is not a generic claim that an entire application is secure.
 
@@ -393,8 +388,7 @@ Read [SECURITY.md](SECURITY.md) and the [threat model](docs/threat-model/README.
 
 ## Repository layout
 
-```text
-fas/
+<pre><code>fas/
 ├── .github/                 # CI and community automation
 ├── docs/                    # architecture, evidence, threat model, ADRs, security
 ├── schemas/                 # machine-readable contracts
@@ -409,7 +403,7 @@ fas/
 ├── LICENSE
 ├── pyproject.toml
 └── README.md
-```
+</code></pre>
 
 The source tree is organized around domain boundaries rather than individual vendors.
 
@@ -419,15 +413,14 @@ The source tree is organized around domain boundaries rather than individual ven
 
 ### Local validation
 
-```bash
-python -m pip install -e ".[dev]"
+<pre><code>python -m pip install -e ".[dev]"
 ruff check .
 pytest --cov=fas --cov-report=term-missing
 pytest tests/security
 python -m pip check
 python scripts/check_schema_parity.py
 python -m build
-```
+</code></pre>
 
 CI also exercises supported Python versions, package installation, CLI/API smoke paths, reproducibility, product integration, and security-focused tests.
 
