@@ -1,0 +1,55 @@
+# FAS — Full Documentation Map
+
+FAS is an evidence-first security analysis engine for AI agents and modern software.
+
+## Product model
+
+FAS collects deterministic observations, preserves provenance, builds an evidence graph, reconstructs security-relevant paths, evaluates exploitability, produces explicit verdicts, and verifies remediation against explicit before/after snapshots.
+
+The canonical semantic chain is:
+
+    Observation → Evidence → Finding → Attack Path → Verdict
+
+Unknown and incomplete states are preserved rather than silently treated as negative facts.
+
+## Authority model
+
+Collectors produce observations. Evidence preserves provenance and integrity. The graph represents evidence-backed relationships. Analysis correlates and reasons over evidence. The verdict engine produces formal conclusions. LLMs remain advisory.
+
+## Documentation
+
+- README: ./README.md
+- Documentation: ./docs/README.md
+- Tutorials: ./docs/tutorials/README.md
+- How-to: ./docs/how-to/README.md
+- Explanation: ./docs/explanation/README.md
+- Reference: ./docs/reference/README.md
+- Architecture: ./docs/architecture/README.md
+- Evidence model: ./docs/evidence-model/README.md
+- Threat model: ./docs/threat-model/README.md
+- Decisions: ./docs/decisions/README.md
+- Security: ./SECURITY.md
+- Contributing: ./CONTRIBUTING.md
+- Support: ./SUPPORT.md
+- Changelog: ./CHANGELOG.md
+
+## CLI
+
+fas doctor
+fas tools
+fas analyze
+fas status
+fas findings
+fas report
+fas api
+fas verify
+
+Use fas --help and command-specific --help output as the final CLI authority.
+
+## Compatibility
+
+FAS targets Python 3.11+. CI currently exercises Python 3.11 through 3.14.
+
+## Non-claims
+
+FAS does not claim universal vulnerability coverage, complete attack-path enumeration, arbitrary execution of candidate repositories, or formal compliance with a security framework without a specific verified mapping.
