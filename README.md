@@ -14,14 +14,18 @@
 
 > **A scanner finding is a signal. A FAS security conclusion must be evidence-backed, reproducible, and explicit about uncertainty.**
 
-<pre><code class="language-mermaid">flowchart LR
-    A[Code / Config / Tools] --> B[Observations]
-    B --> C[Evidence + Provenance]
-    C --> D[Evidence Graph]
-    D --> E[Attack-Path Analysis]
-    E --> F[Verdict]
-    F --> G[Remediation Verification]
-    G --> C</code></pre>
+```mermaid
+flowchart LR
+    A["Code / Config / Tools"] --> B["Observations"]
+    B --> C["Evidence + Provenance"]
+    C --> D["Evidence Graph"]
+    D --> E["Attack-Path Analysis"]
+    E --> F["Verdict"]
+    F --> G["Remediation Verification"]
+    G --> C
+    E -.-> H["Missing / Contradictory Evidence"]
+    H -.-> C
+```
 
 > [!NOTE]
 > A recorded terminal demo is not yet committed. The repository should add a real, short FAS run under docs/media/ rather than presenting a fabricated demo.
