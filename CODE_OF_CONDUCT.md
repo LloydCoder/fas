@@ -2,22 +2,30 @@
 
 ## Our standard
 
-We are committed to maintaining a professional, respectful, and technically rigorous community.
+FAS is a security-analysis project. We expect everyone participating in the project to help maintain a professional, respectful, technically rigorous environment.
 
-Participants are expected to:
+Expected behavior includes respect, good-faith technical discussion, responsible security disclosure, privacy, and criticism focused on code, evidence, ideas, and implementation.
 
-- be respectful and constructive
-- discuss technical disagreements in good faith
-- focus criticism on ideas and implementations
-- avoid harassment, discrimination, threats, and personal attacks
-- respect responsible security disclosure practices
+Unacceptable behavior includes harassment, discrimination, threats, intimidation, doxxing, deliberate disruption, abuse of security-reporting channels, and retaliation against good-faith contributors or reporters.
 
 ## Enforcement
 
-Project maintainers may remove comments, contributions, or participation that violate this code of conduct.
+The project maintainer is responsible for interpretation and enforcement.
 
-Serious or repeated violations may result in temporary or permanent exclusion from project spaces.
+**Enforcement contact: @LloydCoder via GitHub.**
+
+Reports will be handled as confidentially as reasonably possible. The maintainer may remove content, request changes, restrict participation, or permanently exclude a participant when necessary to protect the community.
+
+If a report concerns a security vulnerability in FAS, use [SECURITY.md](SECURITY.md), not a public issue.
 
 ## Security research
 
-Security research is welcome. Do not disclose sensitive vulnerabilities irresponsibly or test systems without authorization.
+Authorized security research is welcome. Do not test systems without permission, publish sensitive vulnerability details prematurely, or include real credentials or private data in project discussions.
+
+## Scope
+
+This policy applies to project repositories, issues, pull requests, discussions, documentation, and other project spaces under the project's control.
+
+## Attribution
+
+This policy is informed by the Contributor Covenant 2.1 and adapted for the needs of a security-analysis project.
