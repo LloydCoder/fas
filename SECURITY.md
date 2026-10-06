@@ -1,63 +1,54 @@
 # Security Policy
 
-FAS is security-sensitive software that may process hostile repositories, tool output, security
-findings, and verification artifacts.
+FAS is security-sensitive software that may process hostile repositories, source code, configuration, scanner output, and security evidence.
 
 ## Reporting a vulnerability
 
-Please do not report security vulnerabilities in FAS through a public GitHub issue. Use GitHub's
-private vulnerability reporting or security advisory mechanism when available. If private
-reporting is unavailable, use the security contact configured in the repository settings.
+**Do not report security vulnerabilities through a public GitHub issue.**
 
-Do not include real credentials, customer information, or unnecessary sensitive data.
+Use GitHub's private vulnerability reporting/security advisory mechanism for this repository when available.
 
-## Security scope
+If private reporting is unavailable, contact the maintainer privately through GitHub: **@LloydCoder**.
 
-Security reports may concern:
+Do not include real credentials, customer information, private source code, or unnecessary sensitive data.
 
-- snapshot and cross-analysis isolation
-- evidence/provenance integrity
-- graph poisoning or path confusion
-- collector and parser hardening
-- unsafe command or runtime execution
-- remediation/verification bypass
-- regression-baseline tampering
-- permission and identity analysis
-- agent/tool/MCP authorization
-- prompt injection and LLM boundary violations
-- schema validation and unsafe deserialization
-- dependency and CI/CD security
-- secret leakage
+## Response targets
 
-## Phase 5 verification security
+These are operational targets, not guarantees:
 
-Candidate snapshots are untrusted. FAS does not equate a patch, scanner disappearance, or changed
-line with remediation. Verification requires explicit before/after snapshot identity, provenance,
-bounded graph/path analysis, and evidence-backed security-property evaluation.
+| Stage | Target |
+|---|---|
+| Initial acknowledgement | Within 2 business days |
+| Initial triage | Within 5 business days |
+| Severity assessment | Within 7 business days |
+| Remediation/disclosure plan | Coordinated according to severity and affected versions |
 
-Core Phase 5 CI does not execute arbitrary candidate-repository commands and does not expose
-production credentials to verification fixtures. The deterministic security-test executor uses
-fixture results only. The Linux sandbox backend uses bubblewrap when available and fails closed when the requested isolation backend is unavailable. It isolates the target repository, process/user/PID/IPC/UTS/network namespaces as configured, removes ambient credential files, applies resource limits, and restricts the visible filesystem. Other operating systems and runtime backends remain bounded/unsupported unless explicitly implemented.
+Complex reports, upstream dependencies, or coordinated-disclosure constraints may require more time.
 
-## LLM boundary
+## Scope
 
-LLMs are advisory investigators. They cannot create authoritative evidence, override deterministic
-verification, mutate verification records, or execute arbitrary remediation/runtime commands.
+Reports may concern snapshot isolation, evidence/provenance integrity, graph poisoning, parser hardening, unsafe execution, verification bypass, baseline tampering, permission analysis, agent/tool/MCP authorization, prompt injection, unsafe deserialization, dependency/CI security, secret leakage, API authentication/authorization, or denial of service.
+
+## Security boundaries
+
+Candidate repositories and external tool output are untrusted. FAS must not treat a scanner disappearance, changed line, successful build, or model-generated explanation as proof of remediation by itself.
+
+Verification requires explicit before/after snapshot identity, provenance, bounded graph/path analysis, and evidence-backed evaluation of the declared security property.
+
+LLMs are advisory and cannot create authoritative evidence, mutate immutable evidence history, bypass deterministic verification, or authorize arbitrary remediation/runtime commands.
+
+## Runtime security
+
+The default HTTP API binds to 127.0.0.1. Authentication may be disabled for local development only. Any externally reachable deployment must enable bearer-token authentication.
+
+The local SQLite backend is intended for local operation and deterministic CI; it is not by itself a claim of horizontally scaled production storage.
+
+## Supply-chain security
+
+The repository uses locked dependencies and automated security checks including dependency review, dependency auditing, secret scanning, CodeQL, SBOM generation, and artifact attestations.
+
+Security-sensitive workflow changes must preserve least-privilege permissions and immutable action pinning.
 
 ## Coordinated disclosure
 
-Allow reasonable time for investigation and remediation before public disclosure.
-
-
-## Phase 6 product boundary
-
-The default HTTP API binds to 127.0.0.1 and has authentication disabled only for local development.
-Any externally reachable deployment must enable bearer-token authentication. The API rejects oversized
-JSON bodies and does not expose arbitrary filesystem or shell execution.
-
-The local SQLite backend is suitable for local operation and deterministic CI, not as a claim of
-horizontally scaled production storage. Deployments requiring PostgreSQL, S3-compatible storage, or
-runtime code execution must supply dedicated hardened adapters.
-
-Secrets are redacted from product diagnostics where recognized. Source content is not sent to external
-AI services by the core product layer. Network use is not required for core local analysis.
+Please allow reasonable time for investigation, remediation, affected-version assessment, and coordination before public disclosure.

@@ -1,96 +1,77 @@
 # Contributing to FAS
 
-Thank you for contributing to FAS. The project is security-analysis software, so correctness, reproducibility, provenance, immutable history, and safe execution matter more than feature volume.
+Thank you for contributing to FAS. Correctness, reproducibility, provenance, safe execution, and explicit uncertainty take priority over feature volume.
 
-## Start here
+## Before you start
 
-1. Read the [README](README.md).
+1. Read [README.md](README.md).
 2. Read the relevant [architecture documentation](docs/architecture/README.md).
-3. Check the [ADRs](docs/decisions/README.md) before changing security semantics.
-4. For security vulnerabilities, follow [SECURITY.md](SECURITY.md) rather than opening a public issue.
-5. If you are unsure whether a proposed change fits the architecture, open a design discussion/issue before implementing a large change.
+3. Check [ADRs](docs/decisions/README.md) before changing security semantics.
+4. For vulnerabilities, follow [SECURITY.md](SECURITY.md), not the public issue tracker.
+5. For normal bugs and feature proposals, use the GitHub issue forms.
 
-## What makes a good contribution?
+## Development workflow
 
-Prefer changes that are:
+Fork the repository, create a focused branch, make the smallest coherent change, validate locally, then open a pull request.
 
-- narrowly scoped
-- reproducible
-- testable
-- evidence-backed
-- explicit about capability boundaries
-- documented at the same time as the implementation
-
-High-value contribution areas include program analysis, evidence/provenance, graph algorithms, agent/MCP security, security-tool adapters, remediation verification, adversarial testing, reproducible security research, and documentation.
-
-## Domain and evidence rules
-
-- Observation, evidence, finding, investigation, verdict, remediation, and verification are distinct.
-- Security-relevant relationships must be provenance/evidence backed.
-- Original snapshot/evidence history is immutable.
-- Candidate verification data must not silently cross snapshot boundaries.
-- Missing evidence is explicit; absence is not negative evidence.
-- LLM output is advisory and never the source of truth.
-
-## Verification rules
-
-- A remediation declares an expected security property and root cause.
-- Verification compares explicit before/after snapshots.
-- Semantic graph diff distinguishes security-relevant changes from identifier churn.
-- Original attack paths are accounted for.
-- Residual/alternate-path analysis is used where technically applicable.
-- `REMEDIATED` requires completed required checks, verification evidence, and no blocking contradiction or missing evidence.
-- `UNKNOWN` is the correct outcome when required evidence is unavailable.
-- Candidate repositories are untrusted and must not receive ambient credentials or arbitrary execution privileges.
-
-## Development setup
-
-```bash
-git clone https://github.com/LloydCoder/fas.git
-cd fas
-python -m pip install -e ".[dev]"
-```
-
-Run the local product smoke path:
-
-```bash
-fas doctor --format json
-fas tools --format json
-fas analyze ./path-to-fixture --format json
-fas status <analysis-id> --format json
-fas report <analysis-id> --format json
-```
+    git clone https://github.com/LloydCoder/fas.git
+    cd fas
+    python -m pip install -e ".[dev]"
+    git checkout -b feat/short-description
 
 ## Validation baseline
 
-```bash
-ruff check .
-pytest --cov=fas --cov-report=term-missing
-pytest tests/security
-python -m pip check
-python scripts/check_schema_parity.py
-python -m build
-```
+    ruff check .
+    pytest --cov=fas --cov-report=term-missing
+    pytest tests/security
+    python -m pip check
+    python scripts/check_schema_parity.py
+    python -m build
 
-CI also exercises supported Python versions, clean package installation, API/CLI smoke paths, reproducibility, product integration, and security gates.
+CI additionally tests supported Python versions, clean installation, API/CLI smoke paths, reproducibility, product integration, dependency security, CodeQL and secret scanning.
 
-**Never weaken assertions, remove security tests, skip workflows, or reduce permissions simply to obtain a green build.**
+> [!WARNING]
+> Do not weaken assertions, remove security tests, bypass CI, or reduce permissions merely to obtain a green build.
 
-## Documentation synchronization
+## Security and evidence rules
 
-When a change affects public behavior or security semantics, update the relevant combination of:
+- Observation, evidence, finding, investigation, verdict, remediation, and verification are distinct.
+- Security-relevant relationships must remain provenance/evidence backed.
+- Original snapshot and evidence history are immutable.
+- Missing evidence remains explicit; absence is not negative evidence.
+- LLM output is advisory and never the source of truth.
+- Candidate repositories are untrusted and must not receive ambient credentials or arbitrary execution privileges.
+- Remediation verification must compare explicit before/after snapshots.
+- UNKNOWN is correct when required evidence is unavailable.
 
-- README
-- CLI/API documentation
-- schemas
-- architecture documentation
-- ADR
-- threat model
-- security verification matrix
-- changelog
+## Change requirements
 
-New domain objects normally require corresponding schema, persistence, API/CLI, tests, and documentation work where applicable.
+| Change | Expected updates |
+|---|---|
+| Public CLI/API behavior | Tests + reference docs + changelog |
+| Security semantics | Regression tests + threat model/ADR + docs |
+| Schema/contract | Schema + parity tests + consumers + docs |
+| New collector/adapter | Deterministic tests + provenance coverage + docs |
+| Persistence change | Storage tests + compatibility notes |
+| User-visible behavior | Changelog and relevant docs |
+| Architecture/security boundary | ADR and threat-model review |
+
+## Pull requests
+
+Explain what changed, why, validation performed, security/evidence impact, contract impact, and documentation impact. CODEOWNERS identifies security-sensitive areas requiring maintainer review.
+
+## Commits
+
+Use clear, imperative commit subjects. Conventional prefixes such as feat:, fix:, docs:, test:, refactor:, ci:, and security: are recommended when accurate.
 
 ## Security research
 
-Use FAS only against systems you are authorized to analyze. Prefer controlled fixtures for demonstrations and regression tests.
+Use FAS only against systems you are authorized to analyze. Prefer controlled fixtures. Never commit real credentials, customer data, private source code, or sensitive vulnerability evidence.
+
+## Documentation
+
+Documentation is part of the implementation contract. Update the canonical source when behavior or security semantics change rather than duplicating deep explanations.
+
+## License
+
+Contributions are provided under the repository's [Apache License 2.0](LICENSE).

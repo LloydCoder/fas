@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: "If you use FAS in research, security engineering, or published work, please cite this software."
+title: "FAS — Forensic Agent Security"
+type: software
+authors:
+  - name: "LloydCoder"
+    alias: "LloydCoder"
+repository-code: "https://github.com/LloydCoder/fas"
+repository: "https://github.com/LloydCoder/fas"
+license: "Apache-2.0"
+version: "0.6.0"
+abstract: "Evidence-first security analysis for AI agents and modern software, focused on evidence, provenance, attack-path reconstruction, exploitability analysis, and remediation verification."
+keywords:
+  - cybersecurity
+  - application-security
+  - ai-security
+  - agent-security
+  - security-analysis
+  - program-analysis
+  - attack-path-analysis
+  - vulnerability-analysis
+  - security-automation

@@ -1,56 +1,34 @@
 # FAS Documentation
 
-This directory contains the durable technical documentation for FAS.
+This directory is the durable technical documentation for FAS. It uses a practical Diátaxis model: tutorials teach a first successful workflow, how-to guides solve specific tasks, explanation documents describe the system and rationale, and reference pages define commands, configuration, and contracts.
 
-## Documentation map
+## Start here
 
-| Area | Purpose |
+| Need | Read |
 |---|---|
-| [Architecture](architecture/README.md) | System lifecycle, boundaries, implementation phases, and architectural invariants |
-| [Evidence Model](evidence-model/README.md) | Observation/evidence separation, provenance, snapshot integrity, and completeness semantics |
-| [Threat Model](threat-model/README.md) | Trust boundaries, threats, security invariants, and runtime limits |
-| [ADRs](decisions/README.md) | Recorded architecture and security decisions |
-| [Security](security/phase6-verification-matrix.md) | Phase 6 security verification map and standards-reference boundaries |
+| First successful run | [Tutorials](tutorials/README.md) |
+| Solve a task | [How-to guides](how-to/README.md) |
+| Understand the system | [Explanation](explanation/README.md) |
+| Look up exact behavior | [Reference](reference/README.md) |
+| Architecture | [Architecture](architecture/README.md) |
+| Evidence and provenance | [Evidence Model](evidence-model/README.md) |
+| Threats and controls | [Threat Model](threat-model/README.md) |
+| Decisions | [ADRs](decisions/README.md) |
+| Security verification | [Security](security/phase6-verification-matrix.md) |
 
-## Documentation ownership model
+## Canonical ownership
 
-The repository uses a simple rule:
+Implementation, contracts, tests, and documentation must describe the same system.
 
-> **Implementation, contracts, tests, and documentation must describe the same system.**
+- README.md — orientation and first-run experience.
+- CONTRIBUTING.md — development and contribution workflow.
+- SECURITY.md — vulnerability reporting and security policy.
+- Tutorials — complete learning paths.
+- How-to — task-specific procedures.
+- Explanation — architecture, evidence semantics, and rationale.
+- Reference — commands, configuration, schemas, and contracts.
+- ADRs — why architectural/security decisions were made.
+- Threat model — what can go wrong and which controls matter.
+- CHANGELOG.md — user-visible history.
 
-When a public behavior or security invariant changes, update the relevant documentation in the same change.
-
-### Where information belongs
-
-- **README.md** — project orientation, quick start, capability boundaries, contributor entry points.
-- **CONTRIBUTING.md** — development workflow and contribution expectations.
-- **SECURITY.md** — vulnerability reporting and security policy.
-- **Architecture docs** — system structure and boundaries.
-- **ADRs** — why an architectural decision was made.
-- **Threat model** — what can go wrong and which controls matter.
-- **Schemas** — machine-readable contracts.
-- **CHANGELOG.md** — user-visible historical changes.
-
-Avoid duplicating deep design explanations across multiple documents. Link to one canonical source instead.
-
-## Documentation quality bar
-
-Documentation changes should be:
-
-- technically accurate against the current implementation
-- explicit about supported and unsupported capabilities
-- reproducible where commands are shown
-- clear about security boundaries
-- free of unsupported compliance or production-readiness claims
-- linked using repository-relative paths where possible
-
-- **Phase 7 production architecture** — hosted PostgreSQL/S3, tenant authorization, worker leases, and operational boundaries. See [phase7-production.md](architecture/phase7-production.md).\n\n### Maturity architecture documents
-
-- [Phase 7 — Production Runtime](architecture/phase7-production.md)
-- [Phase 8 — Advanced Analysis](architecture/phase8-advanced-analysis.md)
-- [Phase 9 — Trusted Runtime](architecture/phase9-trusted-runtime.md)
-- [Phase 10 — Enterprise Integrations](architecture/phase10-enterprise-integrations.md)
-- [Phase 11 — Governance & Assurance](architecture/phase11-governance-assurance.md)
-- [Phase 12 — Platform Maturity](architecture/phase12-platform-maturity.md)
-
-The root [README](../README.md) is the starting point for new users and contributors.
+Prefer links to canonical sources instead of duplicating deep explanations.

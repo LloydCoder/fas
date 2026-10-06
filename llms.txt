@@ -1,0 +1,40 @@
+# FAS
+
+Evidence-first security analysis for AI agents and modern software. FAS correlates observations into provenance-aware evidence, attack paths, exploitability analysis, formal verdicts, and remediation verification.
+
+## Core documentation
+
+- [README](README.md): product overview, quick start, capabilities, boundaries, configuration summary.
+- [Documentation index](docs/README.md): documentation architecture and canonical sources.
+- [Tutorials](docs/tutorials/README.md): first-run learning paths.
+- [How-to guides](docs/how-to/README.md): task-oriented procedures.
+- [Explanation](docs/explanation/README.md): evidence-first semantics and authority boundaries.
+- [Reference](docs/reference/README.md): CLI, configuration, environment variables, and contracts.
+- [Architecture](docs/architecture/README.md): system structure and invariants.
+- [Evidence Model](docs/evidence-model/README.md): observation/evidence/provenance semantics.
+- [Threat Model](docs/threat-model/README.md): trust boundaries and threats.
+- [ADRs](docs/decisions/README.md): recorded architectural and security decisions.
+- [Security Policy](SECURITY.md): vulnerability reporting and runtime security boundaries.
+- [Contributing](CONTRIBUTING.md): development and contribution rules.
+
+## Important concepts
+
+- Observation is not evidence.
+- Evidence is not automatically a finding.
+- A finding is not automatically a proven vulnerability.
+- LLM output is advisory and never authoritative evidence.
+- Missing evidence remains explicit.
+- Remediation requires scoped before/after verification.
+- FAS is complementary to deterministic security scanners.
+
+## Repository
+
+- Source: [src/fas](src/fas/)
+- Schemas: [schemas](schemas/)
+- Tests: [tests](tests/)
+- CI: [.github/workflows](.github/workflows/)
+- FAS-Bench: https://github.com/LloydCoder/fas-bench
+
+## Constraints
+
+Do not describe FAS as providing universal vulnerability coverage, complete attack-path enumeration, arbitrary candidate-repository execution, formal standards compliance, or a guarantee that a verdict means the entire analyzed system is secure.
