@@ -1,417 +1,168 @@
+<div align="center">
+
 # FAS
+### Forensic Agent Security
 
-## Forensic Agent Security
+**Evidence-first security analysis for AI agents and modern software — reconstruct attack paths, test exploitability, and verify remediation from traceable evidence.**
 
-**Evidence-first security analysis for AI agents and modern software — reconstructing attack paths, testing exploitability, and verifying remediation without treating scanner output or LLM prose as ground truth.**
+[![CI](https://github.com/LloydCoder/fas/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/LloydCoder/fas/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/LloydCoder/fas/actions/workflows/codeql.yml/badge.svg)](https://github.com/LloydCoder/fas/actions/workflows/codeql.yml)
+[![License](https://img.shields.io/github/license/LloydCoder/fas)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 
-[![Status: Alpha](https://img.shields.io/badge/status-alpha-orange)](https://github.com/LloydCoder/fas)
-[![License: Apache 2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
-[![Python: 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](pyproject.toml)
+</div>
 
-> **Security conclusions should be traceable to evidence.**
+> **A scanner finding is a signal. A FAS security conclusion must be evidence-backed, reproducible, and explicit about uncertainty.**
 
-FAS is an open-source security analysis engine for investigating findings across application code, dependencies, identity and authorization, AI agents, tools/MCP interfaces, configuration, CI/CD, and connected service boundaries.
+<pre><code class="language-mermaid">flowchart LR
+    A[Code / Config / Tools] --> B[Observations]
+    B --> C[Evidence + Provenance]
+    C --> D[Evidence Graph]
+    D --> E[Attack-Path Analysis]
+    E --> F[Verdict]
+    F --> G[Remediation Verification]
+    G --> C</code></pre>
 
-FAS focuses on the questions scanners often leave unresolved:
+> [!NOTE]
+> A recorded terminal demo is not yet committed. The repository should add a real, short FAS run under docs/media/ rather than presenting a fabricated demo.
 
-- Is the reported condition actually reachable?
-- Can attacker-controlled data or state reach the sensitive operation?
-- Which identity, permission, tool, service, or trust boundary is involved?
-- What evidence establishes the claim, and where did it come from?
-- Can the relevant attack path be reconstructed?
-- Did the remediation actually break the original security property?
-- Does a residual or alternate path remain?
-- What evidence is missing or contradictory?
+## Why FAS
 
-FAS is deliberately **complementary to security scanners**, not a replacement for them.
+FAS helps security engineers investigate the questions scanners often leave unresolved.
 
----
+| Security question | FAS approach |
+|---|---|
+| Is a condition reachable? | Evidence-backed reachability and path analysis |
+| Can attacker-controlled state reach a sensitive operation? | Data-flow and relationship analysis |
+| Which identity or trust boundary matters? | Identity, permission, service and tool relationships |
+| What proves the claim? | Provenance-aware evidence |
+| Did remediation work? | Before/after snapshots and semantic graph comparison |
+| What remains unknown? | Explicit missing or contradictory evidence |
+| Can an AI model decide the result? | No. Models are advisory, not authoritative |
 
-## Why evidence-first?
+FAS is complementary to deterministic security scanners, not a replacement for them.
 
-A scanner finding is a signal. A security conclusion requires context.
+## Quick Start
 
-```
-VERDICT
-  ↓
-FINDING
-  ↓
-ATTACK PATH
-  ↓
-GRAPH RELATIONSHIPS
-  ↓
-EVIDENCE
-  ↓
-ARTIFACT / CODE LOCATION
-  ↓
-IMMUTABLE SNAPSHOT
-```
-
-The goal is not to maximize the number of findings. It is to make important conclusions inspectable, reproducible, and appropriately uncertain.
-
-### Core principles
-
-1. **Evidence before conclusions** — security claims require supporting observations.
-2. **Provenance is first-class** — evidence records origin, method, artifact state, and integrity metadata.
-3. **LLMs are advisory** — models may form hypotheses and request evidence; they do not create ground truth.
-4. **Snapshots are explicit** — analysis is bound to a defined repository/configuration state.
-5. **Attack paths are explicit** — important security relationships should be traceable.
-6. **Unknown is valid** — missing evidence is never silently converted into a negative fact.
-7. **Remediation is verified** — a changed line or disappearing scanner result is not, by itself, proof of remediation.
-8. **Tool truth is preserved** — external observations remain attributable to their source collectors.
-
----
-
-## Current status
-
-**Version:** `0.6.0`  
-**Maturity:** Alpha  
-**Current milestone:** Phases 1–16 are implemented and merged; the project is in continuous enterprise hardening, capability expansion, and forensic maintenance.
-
-Phase 6 includes:
-
-- installable Python package and `fas` CLI
-- shared CLI/API application service
-- local SQLite persistence
-- content-addressed local objects
-- deterministic repository snapshot/discovery/collection
-- bounded subprocess execution policy
-- durable local jobs
-- completeness-aware reporting
-- audit-chain integrity verification
-- configuration diagnostics
-- HTTP API and OpenAPI metadata
-- package/build/install and security/reproducibility CI gates
-
-### Explicit boundaries
-
-FAS does **not** currently claim:
-
-- universal vulnerability coverage
-- that an incomplete graph proves absence
-- that scanner disappearance proves remediation
-- arbitrary candidate-repository code execution in the core product
-- horizontally scaled workers
-- PostgreSQL/S3 as fully hardened production adapters
-- formal compliance with OWASP ASVS, OWASP Top 10, NIST, SLSA, or another framework
-
-These are explicit capability boundaries, not hidden assumptions.
-
----
-
-## Quick start
-
-### Requirements
-
-- Python **3.11+**
-- Git
-- Optional external security tools when their collectors are enabled
-
-### Install for development
+Prerequisites: Python 3.11+ and Git.
 
 <pre><code>git clone https://github.com/LloydCoder/fas.git
 cd fas
 python -m pip install -e ".[dev]"
-</code></pre>
+fas doctor --format json
+fas analyze ./path-to-project --format json</code></pre>
+
+The analysis returns an identifier. Continue with <code>fas status &lt;analysis-id&gt;</code>, <code>fas findings &lt;analysis-id&gt;</code>, or <code>fas report &lt;analysis-id&gt;</code>.
+
+> [!WARNING]
+> Only analyze repositories and systems you are authorized to inspect. FAS processes potentially hostile source, configuration and tool output. Read [SECURITY.md](SECURITY.md) before enabling execution or exposing the API.
+
+## Installation
+
+The repository provides a Python package and the <code>fas</code> console command.
+
+<pre><code>python -m pip install -e ".[dev]"</code></pre>
+
+Build and install a wheel when testing a distribution:
+
+<pre><code>python -m build
+python -m pip install dist/*.whl</code></pre>
+
+| Requirement | Supported |
+|---|---|
+| Python | 3.11, 3.12, 3.13, 3.14 |
+| Primary hardened runtime | Linux |
+| Local persistence | SQLite |
+| External security tools | Optional; inspect with <code>fas tools</code> |
+
+## Usage
 
 ### Inspect the environment
 
 <pre><code>fas doctor --format json
-fas tools --format json
-</code></pre>
+fas tools --format json</code></pre>
 
-### Analyze a local project
+### Analyze a project
 
-<pre><code>fas analyze ./example-project --format json
+<pre><code>fas analyze ./path-to-project --format json
 fas status &lt;analysis-id&gt; --format json
 fas findings &lt;analysis-id&gt; --format json
-fas report &lt;analysis-id&gt; --format json
-</code></pre>
+fas report &lt;analysis-id&gt; --format json</code></pre>
 
 ### Run the local API
 
-<pre><code>fas api
-</code></pre>
+<pre><code>fas api</code></pre>
 
-The API binds to `127.0.0.1` by default. Non-local exposure requires explicit bearer-token authentication. Read [SECURITY.md](SECURITY.md) before exposing the service beyond a trusted local environment.
+The default API address is <code>127.0.0.1:8765</code>. Any externally reachable deployment must enable bearer-token authentication.
 
-### Explore verification
+### Verification
 
-<pre><code>fas verify --help
-</code></pre>
+<pre><code>fas verify --help</code></pre>
 
-Verification operates on explicit verification inputs. It is not a generic claim that an entire application is secure.
+Verification is scoped to explicit inputs and security properties. It is not a generic claim that an application is secure.
 
----
+## Configuration
 
-## What FAS analyzes
+Configuration precedence is:
 
-FAS is designed to correlate evidence across:
+**defaults → JSON configuration file → FAS_* environment variables → CLI/application overrides**
 
-- application code and program flow
-- dependencies and software supply chain
-- authentication and authorization
-- identities, principals, and permissions
-- APIs and service boundaries
-- AI agents and agent tasks
-- tools and MCP-style interfaces
-- credentials and secret references
-- infrastructure and configuration
-- CI/CD metadata
-- trust boundaries
-- runtime observations where supported
-- security controls
-- remediation changes
-
-A collector produces observations. An observation is not automatically a finding, and a finding is not automatically a proven vulnerability.
-
----
-
-## Core capabilities
-
-### Security-signal ingestion
-
-FAS can normalize observations from supported deterministic collectors and adapters, including SARIF-compatible output and integrations for tools such as Semgrep, Trivy, and Gitleaks where configured.
-
-### Evidence normalization
-
-Evidence can retain:
-
-- collector
-- tool and version
-- collection method
-- artifact and location
-- observed value
-- timestamp
-- content hash
-- provenance metadata
-
-### Evidence graph
-
-FAS represents relationships among repositories, artifacts, files, symbols, endpoints, services, identities, permissions, agents, tasks, tools, data assets, findings, evidence, attack paths, remediations, and runtime observations.
-
-Security-relevant relationships are expected to remain evidence-backed.
-
-### Exploitability analysis
-
-Investigation can ask whether attacker influence, reachability, data flow, effective identity, privileges, trust boundaries, controls, impact, and required evidence are established.
-
-### Attack-path reconstruction
-
-```
-Internet
-  ↓
-Webhook
-  ↓
-Agent
-  ↓
-Tool
-  ↓
-CI Identity
-  ↓
-Production Resource
-```
-
-### Formal verdicts
-
-FAS uses explicit states:
-
-- `EXPLOITABLE`
-- `NOT_EXPLOITABLE`
-- `CONDITIONALLY_EXPLOITABLE`
-- `REMEDIATED`
-- `REMEDIATION_FAILED`
-- `REGRESSED`
-- `UNKNOWN`
-
-A verdict is accompanied by supporting/contradicting evidence and missing-evidence context.
-
-### Remediation verification
-
-```
-Original Snapshot
-      ↓
-Original Evidence Graph
-      ↓
-Remediation / Patch
-      ↓
-Patched Snapshot
-      ↓
-Patched Evidence Graph
-      ↓
-Semantic Graph Diff
-      ↓
-Attack-Path Revalidation
-      ↓
-Remediation Verdict
-```
-
-Verification is scoped to the configured finding, security property, evidence graph, paths, and checks. It does not prove that an entire application is secure.
-
----
-
-## Architecture
-
-FAS is a **modular monolith with isolated execution boundaries**.
-
-```
-                         CLI / API
-                           │
-                           ▼
-                  Application Orchestrator
-                           │
-          ┌────────────────┼────────────────┐
-          ▼                ▼                ▼
-      Discovery       Tool Adapters      Collectors
-          │                │                │
-          └────────────────┼────────────────┘
-                           ▼
-                 Evidence + Provenance
-                           │
-                           ▼
-                     Evidence Graph
-                           │
-              ┌────────────┼────────────┐
-              ▼            ▼            ▼
-          Data Flow    Permissions  Reachability
-              │            │            │
-              └────────────┼────────────┘
-                           ▼
-                   Attack-Path Analysis
-                           │
-                           ▼
-                 Exploitability Analysis
-                           │
-                           ▼
-                      Verdict Engine
-                           │
-                 ┌─────────┴─────────┐
-                 ▼                   ▼
-             Reporting          Remediation
-                                     │
-                                     ▼
-                                Verification
-```
-
-### Boundary rules
-
-| Layer | Owns | Must not |
+| Setting | Default | Purpose |
 |---|---|---|
-| API | authentication, transport, request validation | perform security reasoning |
-| CLI | commands and presentation | bypass application/domain rules |
-| Application | orchestration and lifecycle | invent evidence |
-| Collectors | deterministic observations | declare exploitability |
-| Adapters | external-tool integration | erase provenance |
-| Evidence | provenance, integrity, normalization | manufacture observations |
-| Graph | evidence-backed relationships | invent unsupported relationships |
-| Analysis | correlation and path reasoning | bypass evidence constraints |
-| Verdict | formal conclusions | create unsupported evidence |
-| Remediation | before/after comparison | assume a patch worked |
-| Reporting | presentation/serialization | alter conclusions |
+| database_url | sqlite:///./.fas/fas.db | Local persistence |
+| object_store_path | .fas/objects | Content-addressed objects |
+| tenant_id | local | Tenant boundary |
+| subject_id | local | Request subject |
+| role | admin | reader, analyst, or admin |
+| api_host | 127.0.0.1 | API bind address |
+| api_port | 8765 | API port |
+| auth_required | false | Require API authentication |
+| max_workers | 2 | Local job concurrency |
+| analysis_timeout_seconds | 900 | Analysis time limit |
+| subprocess_timeout_seconds | 120 | Process time limit |
+| max_artifact_bytes | 50000000 | Artifact size limit |
+| max_graph_nodes | 200000 | Graph node bound |
+| max_graph_edges | 500000 | Graph edge bound |
+| network_policy | DENY_ALL | Runtime network policy |
+| retention_days | 90 | Local retention policy |
 
-See [Architecture](docs/architecture/README.md) and [ADRs](docs/decisions/README.md).
+Environment variables use the <code>FAS_</code> prefix. Never commit bearer tokens or other secrets.
 
----
+## Features
 
-## Evidence and provenance
-
-FAS uses provenance levels to distinguish how an observation was established:
-
-| Level | Meaning |
+| Capability | What it provides |
 |---|---|
-| T0 | unverified assertion |
-| T1 | model inference |
-| T2 | tool-generated observation |
-| T3 | deterministic artifact verification |
-| T4 | reproduced runtime observation |
-| T5 | independently reproduced security test |
+| Evidence ingestion | Normalizes observations while preserving source and provenance |
+| Evidence graph | Connects artifacts, identities, permissions, services, findings and paths |
+| Exploitability analysis | Tests reachability, influence, privilege and required conditions |
+| Formal verdicts | Explicit exploitable, remediated, regression and unknown states |
+| Remediation verification | Before/after snapshot and semantic graph comparison |
+| AI-assisted investigation | Hypotheses and evidence requests without authoritative model control |
+| Tool integration | Deterministic collector and adapter boundaries |
+| Security controls | Provenance, bounded execution, redaction and isolation |
+| CLI + API | Local human and machine interfaces |
+| Reproducibility | Locked dependencies and extensive CI/security gates |
 
-These are provenance classifications, **not truth probabilities**.
+## Documentation
 
-Canonical schemas live under [`schemas/`](schemas/). The detailed evidence model lives under [`docs/evidence-model/`](docs/evidence-model/).
+| Need | Documentation |
+|---|---|
+| First successful run | [Tutorials](docs/tutorials/README.md) |
+| Task-specific procedure | [How-to guides](docs/how-to/README.md) |
+| Architecture and rationale | [Explanation](docs/explanation/README.md) |
+| Commands and configuration | [Reference](docs/reference/README.md) |
+| System architecture | [Architecture](docs/architecture/README.md) |
+| Evidence and provenance | [Evidence Model](docs/evidence-model/README.md) |
+| Threats and controls | [Threat Model](docs/threat-model/README.md) |
+| Architecture decisions | [ADRs](docs/decisions/README.md) |
+| Contributing | [CONTRIBUTING.md](CONTRIBUTING.md) |
+| Vulnerability reporting | [SECURITY.md](SECURITY.md) |
+| Support | [SUPPORT.md](SUPPORT.md) |
+| History | [CHANGELOG.md](CHANGELOG.md) |
 
----
-
-## AI-assisted investigation
-
-The intended loop is:
-
-```
-Hypothesis
-   ↓
-Evidence Request
-   ↓
-Deterministic Collector
-   ↓
-Verified Evidence
-   ↓
-Evidence Graph Update
-   ↓
-Reassessment
-   ↓
-Verdict Proposal
-   ↓
-Verification
-```
-
-The investigator boundary is intentionally narrow. Model output cannot:
-
-- create authoritative evidence
-- mutate immutable evidence history
-- override deterministic verification requirements
-- authorize arbitrary remediation
-- obtain unrestricted database or filesystem access
-
----
-
-## Security model
-
-FAS may process hostile repositories, source code, configuration, scanner output, and sensitive security evidence. The analyzed repository must therefore be treated as **untrusted input**.
-
-Important security boundaries include:
-
-- hostile source/configuration parsing
-- prompt injection in analyzed content
-- malicious tool metadata
-- subprocess and command execution
-- dependency and CI supply-chain compromise
-- credential exposure
-- sandbox escape
-- evidence tampering
-- cross-analysis data leakage
-- confused-deputy behavior
-- unauthorized remediation
-
-Read [SECURITY.md](SECURITY.md) and the [threat model](docs/threat-model/README.md).
-
----
-
-## Repository layout
-
-<pre><code>fas/
-├── .github/                 # CI and community automation
-├── docs/                    # architecture, evidence, threat model, ADRs, security
-├── schemas/                 # machine-readable contracts
-├── src/fas/                 # Python package
-├── tests/                   # unit, integration, security, fixtures
-├── scripts/                 # repository validation and maintenance
-├── CONTRIBUTING.md
-├── SECURITY.md
-├── CODE_OF_CONDUCT.md
-├── SUPPORT.md
-├── CHANGELOG.md
-├── LICENSE
-├── pyproject.toml
-└── README.md
-</code></pre>
-
-The source tree is organized around domain boundaries rather than individual vendors.
-
----
+Machine-oriented navigation is available through [llms.txt](llms.txt).
 
 ## Development
-
-### Local validation
 
 <pre><code>python -m pip install -e ".[dev]"
 ruff check .
@@ -419,122 +170,57 @@ pytest --cov=fas --cov-report=term-missing
 pytest tests/security
 python -m pip check
 python scripts/check_schema_parity.py
-python -m build
-</code></pre>
+python -m build</code></pre>
 
-CI also exercises supported Python versions, package installation, CLI/API smoke paths, reproducibility, product integration, and security-focused tests.
-
-**Do not weaken assertions, remove security tests, bypass security gates, or reduce permissions merely to obtain a green build.**
-
-### Security-sensitive changes
-
-A strong contribution normally includes:
-
-1. the smallest coherent implementation change
-2. a regression test for the intended security property
-3. schema updates when a public contract changes
-4. an ADR when architecture or security semantics change
-5. documentation updates
-6. a changelog entry when the user-visible contract changes
+Security-sensitive changes should include regression coverage, preserve evidence/provenance semantics, update contracts and documentation where applicable, and never weaken a security gate merely to obtain a green build.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md).
 
----
+## Security model
 
-## Documentation map
+FAS treats analyzed repositories and external tool output as untrusted input. Important boundaries include hostile parsing, prompt injection, subprocess/runtime execution, dependency and CI supply-chain compromise, credential exposure, evidence tampering, cross-analysis isolation, agent/tool authorization, and verification bypass.
 
-| Need | Read |
-|---|---|
-| Understand FAS quickly | This README |
-| Learn the architecture | [Architecture](docs/architecture/README.md) |
-| Understand evidence/provenance | [Evidence Model](docs/evidence-model/README.md) |
-| Understand threats | [Threat Model](docs/threat-model/README.md) |
-| Understand design decisions | [ADRs](docs/decisions/README.md) |
-| Review Phase 6 controls | [Security Verification Matrix](docs/security/phase6-verification-matrix.md) |
-| Contribute | [CONTRIBUTING.md](CONTRIBUTING.md) |
-| Report a vulnerability | [SECURITY.md](SECURITY.md) |
-| Get help | [SUPPORT.md](SUPPORT.md) |
-| Review history | [CHANGELOG.md](CHANGELOG.md) |
+> [!NOTE]
+> LLM output is advisory. Models cannot create authoritative evidence, mutate immutable evidence history, bypass deterministic verification, or authorize arbitrary remediation/runtime commands.
 
-The README is intentionally the orientation layer. Deep design rationale belongs in `docs/`.
+Read the [threat model](docs/threat-model/README.md) and [security policy](SECURITY.md).
 
----
+## Project status
 
-## Roadmap
+**Package version:** 0.6.0  
+**Maturity:** Alpha.
 
-The numbered enterprise maturity sequence is complete through Phase 12. Further work should be handled as versioned hardening, capability releases, and benchmark-driven improvements rather than inventing additional phases.
+The current main branch contains the Phase 1–16 implementation described by the repository architecture. Version 0.6.0 remains the latest version recorded in package metadata and the changelog; Phases 13–16 are implemented on main but unreleased until a corresponding versioned release is published.
 
-### Completed
-
-- **Phase 1 — Foundations:** canonical domain contracts, evidence/provenance model, immutable snapshots.
-- **Phase 2 — Evidence Graph:** provenance-aware graph storage, bounded traversal/path analysis, validation, serialization, and graph comparison.
-- **Phase 3 — Security Collection:** repository discovery, tool adapters, hostile-input hardening, raw artifacts, replay metadata, and collection acceptance.
-- **Phase 4 — Investigation:** immutable cases, evidence requests, deterministic graph/data-flow primitives, attack-path reconstruction, exploitability analysis, and constrained model advisory.
-- **Phase 5 — Verification:** remediation verification, semantic graph diff, attack-path revalidation, residual/alternate paths, regression baselines, and deterministic security-test contracts.
-- **Phase 6 — Productization:** installable package, CLI/API service, SQLite persistence, content-addressed objects, durable jobs, reporting, diagnostics, and CI/package hardening.
-- **Phase 7 — Production Runtime & Scale:** PostgreSQL/S3 hosted adapters, tenant-scoped roles, distributed-safe job leasing, structured operational events, and hosted deployment boundaries.
-- **Phase 8 — Advanced Security Analysis:** bounded deterministic reachability, privilege paths, agent/tool and MCP paths, sensitive-resource reachability, and attack-surface inventory.
-- **Phase 9 — Trusted Runtime Verification:** controlled sandboxed runtime verification over the existing executor with explicit executable allowlisting, deny-all networking, secret denial, and output integrity.
-- **Phase 10 — Enterprise Integrations:** normalized tenant-scoped integration events, idempotency, HTTPS host allowlisting, GitHub REST access, and authenticated webhook normalization.
-- **Phase 11 — Governance & Assurance:** versioned framework references, evidence-required control assessments, deterministic evidence bundles, and independently verifiable manifests.
-- **Phase 12 — Platform Maturity:** bounded governed research with approval states, budgets, stopping conditions, and an explicit non-authoritative autonomy boundary.
-
-### Post-Phase-12 evolution
-
-Future releases should concentrate on deeper language-aware analysis, additional provider integrations, stronger hosted operations, benchmark expansion, independently assessed assurance, and controlled model-assisted research while preserving the existing evidence and authority boundaries.
+> [!WARNING]
+> FAS does not claim universal vulnerability coverage, complete attack-path enumeration, arbitrary candidate-repository execution, hardened horizontal scale, or formal compliance with OWASP ASVS, OWASP Top 10, NIST, SLSA, or another framework without a specific verified mapping.
 
 ## Relationship to FAS-Bench
 
-[FAS-Bench](https://github.com/LloydCoder/fas-bench) is a separate repository and benchmark boundary.
-
-FAS exposes versioned machine-readable analysis/report structures so an external benchmark can evaluate findings, evidence, attack paths, verdicts, remediation state, verification state, and provenance without importing private implementation modules.
-
-Keeping the benchmark independent helps keep evaluation separate from product implementation.
-
----
-
-## Standards and interoperability
-
-FAS supports SARIF-oriented interoperability where implemented.
-
-Security standards and frameworks may be used as engineering references, but references are **not compliance claims**. Formal compliance should only be stated when the relevant versioned requirements have been explicitly mapped, implemented, and verified.
-
----
+[FAS-Bench](https://github.com/LloydCoder/fas-bench) is a separate benchmark boundary. Keeping evaluation independent from product implementation lets external benchmark data evaluate findings, evidence, attack paths, verdicts, remediation state and provenance without importing private FAS implementation modules.
 
 ## Contributing
 
-Contributions are welcome in:
-
-- application and program analysis
-- evidence and provenance modeling
-- graph algorithms
-- agent and MCP security
-- security-tool adapters
-- remediation verification
-- reproducible security research
-- testing and adversarial regression coverage
-- documentation and developer experience
-
-Good first contributions should be small, testable, and evidence-oriented.
+Contributions are welcome in program analysis, evidence/provenance, graph algorithms, agent/MCP security, security-tool adapters, remediation verification, adversarial testing, reproducible security research, and documentation.
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
 
----
-
-## Security
-
-Please report vulnerabilities privately rather than through public issues. See [SECURITY.md](SECURITY.md).
-
----
-
-## License
+## License and acknowledgements
 
 FAS is licensed under the [Apache License 2.0](LICENSE).
 
----
+FAS builds on the Python ecosystem and interoperates with established security tooling and machine-readable security formats. External tools remain attributable sources; FAS does not convert their output into authoritative conclusions without evidence-backed analysis.
 
-## Disclaimer
+<details>
+<summary>Roadmap</summary>
 
-FAS is security-analysis software. Results depend on configured collectors, tools, evidence, snapshots, and the analysis environment.
+Future work is versioned capability development rather than another numbered phase system. Priorities include deeper language-aware analysis, additional integrations, stronger hosted operations, benchmark expansion, independently assessed assurance, and controlled model-assisted research.
 
-A FAS verdict is not a guarantee that a system is secure, nor does it claim to enumerate every possible attack path. Review conclusions in the context of the target system, threat model, and available evidence.
+</details>
+
+<details>
+<summary>Troubleshooting</summary>
+
+Start with <code>fas doctor --format json</code> and <code>fas tools --format json</code>. Then use the [How-to guides](docs/how-to/README.md) or [SUPPORT.md](SUPPORT.md). Never use a public issue for a vulnerability.
+
+</details>
