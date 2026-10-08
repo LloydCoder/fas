@@ -66,6 +66,9 @@ jobs:
       - name: Schema parity
         run: uv run python scripts/check_schema_parity.py
 
+      - name: Verify TSIC evidence-analysis conformance
+        run: uv run python scripts/tsic_conformance.py
+
       - name: Package build
         run: uv run python -m build
 
