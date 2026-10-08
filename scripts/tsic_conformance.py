@@ -33,7 +33,7 @@ def main() -> None:
 
     system = next(item for item in manifest["systems"] if item["id"] == "fas")
     assert system["repository"] == "LloydCoder/fas"
-    assert system["governance_role"] == "forensic_analysis_authority"
+    assert system["governance_role"] == "evidence_analysis_authority"
 
     assert adapter["source_system"] == "tsic"
     assert adapter["target_system"] == "fas"
