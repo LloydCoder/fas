@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Fail-closed FAS verification against the canonical TSIC evidence-analysis adapter."""
 
 from __future__ import annotations
