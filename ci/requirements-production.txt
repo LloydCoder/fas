@@ -1,4 +1,4 @@
 # FAS hosted deployment dependencies
 # Keep these outside the core lock because the local product has no external-service dependency.
 psycopg[binary]>=3.2,<4
-boto3>=1.35,<2
+boto3>=1.43.109,<2
