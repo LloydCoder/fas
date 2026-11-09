@@ -253,21 +253,38 @@ class ProductService:
         if selected_snapshot is None or selected_snapshot not in analysis.snapshot_ids:
             raise ValueError("snapshot does not belong to analysis")
         snapshot = self.store.get("snapshots", selected_snapshot, tenant_id=self.settings.tenant_id)
+        def list_all(table: str, foreign_key: str, value: str) -> list[dict[str, object]]:
+            records: list[dict[str, object]] = []
+            offset = 0
+            page_size = 1000
+            while True:
+                page = self.store.list(
+                    table, foreign_key, value, limit=page_size, offset=offset,
+                    tenant_id=self.settings.tenant_id,
+                )
+                records.extend(page)
+                if len(page) < page_size:
+                    return records
+                offset += page_size
+
         bundle: dict[str, object] = {
             "bundle_version": "1.0",
             "producer": {"name": "fas", "version": __import__("fas").__version__},
             "analysis": analysis.model_dump(mode="json"),
             "snapshot": snapshot,
-            "artifacts": self.store.list("artifacts", "snapshot_id", selected_snapshot, tenant_id=self.settings.tenant_id),
-            "observations": self.store.list("observations", "snapshot_id", selected_snapshot, tenant_id=self.settings.tenant_id),
-            "evidence": self.store.list("evidence", "snapshot_id", selected_snapshot, tenant_id=self.settings.tenant_id),
+            "artifacts": list_all("artifacts", "snapshot_id", selected_snapshot),
+            "observations": list_all("observations", "snapshot_id", selected_snapshot),
+            "evidence": list_all("evidence", "snapshot_id", selected_snapshot),
             "graph": {
-                "nodes": self.store.list("graph_nodes", "snapshot_id", selected_snapshot, tenant_id=self.settings.tenant_id),
-                "edges": self.store.list("graph_edges", "snapshot_id", selected_snapshot, tenant_id=self.settings.tenant_id),
+                "nodes": list_all("graph_nodes", "snapshot_id", selected_snapshot),
+                "edges": list_all("graph_edges", "snapshot_id", selected_snapshot),
             },
-            "findings": self.store.list("findings", "snapshot_id", selected_snapshot, tenant_id=self.settings.tenant_id),
-            "tool_runs": self.store.list("tool_runs", "analysis_id", analysis_id, tenant_id=self.settings.tenant_id),
-            "audit_events": self.store.list("audit_events", "analysis_id", analysis_id, tenant_id=self.settings.tenant_id),
+            "findings": list_all("findings", "snapshot_id", selected_snapshot),
+            "tool_runs": [
+                run for run in list_all("tool_runs", "analysis_id", analysis_id)
+                if run.get("snapshot_id") == selected_snapshot
+            ],
+            "audit_events": list_all("audit_events", "analysis_id", analysis_id),
         }
         canonical = json.dumps(bundle, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
         bundle["bundle_sha256"] = hashlib.sha256(canonical).hexdigest()
