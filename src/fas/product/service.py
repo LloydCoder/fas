@@ -245,6 +245,34 @@ class ProductService:
             raise ValueError("analysis has no snapshot")
         return self.reports.generate(analysis_id,a.snapshot_ids[-1]).model_dump(mode="json")
 
+    def export_bundle(self, analysis_id: str, snapshot_id: str | None = None) -> dict[str, object]:
+        """Export a deterministic, provenance-preserving analysis bundle for external evaluation."""
+        self.tenant.require(Role.READER, Role.ANALYST, Role.ADMIN)
+        analysis = self.get_analysis(analysis_id)
+        selected_snapshot = snapshot_id or (analysis.snapshot_ids[-1] if analysis.snapshot_ids else None)
+        if selected_snapshot is None or selected_snapshot not in analysis.snapshot_ids:
+            raise ValueError("snapshot does not belong to analysis")
+        snapshot = self.store.get("snapshots", selected_snapshot, tenant_id=self.settings.tenant_id)
+        bundle: dict[str, object] = {
+            "bundle_version": "1.0",
+            "producer": {"name": "fas", "version": __import__("fas").__version__},
+            "analysis": analysis.model_dump(mode="json"),
+            "snapshot": snapshot,
+            "artifacts": self.store.list("artifacts", "snapshot_id", selected_snapshot, tenant_id=self.settings.tenant_id),
+            "observations": self.store.list("observations", "snapshot_id", selected_snapshot, tenant_id=self.settings.tenant_id),
+            "evidence": self.store.list("evidence", "snapshot_id", selected_snapshot, tenant_id=self.settings.tenant_id),
+            "graph": {
+                "nodes": self.store.list("graph_nodes", "snapshot_id", selected_snapshot, tenant_id=self.settings.tenant_id),
+                "edges": self.store.list("graph_edges", "snapshot_id", selected_snapshot, tenant_id=self.settings.tenant_id),
+            },
+            "findings": self.store.list("findings", "snapshot_id", selected_snapshot, tenant_id=self.settings.tenant_id),
+            "tool_runs": self.store.list("tool_runs", "analysis_id", analysis_id, tenant_id=self.settings.tenant_id),
+            "audit_events": self.store.list("audit_events", "analysis_id", analysis_id, tenant_id=self.settings.tenant_id),
+        }
+        canonical = json.dumps(bundle, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+        bundle["bundle_sha256"] = hashlib.sha256(canonical).hexdigest()
+        return bundle
+
     def doctor(self) -> dict[str,object]:
         checks=[]
         checks.append({"name":"python","ok":__import__("sys").version_info >= (3,11),"detail":__import__("sys").version.split()[0]})
