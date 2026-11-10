@@ -47,3 +47,15 @@ def test_cli_analyze_status_and_report_e2e(tmp_path: Path) -> None:
     assert report.returncode == 2
     report_payload = json.loads(report.stdout)
     assert report_payload["content"]["executive_summary"]["clean_claim_permitted"] is False
+
+    exported = subprocess.run(
+        [sys.executable, "-m", "fas.cli", "--config", str(config), "--format", "json", "export", analysis_id],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    bundle = json.loads(exported.stdout)
+    assert bundle["analysis"]["id"] == analysis_id
+    assert bundle["snapshot"]["id"] == payload["snapshot"]["id"]
+    assert len(bundle["bundle_sha256"]) == 64
+

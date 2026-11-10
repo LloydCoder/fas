@@ -245,6 +245,51 @@ class ProductService:
             raise ValueError("analysis has no snapshot")
         return self.reports.generate(analysis_id,a.snapshot_ids[-1]).model_dump(mode="json")
 
+    def export_bundle(self, analysis_id: str, snapshot_id: str | None = None) -> dict[str, object]:
+        """Export a deterministic, provenance-preserving analysis bundle for external evaluation."""
+        self.tenant.require(Role.READER, Role.ANALYST, Role.ADMIN)
+        analysis = self.get_analysis(analysis_id)
+        selected_snapshot = snapshot_id or (analysis.snapshot_ids[-1] if analysis.snapshot_ids else None)
+        if selected_snapshot is None or selected_snapshot not in analysis.snapshot_ids:
+            raise ValueError("snapshot does not belong to analysis")
+        snapshot = self.store.get("snapshots", selected_snapshot, tenant_id=self.settings.tenant_id)
+        def list_all(table: str, foreign_key: str, value: str) -> list[dict[str, object]]:
+            records: list[dict[str, object]] = []
+            offset = 0
+            page_size = 1000
+            while True:
+                page = self.store.list(
+                    table, foreign_key, value, limit=page_size, offset=offset,
+                    tenant_id=self.settings.tenant_id,
+                )
+                records.extend(page)
+                if len(page) < page_size:
+                    return records
+                offset += page_size
+
+        bundle: dict[str, object] = {
+            "bundle_version": "1.0",
+            "producer": {"name": "fas", "version": __import__("fas").__version__},
+            "analysis": analysis.model_dump(mode="json"),
+            "snapshot": snapshot,
+            "artifacts": list_all("artifacts", "snapshot_id", selected_snapshot),
+            "observations": list_all("observations", "snapshot_id", selected_snapshot),
+            "evidence": list_all("evidence", "snapshot_id", selected_snapshot),
+            "graph": {
+                "nodes": list_all("graph_nodes", "snapshot_id", selected_snapshot),
+                "edges": list_all("graph_edges", "snapshot_id", selected_snapshot),
+            },
+            "findings": list_all("findings", "snapshot_id", selected_snapshot),
+            "tool_runs": [
+                run for run in list_all("tool_runs", "analysis_id", analysis_id)
+                if run.get("snapshot_id") == selected_snapshot
+            ],
+            "audit_events": list_all("audit_events", "analysis_id", analysis_id),
+        }
+        canonical = json.dumps(bundle, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+        bundle["bundle_sha256"] = hashlib.sha256(canonical).hexdigest()
+        return bundle
+
     def doctor(self) -> dict[str,object]:
         checks=[]
         checks.append({"name":"python","ok":__import__("sys").version_info >= (3,11),"detail":__import__("sys").version.split()[0]})

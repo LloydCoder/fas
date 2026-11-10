@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/LloydCoder/fas/blob/main/schemas/export-bundle.schema.json",
+  "title": "FAS Export Bundle",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["bundle_version", "producer", "analysis", "snapshot", "artifacts", "observations", "evidence", "graph", "findings", "tool_runs", "audit_events", "bundle_sha256"],
+  "properties": {
+    "bundle_version": {"type": "string", "const": "1.0"},
+    "producer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version"],
+      "properties": {"name": {"type": "string", "const": "fas"}, "version": {"type": "string", "minLength": 1}}
+    },
+    "analysis": {"type": "object"},
+    "snapshot": {"type": "object"},
+    "artifacts": {"type": "array", "items": {"type": "object"}},
+    "observations": {"type": "array", "items": {"type": "object"}},
+    "evidence": {"type": "array", "items": {"type": "object"}},
+    "graph": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["nodes", "edges"],
+      "properties": {"nodes": {"type": "array", "items": {"type": "object"}}, "edges": {"type": "array", "items": {"type": "object"}}}
+    },
+    "findings": {"type": "array", "items": {"type": "object"}},
+    "tool_runs": {"type": "array", "items": {"type": "object"}},
+    "audit_events": {"type": "array", "items": {"type": "object"}},
+    "bundle_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  }
+}

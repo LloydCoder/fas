@@ -14,3 +14,5 @@ Run <code>fas --help</code> for the complete current command surface.
 | fas verify | Inspect remediation-verification options |
 
 Prefer <code>--format json</code> when scripting or integrating with other systems.
+
+| fas export <analysis-id> | Export a verifiable provenance-preserving analysis bundle |
