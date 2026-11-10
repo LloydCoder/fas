@@ -34,7 +34,8 @@ def build_parser() -> argparse.ArgumentParser:
         ("status","show analysis status"),("findings","show findings"),
         ("report","generate or show report")):
         q=sub.add_parser(name,help=help_text); subcommands.append(q); q.add_argument("id")
-    export=sub.add_parser("export",help="export a provenance-preserving analysis bundle"); export.add_argument("id"); export.add_argument("--snapshot-id",default=None)\n    doctor=sub.add_parser("doctor"); tools=sub.add_parser("tools"); api=sub.add_parser("api")
+    export=sub.add_parser("export",help="export a provenance-preserving analysis bundle"); export.add_argument("id"); export.add_argument("--snapshot-id",default=None)
+    doctor=sub.add_parser("doctor"); tools=sub.add_parser("tools"); api=sub.add_parser("api")
     subcommands.extend((doctor,tools,api))
     for command in subcommands:
         command.add_argument("--format",choices=("human","json"),default=argparse.SUPPRESS)
@@ -44,7 +45,9 @@ def main(argv: list[str]|None=None) -> int:
     args=build_parser().parse_args(argv)
     settings=load_settings(args.config)
     service=ProductService(settings)
-    if args.command=="export":\n        dump(service.export_bundle(args.id,args.snapshot_id),args.format); return 0\n    if args.command=="doctor":
+    if args.command=="export":
+        dump(service.export_bundle(args.id,args.snapshot_id),args.format); return 0
+    if args.command=="doctor":
         result=service.doctor()
         dump(result,args.format); return 0 if result["ok"] else 2
     if args.command=="tools":
